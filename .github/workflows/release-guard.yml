@@ -1,0 +1,79 @@
+name: Release guard
+
+# Plugin users only receive updates when .claude-plugin/plugin.json's version
+# changes, so nothing ships until that field moves. This guard runs on PRs into
+# main (the dev -> main flow) and, as a safety net, on direct pushes to main:
+#
+#   1. If skills/ or agents/ changed without a version bump, bump the patch
+#      version in plugin.json.
+#   2. Sync every per-file `pack: orc-pack@x.y.z` marker to the manifest.
+#   3. Run Prettier over the repo.
+#   4. Commit and push the fixes to the branch under review, so the merge
+#      proceeds with them included.
+#
+# Anything that can't be auto-fixed (for example a file Prettier can't parse)
+# fails the job: red check, no merge until it's fixed. Pushes made by the bot
+# use GITHUB_TOKEN and don't retrigger workflows, so there is no loop.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Bump version if pack content changed without one
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=$(git merge-base HEAD "origin/${{ github.base_ref }}")
+          else
+            BASE='${{ github.event.before }}'
+            if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+              BASE=$(git rev-parse HEAD^)
+            fi
+          fi
+
+          NEW_VER=$(jq -r .version .claude-plugin/plugin.json)
+          BASE_VER=$(git show "$BASE:.claude-plugin/plugin.json" 2>/dev/null | jq -r .version || echo "")
+          CONTENT_CHANGED=$(git diff --name-only "$BASE" HEAD -- skills agents | head -1)
+
+          if [ -n "$CONTENT_CHANGED" ] && [ "$NEW_VER" = "$BASE_VER" ]; then
+            IFS=. read -r MAJ MIN PAT <<< "$NEW_VER"
+            NEW_VER="$MAJ.$MIN.$((PAT + 1))"
+            jq --arg v "$NEW_VER" '.version = $v' .claude-plugin/plugin.json > plugin.json.tmp
+            mv plugin.json.tmp .claude-plugin/plugin.json
+            echo "Pack content changed without a version bump — auto-bumping to $NEW_VER"
+          fi
+
+          sed -i "s/^pack: orc-pack@.*/pack: orc-pack@$NEW_VER/" skills/orc/SKILL.md agents/*.md
+          echo "PACK_VERSION=$NEW_VER" >> "$GITHUB_ENV"
+
+      - name: Format (fails the job on files Prettier cannot parse)
+        run: npx --yes prettier@3 --write .
+
+      - name: Commit and push fixes
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Version $PACK_VERSION consistent and formatting clean; nothing to do."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: version $PACK_VERSION — auto bump/sync and formatting"
+          git push
