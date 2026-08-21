@@ -25,6 +25,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-guard-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   guard:
     runs-on: ubuntu-latest
