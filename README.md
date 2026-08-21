@@ -6,7 +6,7 @@ Under the hood it runs **subagent-driven development**. The orchestrator keeps i
 
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
 
-> **Run it on Opus 4.8 or Sonnet 5. Do not use Opus 5.** This pack is tuned for Claude Opus 4.8 and Sonnet 5, which drive it well. **Avoid Opus 5** — the orchestration is calibrated to 4.8/Sonnet-5 behavior, and Opus 5 causes real headaches driving it (poorer judgement, more wasted review/fix rounds). The skill enforces this internally too: it won't dispatch its subagents on Opus 5. Inside a run, orc uses the capable models for the thinking work (implementing, reviewing, verifying) and Haiku for the lightweight scan-and-report work (picking the next issue, running lint/tests). There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-opus-48-and-sonnet-5) below.
+> **Run it on any capable model — just not Opus 5.** Orc drives well on essentially any strong Claude model (Opus 4.8 and Sonnet 5 are what we use day to day). The one model to avoid is **Opus 5**: it hallucinates, goes off script, and generally wastes review and fix rounds, so we don't use it or recommend it. The numbers back the concern — on the AA-Omniscience knowledge benchmark, Opus 5 hallucinates on **50.1%** of items, and even [head-to-head reviews that rate Opus 5 higher overall](https://buda.im/blog/claude-opus-5-vs-opus-4-8) concede it "should not be described as universally more reliable than Opus 4.8." For an unattended tool that has to trust its own findings, that regression is disqualifying. Everything else works great. The skill enforces this internally too: it won't dispatch its subagents on Opus 5. For our full breakdown, see [our benchmarks](https://rogadigital.com/labs/benchmarks/). Inside a run, orc uses the capable models for the thinking work (implementing, reviewing, verifying) and Haiku for the lightweight scan-and-report work (picking the next issue, running lint/tests). There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-newer-models) below.
 
 ---
 
@@ -108,11 +108,11 @@ Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every
 
 ---
 
-## Turn on the to-do list (Opus 4.8 and Sonnet 5)
+## Turn on the to-do list (newer models)
 
 Orc runs best when it can build its plan as a **live task list** and work it top to bottom — that's how an unsupervised run never drops a step. The task list is orc's spine.
 
-Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8** and **Sonnet 5** (and Fable 5). The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since this pack runs on Opus 4.8 and Sonnet 5, you'll want to switch them back on.
+Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8** and **Sonnet 5** (and Fable 5). The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
 
 **The fix — set one environment variable before launching Claude Code:**
 

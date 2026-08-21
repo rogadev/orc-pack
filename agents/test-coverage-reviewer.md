@@ -1,6 +1,6 @@
 ---
 name: test-coverage-reviewer
-pack: orc-pack@1.1.0
+pack: orc-pack@1.1.1
 description: Test-coverage analyst. Reviews whether new or changed code has sufficient, meaningful test coverage following the testing pyramid. Use during deep reviews. Exists to prevent regressions, not to demand tests for their own sake.
 model: sonnet
 tools:
