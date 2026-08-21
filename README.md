@@ -53,21 +53,21 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 **The agents** (`agents/`):
 
-| Agent | Role |
-|---|---|
-| `next-issue-finder` | Scout — picks the next issue from the board (used only in undirected runs) |
-| `lint` | Runs the repo's lint/format chain, reports raw results |
-| `typecheck` | Runs the repo's type checker |
-| `test` | Runs the repo's test suite(s) |
-| `impact` | Diff stats for a change |
-| `fallow` | Optional codebase-intelligence audit (JS/TS repos with the `fallow` CLI) |
-| `security-reviewer` | Input validation, secrets, XSS, SSRF, injection, path traversal |
-| `architecture-reviewer` | Structure, module boundaries, framework conventions |
-| `quality-reviewer` | Type safety, error handling, performance, accessibility |
-| `test-coverage-reviewer` | Depth and meaningfulness of test coverage |
-| `verifier` | Skeptical second pass that filters reviewer false positives |
-| `docs-writer` | Project documentation |
-| `skill-vetter` | Static security audit of untrusted skills/plugins before you install them |
+| Agent                    | Role                                                                       |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs) |
+| `lint`                   | Runs the repo's lint/format chain, reports raw results                     |
+| `typecheck`              | Runs the repo's type checker                                               |
+| `test`                   | Runs the repo's test suite(s)                                              |
+| `impact`                 | Diff stats for a change                                                    |
+| `fallow`                 | Optional codebase-intelligence audit (JS/TS repos with the `fallow` CLI)   |
+| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal            |
+| `architecture-reviewer`  | Structure, module boundaries, framework conventions                        |
+| `quality-reviewer`       | Type safety, error handling, performance, accessibility                    |
+| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                  |
+| `verifier`               | Skeptical second pass that filters reviewer false positives                |
+| `docs-writer`            | Project documentation                                                      |
+| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them  |
 
 Orc doesn't run every reviewer on every change — it looks at what the diff touches and **selects the reviewers that apply**. A comment-only tweak doesn't wake the security panel; a change to an upload handler does.
 
@@ -93,7 +93,7 @@ The skill and all agents load automatically after install; the skill is invoked 
 The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
 1. Open a Claude Code session in the repo you want orc in.
-2. Point Claude at this folder and ask it to install the pack — for example: *"Read the INSTALL.md in `~/Desktop/orc-pack` and install this pack into this repo."*
+2. Point Claude at this folder and ask it to install the pack — for example: _"Read the INSTALL.md in `~/Desktop/orc-pack` and install this pack into this repo."_
 3. Claude copies the skill to `.claude/skills/orc/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
 
 If you'd rather do it by hand, it's just a copy:

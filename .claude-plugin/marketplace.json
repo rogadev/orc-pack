@@ -1,13 +1,13 @@
 {
-	"name": "orc-pack",
-	"owner": {
-		"name": "rogadev"
-	},
-	"plugins": [
-		{
-			"name": "orc-pack",
-			"source": "./",
-			"description": "Autonomous orchestrator skill (/orc) plus its subagent team: code reviewers, a finding verifier, an issue scout, and tooling runners."
-		}
-	]
+  "name": "orc-pack",
+  "owner": {
+    "name": "rogadev"
+  },
+  "plugins": [
+    {
+      "name": "orc-pack",
+      "source": "./",
+      "description": "Autonomous orchestrator skill (/orc) plus its subagent team: code reviewers, a finding verifier, an issue scout, and tooling runners."
+    }
+  ]
 }

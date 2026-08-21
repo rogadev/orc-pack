@@ -41,10 +41,10 @@ orc-pack/
 
 Two valid targets. **Default to project scope** unless the user says otherwise.
 
-| Scope | Destination root | Use when |
-|---|---|---|
-| **Project** (default) | `<repo>/.claude/` | The pack should live with this repo and be shared/committed with it (or kept local to it). This is almost always what's wanted when installing "into this project". |
-| **Global** | `~/.claude/` (`C:\Users\<you>\.claude\` on Windows) | The user wants `/orc` available in every project on this machine. |
+| Scope                 | Destination root                                    | Use when                                                                                                                                                            |
+| --------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Project** (default) | `<repo>/.claude/`                                   | The pack should live with this repo and be shared/committed with it (or kept local to it). This is almost always what's wanted when installing "into this project". |
+| **Global**            | `~/.claude/` (`C:\Users\<you>\.claude\` on Windows) | The user wants `/orc` available in every project on this machine.                                                                                                   |
 
 Confirm the repo root first — run `git rev-parse --show-toplevel`. Everything below is relative to the destination root you chose.
 
@@ -56,22 +56,22 @@ Confirm the repo root first — run `git rev-parse --show-toplevel`. Everything 
 
 Copy each kit file to the destination below. The directory names — `.claude/skills/<name>/SKILL.md` and `.claude/agents/<name>.md` — are exactly what Claude Code scans, so the paths are not negotiable.
 
-| Kit file | → Destination in the repo |
-|---|---|
-| `skills/orc/SKILL.md` | `<root>/.claude/skills/orc/SKILL.md` |
-| `agents/architecture-reviewer.md` | `<root>/.claude/agents/architecture-reviewer.md` |
-| `agents/docs-writer.md` | `<root>/.claude/agents/docs-writer.md` |
-| `agents/fallow.md` | `<root>/.claude/agents/fallow.md` |
-| `agents/impact.md` | `<root>/.claude/agents/impact.md` |
-| `agents/lint.md` | `<root>/.claude/agents/lint.md` |
-| `agents/next-issue-finder.md` | `<root>/.claude/agents/next-issue-finder.md` |
-| `agents/quality-reviewer.md` | `<root>/.claude/agents/quality-reviewer.md` |
-| `agents/security-reviewer.md` | `<root>/.claude/agents/security-reviewer.md` |
-| `agents/skill-vetter.md` | `<root>/.claude/agents/skill-vetter.md` |
+| Kit file                           | → Destination in the repo                         |
+| ---------------------------------- | ------------------------------------------------- |
+| `skills/orc/SKILL.md`              | `<root>/.claude/skills/orc/SKILL.md`              |
+| `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
+| `agents/docs-writer.md`            | `<root>/.claude/agents/docs-writer.md`            |
+| `agents/fallow.md`                 | `<root>/.claude/agents/fallow.md`                 |
+| `agents/impact.md`                 | `<root>/.claude/agents/impact.md`                 |
+| `agents/lint.md`                   | `<root>/.claude/agents/lint.md`                   |
+| `agents/next-issue-finder.md`      | `<root>/.claude/agents/next-issue-finder.md`      |
+| `agents/quality-reviewer.md`       | `<root>/.claude/agents/quality-reviewer.md`       |
+| `agents/security-reviewer.md`      | `<root>/.claude/agents/security-reviewer.md`      |
+| `agents/skill-vetter.md`           | `<root>/.claude/agents/skill-vetter.md`           |
 | `agents/test-coverage-reviewer.md` | `<root>/.claude/agents/test-coverage-reviewer.md` |
-| `agents/test.md` | `<root>/.claude/agents/test.md` |
-| `agents/typecheck.md` | `<root>/.claude/agents/typecheck.md` |
-| `agents/verifier.md` | `<root>/.claude/agents/verifier.md` |
+| `agents/test.md`                   | `<root>/.claude/agents/test.md`                   |
+| `agents/typecheck.md`              | `<root>/.claude/agents/typecheck.md`              |
+| `agents/verifier.md`               | `<root>/.claude/agents/verifier.md`               |
 
 **Do NOT copy `INSTALL.md` or `README.md` into the repo** — they're kit docs, not runtime files.
 
