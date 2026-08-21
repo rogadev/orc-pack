@@ -73,6 +73,19 @@ The reviewers, tooling runners, and the scout are all also useful on their own, 
 
 ---
 
+## Two ways to install
+
+**As a plugin — quickest, available in all your projects.** This repo is its own Claude Code plugin marketplace. In any Claude Code session:
+
+```
+/plugin marketplace add rogadev/orc-pack
+/plugin install orc-pack@orc-pack
+```
+
+The skill and all agents load automatically after install; the skill is invoked as `/orc-pack:orc`. The plugin version is pinned in `.claude-plugin/plugin.json`, so you receive updates when a new version is released, not on every commit.
+
+**Into a repo — committable and tunable.** Copy the pack into one repo's `.claude/` so it ships with the repo, can be committed for a team, and can be tuned to that repo's stack (a repo-specific security reviewer, for example). Plugin files live in a read-only cache; repo copies are yours to edit. This is the path described in the next section, and it's the right one for team repos or customized installs.
+
 ## Installing it into a project
 
 The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
