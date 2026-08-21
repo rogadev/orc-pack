@@ -92,8 +92,8 @@ The skill and all agents load automatically after install; the skill is invoked 
 
 The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
-1. Open a Claude Code session in the repo you want orc in.
-2. Point Claude at this folder and ask it to install the pack — for example: _"Read the INSTALL.md in `~/Desktop/orc-pack` and install this pack into this repo."_
+1. Clone this repo somewhere outside the target project.
+2. Open a Claude Code session in the repo you want orc in and point Claude at the clone — for example: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
 3. Claude copies the skill to `.claude/skills/orc/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
 
 If you'd rather do it by hand, it's just a copy:
