@@ -17,7 +17,9 @@ orc-pack/
 ├── INSTALL.md              ← you are here (do NOT copy this into the repo)
 ├── README.md               ← for humans (do NOT copy this into the repo)
 ├── skills/
-│   └── orc/
+│   ├── orc/
+│   │   └── SKILL.md
+│   └── newissue/
 │       └── SKILL.md
 └── agents/
     ├── architecture-reviewer.md
@@ -59,6 +61,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | Kit file                           | → Destination in the repo                         |
 | ---------------------------------- | ------------------------------------------------- |
 | `skills/orc/SKILL.md`              | `<root>/.claude/skills/orc/SKILL.md`              |
+| `skills/newissue/SKILL.md`         | `<root>/.claude/skills/newissue/SKILL.md`         |
 | `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
 | `agents/docs-writer.md`            | `<root>/.claude/agents/docs-writer.md`            |
 | `agents/fallow.md`                 | `<root>/.claude/agents/fallow.md`                 |
@@ -104,7 +107,7 @@ The `skill-vetter` agent in this pack is exactly the tool for a cautious install
 The kit's agents and skill are written to be **project-agnostic**: they discover the repo's stack, commands, and conventions at runtime by reading `CLAUDE.md`/`AGENTS.md`, the manifest, and neighbouring code. So a bare copy already works. But a few quick adaptations make them sharper — do these when the information is readily available:
 
 1. **Confirm the ready command and working branch.** The orc skill runs "the repo's aggregate check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them — no edit needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every agent benefits. Ask the user before creating or editing repo docs.
-2. **Prune agents the repo can't use.** `fallow` only applies to JavaScript/TypeScript repos and needs the `fallow` CLI — it self-skips when absent, so it's safe to leave, but you may drop `agents/fallow.md` in a non-JS repo. `impact` is optional metrics; keep or drop per the user's preference.
+2. **Prune what the repo can't use.** `fallow` only applies to JavaScript/TypeScript repos and needs the `fallow` CLI — it self-skips when absent, so it's safe to leave, but you may drop `agents/fallow.md` in a non-JS repo. `impact` is optional metrics; keep or drop per the user's preference. `skills/newissue/` is optional but recommended — it's how orc's Discoveries step files follow-up work well; drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3 as usual) or the repo doesn't track work as GitHub issues. It reads per-repo house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md` — mention that to the user rather than editing the skill.
 3. **Leave the reviewers generic unless asked.** They adapt per-repo at runtime. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version — that's a bigger, opt-in step, not part of a basic install.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
@@ -113,7 +116,7 @@ Don't over-engineer this phase. The pack is designed to work as-copied; adaptati
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/orc/` and `<root>/.claude/agents/` and confirm the 1 skill + up-to-13 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc`, plus `newissue` unless pruned) and up-to-13 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.

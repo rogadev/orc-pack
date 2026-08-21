@@ -49,7 +49,10 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 ## What's in the box
 
-**The skill:** `skills/orc/` — the orchestrator itself.
+**The skills:**
+
+- `skills/orc/` — the orchestrator itself.
+- `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
 
 **The agents** (`agents/`):
 
