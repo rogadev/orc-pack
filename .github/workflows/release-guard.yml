@@ -32,7 +32,14 @@ concurrency:
 jobs:
   guard:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]'
+    # Skip bot pushes (loop guard) and fork PRs: the auto-fix push needs write
+    # access to the head branch, and running this job against branches from
+    # outside the repo would execute the guard over untrusted content while
+    # holding a write token. Same-repo branches already require write access.
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,18 +47,29 @@ jobs:
           fetch-depth: 0
 
       - name: Bump version if pack content changed without one
+        # Event context enters the script only through env, never inline
+        # ${{ }} interpolation — branch names and event fields are data here,
+        # not shell source.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE=$(git merge-base HEAD "origin/${{ github.base_ref }}")
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE=$(git merge-base HEAD "origin/$BASE_REF")
           else
-            BASE='${{ github.event.before }}'
+            BASE="$BEFORE_SHA"
             if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
               BASE=$(git rev-parse HEAD^)
             fi
           fi
 
           NEW_VER=$(jq -r .version .claude-plugin/plugin.json)
+          if ! [[ "$NEW_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::plugin.json version '$NEW_VER' is not a plain x.y.z version"
+            exit 1
+          fi
           BASE_VER=$(git show "$BASE:.claude-plugin/plugin.json" 2>/dev/null | jq -r .version || echo "")
           CONTENT_CHANGED=$(git diff --name-only "$BASE" HEAD -- skills agents | head -1)
 
@@ -63,6 +81,8 @@ jobs:
             echo "Pack content changed without a version bump — auto-bumping to $NEW_VER"
           fi
 
+          # NEW_VER is validated as ^[0-9]+\.[0-9]+\.[0-9]+$ above, so it is
+          # safe to place inside the sed program.
           sed -i "s/^pack: orc-pack@.*/pack: orc-pack@$NEW_VER/" skills/orc/SKILL.md agents/*.md
           echo "PACK_VERSION=$NEW_VER" >> "$GITHUB_ENV"
 
