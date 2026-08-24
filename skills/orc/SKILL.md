@@ -150,13 +150,19 @@ One commit per task. Mark the task completed. Do not push yet.
 
 ### 6. Discoveries
 
-Everything you find that the work didn't mention gets exactly one of these before the run ends:
+Everything you find that the work didn't mention gets exactly one of these before the run ends. The rule is _file or fix_, never _mention_ — a mention evaporates with your context.
+
+**Filing is the expensive option, not the safe one.** An issue costs a full writeup now and a whole future run later — survey, make-buildable, plan, implement, review, verify, ready, commit, close — to land what might be a two-line fix, and every issue filed is one more thing the next scout pages through. So the question is never "is this in scope?" It's "is fixing this now cheaper and safe enough than filing it?" For a small, verifiable, low-risk finding the answer is usually yes — the context is already hot, and paying a whole run later to rebuild it is the wasteful path.
+
+Sort each finding:
 
 - **Inside the work's intent** → do it in the task where you found it, and note it.
-- **Small, safe, adjacent, provably correct** → its own `fix:`/`chore:` commit, named in the report. The bar: no design decision, covered by existing tests or trivially testable, in files you were already touching. If you're arguing with yourself about whether it qualifies, it doesn't — next tier.
-- **Anything larger** → **file it** (`/newissue`, or `gh`) before the run ends and put the number in your report.
+- **Small, safe, provably correct** → fix it this run, in the sweep below. The bar, all three: no design decision, provably correct (covered by existing tests or trivially testable), and low blast radius. Adjacent files are fine — the test is risk, not location, so a one-line fix in a file you didn't touch still qualifies. When you're unsure whether a _small_ fix qualifies, lean toward fixing it; when you're unsure whether it's _small_, treat it as larger and file.
+- **Anything larger** → **file it** (`/newissue`, or `gh`) and put the number in your report. This is design decisions, cross-cutting changes, correctness facts a human must call, and anything over the sweep cap. Before you file, check the board — open and recently closed — for a match; comment there instead of filing a near-duplicate.
 
-The rule is _file or fix_, never _mention_ — a mention evaporates with your context. Add a task for each discovery action so it doesn't slip.
+**The sweep.** Small fixes don't land ad hoc, scattered through the run — that muddies each task's diff and skips review. Collect them as tasks as you find them, then clear them as one batch after the task loop, before **Ready**: dispatch a single implementer for the batch, run the review panel and verifier over the combined diff once (the same machinery as a task — nothing lands unreviewed), then commit each fix on its own (`fix:`/`chore:` per finding, matching the repo's convention). Cap the sweep at roughly three fixes; past the cap, or the moment one turns out to carry a decision, the rest file instead. The cap is a scope-creep backstop — a run that sweeps ten things has lost the plot, and its diff is no longer reviewable.
+
+Add a task for each discovery action — swept fix or filed issue — so it doesn't slip.
 
 ### 7. Ready
 
