@@ -153,7 +153,7 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
 4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
 5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
-6. **Discoveries get actioned.** Anything it finds along the way gets fixed, or filed as a new issue — never just mentioned and forgotten.
+6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
 8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
 

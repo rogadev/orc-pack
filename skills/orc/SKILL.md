@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.1.1
+pack: orc-pack@1.2.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list, dispatch implementer and reviewer subagents, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint".
 ---
 
@@ -28,7 +28,7 @@ Then stop — do not begin the run. Orc won't dispatch its subagents on Opus 5 e
 
 **Your output is landed work, not a report about why the work was hard.** Before writing your final report, ask: _what on disk or on the board is different because I ran?_ If the answer is "nothing", you stopped too early — go find the work you skipped.
 
-`NOT FINISHED` is for genuine human-only blockers only — the closed list in **Outcomes**. "Blocked on something missing", "the issue was vague", "there's nothing executable", "I should flag this and let the user decide" are all your job: build the part that isn't blocked, specify the vague thing yourself, do the board work, decide and report the assumption. A defensible provisional value beats nothing shipped. Out-of-scope findings get filed or fixed, never merely mentioned (see **Discoveries**).
+`NOT FINISHED` is for genuine human-only blockers only — the closed list in **Outcomes**. "Blocked on something missing", "the issue was vague", "there's nothing executable", "I should flag this and let the user decide" are all your job: build the part that isn't blocked, specify the vague thing yourself, do the board work, decide and report the assumption. A defensible provisional value beats nothing shipped. Out-of-scope findings get handled in this run — done in-flight by default, filed only for a genuine human-only call — never merely mentioned (see **Discoveries**).
 
 ## Modes
 
@@ -132,7 +132,7 @@ An irrelevant reviewer wastes tokens and invites fabricated findings; skipping a
 
 **Filter the findings through the `verifier`.** Reviewers hallucinate — that's the known failure mode of LLM review. Hand the consolidated findings (title, file, line, claim, source reviewer) to the `verifier` in a single dispatch. Discard what it can't reproduce, downgrade what it overstates, and re-read a file yourself only when it flags something genuinely ambiguous.
 
-**The review↔fix loop, bounded at three rounds.** Confirmed blocking findings go back to the implementer verbatim; it fixes, re-runs the covering tests, and a scoped re-review confirms. Minor findings and nitpicks are recorded for the final report, **not** fixed — they don't extend the loop. If round three still leaves a blocking finding open, stop the run — don't adjudicate past a real defect to reach the end.
+**The review↔fix loop, bounded at three rounds.** When the verified findings include anything blocking, fix them all in one pass — the blocking findings and the minor ones and nitpicks together. An implementer is already in the code; clearing the small stuff while you're there is cheaper than carrying it. Send the confirmed findings back verbatim; it fixes, re-runs the covering tests, and a scoped re-review confirms. When a round surfaces only minor findings and nitpicks — nothing blocking — that's good enough: record them and move on, don't spend another round polishing. If round three still leaves a blocking finding open, stop the run — don't adjudicate past a real defect to reach the end.
 
 **Commit.** Once the review is clean, commit that task onto the working branch — conventional-commit style matching the repo's history, with the issue reference when there is one:
 
@@ -150,13 +150,18 @@ One commit per task. Mark the task completed. Do not push yet.
 
 ### 6. Discoveries
 
-Everything you find that the work didn't mention gets exactly one of these before the run ends:
+Everything you find that the work didn't mention gets handled in this run. The rule is _do it or, for a genuine human-only call, file it_ — never merely _mention_ it, because a mention evaporates with your context.
 
-- **Inside the work's intent** → do it in the task where you found it, and note it.
-- **Small, safe, adjacent, provably correct** → its own `fix:`/`chore:` commit, named in the report. The bar: no design decision, covered by existing tests or trivially testable, in files you were already touching. If you're arguing with yourself about whether it qualifies, it doesn't — next tier.
-- **Anything larger** → **file it** (`/newissue`, or `gh`) before the run ends and put the number in your report.
+**Default to doing it, not filing it.** This is subagent-driven development: you dispatch the work and hand artifacts over as file paths, so your own context stays lean even as the run's scope grows — a run that expands to cover what it finds is working as intended, not running away. Filing a discovery instead makes a future agent pay a whole cycle — survey, make-buildable, plan, implement, review, verify, ready, commit, close — to rebuild the context you already have right now. So "unrelated to the issue I picked" is not a reason to defer a finding to the board; it's just more work to do this run, the same way as the rest.
 
-The rule is _file or fix_, never _mention_ — a mention evaporates with your context. Add a task for each discovery action so it doesn't slip.
+Handle each finding:
+
+- **Inside the current task's intent** → do it in that task, and note it.
+- **Trivial and provably correct** (a typo, an obvious guard, dead code) → fold it into the nearest related task's commit, or a quick `fix:`/`chore:` — no ceremony.
+- **Anything larger, in scope or out** → add it as its own task (or tasks) and run it through the normal loop this run: implement, review panel, verify, commit — exactly like the picked work. There is no scope cap; keep working until the board-worthy findings are landed, not filed.
+- **A genuine human-only call** → _only_ the closed list in **Outcomes** (a legal or policy statement, a security boundary, an external API contract, spending money, or something the user reserved), or work blocked on missing access. Comment the evidence, file it (`/newissue`, or `gh`) or apply `blocked`, and put the number in the report. Before filing, check the board — open and recently closed — for a match; comment there instead of filing a near-duplicate. This is the rare exception, not the common path.
+
+Add a task for each discovery action so it doesn't slip.
 
 ### 7. Ready
 
@@ -259,4 +264,4 @@ In every `NOT FINISHED` case: commits stay local, nothing is pushed, nothing is 
 - **No closing issues it didn't resolve.** Commenting on an investigated issue is expected.
 - **No board hygiene beyond this run.** Issues you never touched aren't yours to triage.
 - **No force-push, rebase, history rewriting, or hook-skipping.**
-- **No unbounded scope creep.** The work defines the work. An adjacent refactor with a real design decision in it is a `/newissue`, not a commit — but check **Discoveries** first. The rule is _file or fix_, never _mention_.
+- **No procrastinating work onto the board.** A discovery orc could execute is work for this run, not an issue for a future one — filing it just makes a later agent pay a full cycle to rebuild the context orc already has. Subagent dispatch keeps the orchestrator lean, so scope growing within a run is fine, even welcome. File or requeue only the genuine human-only calls in **Outcomes**; everything else, do it in-flight (see **Discoveries**).
