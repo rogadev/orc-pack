@@ -1,6 +1,6 @@
 ---
 name: codegraph
-pack: orc-pack@1.2.0
+pack: orc-pack@1.2.1
 description: Optional. Query a CodeGraph index of the repo for the impact radius, callers, callees, and affected tests of changed symbols or files, and report them concisely. Requires a vetted CodeGraph CLI install; self-skips cleanly when absent. Use during review to give the orchestrator real blast-radius instead of guessed structure.
 tools:
   - Bash
