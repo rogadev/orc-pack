@@ -54,25 +54,39 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 **The agents** (`agents/`):
 
-| Agent                    | Role                                                                       |
-| ------------------------ | -------------------------------------------------------------------------- |
-| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs) |
-| `lint`                   | Runs the repo's lint/format chain, reports raw results                     |
-| `typecheck`              | Runs the repo's type checker                                               |
-| `test`                   | Runs the repo's test suite(s)                                              |
-| `impact`                 | Diff stats for a change                                                    |
-| `fallow`                 | Optional codebase-intelligence audit (JS/TS repos with the `fallow` CLI)   |
-| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal            |
-| `architecture-reviewer`  | Structure, module boundaries, framework conventions                        |
-| `quality-reviewer`       | Type safety, error handling, performance, accessibility                    |
-| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                  |
-| `verifier`               | Skeptical second pass that filters reviewer false positives                |
-| `docs-writer`            | Project documentation                                                      |
-| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them  |
+| Agent                    | Role                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                           |
+| `lint`                   | Runs the repo's lint/format chain, reports raw results                                                               |
+| `typecheck`              | Runs the repo's type checker                                                                                         |
+| `test`                   | Runs the repo's test suite(s)                                                                                        |
+| `impact`                 | Diff stats for a change                                                                                              |
+| `fallow`                 | Optional codebase-intelligence audit (JS/TS repos with the `fallow` CLI)                                             |
+| `codegraph`              | Optional impact-radius, callers/callees, and affected tests via the CodeGraph CLI (polyglot; self-skips when absent) |
+| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                      |
+| `architecture-reviewer`  | Structure, module boundaries, framework conventions                                                                  |
+| `quality-reviewer`       | Type safety, error handling, performance, accessibility                                                              |
+| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                                                            |
+| `verifier`               | Skeptical second pass that filters reviewer false positives                                                          |
+| `docs-writer`            | Project documentation                                                                                                |
+| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                            |
+| `dependency-vetter`      | Supply-chain security vet of a package version (CodeGraph, fallow) before install/update                             |
 
 Orc doesn't run every reviewer on every change — it looks at what the diff touches and **selects the reviewers that apply**. A comment-only tweak doesn't wake the security panel; a change to an upload handler does.
 
 The reviewers, tooling runners, and the scout are all also useful on their own, outside of orc — for example during a manual code review.
+
+---
+
+## CodeGraph (optional)
+
+CodeGraph is an optional, purely under-the-hood tool that sharpens orc's review loop. Nothing changes for you — you still just run `/orc`. Internally, the `codegraph` agent shells out to the [CodeGraph](https://colbymchenry.github.io/codegraph/) CLI to answer structural questions with facts instead of guesses: the impact radius of a changed symbol, its callers and callees, and which tests a change affects. It parses 20+ languages via Tree-sitter, so it covers ground `fallow` (JS/TS only) can't. If the CLI isn't installed, the agent self-skips — it's a bonus, never a gate.
+
+**It installs the latest version — but only after vetting it.** The policy is _install-latest-after-vet_: at install and every update, the `dependency-vetter` agent resolves the newest CodeGraph version and audits that exact version — install scripts, advisories, integrity, a static read — and CodeGraph is installed only if it passes. So you get current fixes, but the pack never hands you an instruction to install something unvetted. `.claude-plugin/codegraph.known-good.json` records the last human-vetted version as a fallback: if latest ever fails the vet, the installer drops back to that known-good version instead of leaving you with a bad one, and CI (`codegraph-vet.yml`) runs the same checks against current latest as a release canary. It's real risk reduction, not a guarantee — `npm audit` only knows published advisories and prebuilt binaries can't be fully read — so the posture is "install the newest version that passes our vet, with a known-good fallback," not blind trust in whatever's newest.
+
+Two things to know if you enable it: turn telemetry off (`codegraph telemetry off` — it's on by default), and don't run `codegraph upgrade` (updates should go through the vet, not around it).
+
+**The MCP server is a separate opt-in, and orc doesn't use it.** CodeGraph can register an MCP server into your agent config (`codegraph install`) and expose `codegraph_impact`, `codegraph_explore`, and friends as native tools. That's genuinely nice for your own interactive coding sessions — but orc deliberately talks to the CLI instead: identical graph data, no config to register, works in headless and scheduled runs, and no persistent server or auto-editing of your config. If you want the MCP tools for interactive use, that's your call to make separately — vet the pinned version the same way first.
 
 ---
 

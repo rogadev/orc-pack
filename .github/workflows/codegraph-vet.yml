@@ -1,0 +1,108 @@
+name: CodeGraph vet canary
+
+# The pack's policy is install-latest-after-vet: at install/update time the
+# dependency-vetter resolves @latest, vets that exact version, and installs only
+# on PASS. This workflow is the release-side canary for that policy — it checks
+# that the version users would actually get right now is clean, so the pack is
+# never shipping an "install latest after vet" instruction while latest is
+# known-bad.
+#
+# On a schedule, on changes to the known-good record, and on PRs/pushes to main
+# it:
+#   1. Resolves @latest and confirms it is >= the recorded knownGoodVersion
+#      (no downgrade).
+#   2. Fails if latest declares preinstall/install/postinstall scripts.
+#   3. Installs latest with --ignore-scripts and runs npm audit, failing on any
+#      advisory.
+#   4. Sanity-checks that the known-good fallback version still resolves and its
+#      recorded integrity still matches the registry.
+#
+# This is the automated backstop under the human dependency-vetter agent, which
+# still runs its static read at each real install/update.
+
+on:
+  schedule:
+    - cron: "0 12 * * 1" # weekly, Monday 12:00 UTC
+  pull_request:
+    branches: [main]
+    paths:
+      - ".claude-plugin/codegraph.known-good.json"
+      - ".github/workflows/codegraph-vet.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".claude-plugin/codegraph.known-good.json"
+      - ".github/workflows/codegraph-vet.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Vet current @latest and the known-good fallback
+        run: |
+          set -euo pipefail
+          REC=.claude-plugin/codegraph.known-good.json
+
+          PKG=$(jq -r .package "$REC")
+          FLOOR=$(jq -r .knownGoodVersion "$REC")
+          FLOOR_INT=$(jq -r .integrity "$REC")
+
+          LATEST=$(npm view "$PKG" version 2>/dev/null || echo "")
+          if [ -z "$LATEST" ]; then
+            echo "::error::could not resolve $PKG@latest from the registry"
+            exit 1
+          fi
+          echo "latest=$LATEST  known-good floor=$FLOOR"
+
+          # 1. No downgrade: latest must be >= the recorded floor.
+          if [ "$(printf '%s\n%s\n' "$FLOOR" "$LATEST" | sort -V | head -1)" != "$FLOOR" ]; then
+            echo "::error::latest ($LATEST) is below the known-good floor ($FLOOR) — possible downgrade, investigate."
+            exit 1
+          fi
+
+          # 2. No install hooks in latest. `npm view pkg scripts` prints nothing
+          # when a package declares no scripts at all, so default empty to {}.
+          HOOKS=$(npm view "$PKG@$LATEST" scripts --json 2>/dev/null || true)
+          [ -z "$HOOKS" ] && HOOKS='{}'
+          if echo "$HOOKS" | jq -e 'has("preinstall") or has("install") or has("postinstall")' >/dev/null; then
+            echo "::error::$PKG@$LATEST declares install scripts — the human dependency-vetter must review before this ships:"
+            echo "$HOOKS" | jq '{preinstall, install, postinstall}'
+            exit 1
+          fi
+          echo "latest declares no install scripts."
+
+          # 3. Install latest with scripts disabled, then audit.
+          WORK=$(mktemp -d); cd "$WORK"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-fund --no-audit "$PKG@$LATEST" >/dev/null
+          echo "Installed $PKG@$LATEST (scripts ignored). Running audit..."
+          if ! npm audit --audit-level=low; then
+            echo "::error::npm audit reported advisories for $PKG@$LATEST — do not ship install-latest until upstream is clean."
+            exit 1
+          fi
+          cd - >/dev/null
+
+          # 4. Known-good fallback still resolves with matching integrity.
+          FLOOR_REG_INT=$(npm view "$PKG@$FLOOR" dist.integrity 2>/dev/null || echo "")
+          if [ -z "$FLOOR_REG_INT" ]; then
+            echo "::error::known-good version $PKG@$FLOOR no longer resolves — update the fallback."
+            exit 1
+          fi
+          if [ "$FLOOR_REG_INT" != "$FLOOR_INT" ]; then
+            echo "::error::integrity mismatch for the known-good $PKG@$FLOOR (republished?):"
+            echo "  record:   $FLOOR_INT"
+            echo "  registry: $FLOOR_REG_INT"
+            exit 1
+          fi
+
+          echo "PASS: latest $LATEST is clean and the known-good fallback $FLOOR is intact."

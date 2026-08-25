@@ -1,0 +1,22 @@
+{
+  "package": "@colbymchenry/codegraph",
+  "policy": "install-latest-after-vet",
+  "knownGoodVersion": "1.5.0",
+  "integrity": "sha512-/l1JMVOQ9WGQLrc/IIuAg7Igr944t79/oNCJTcnGkYtIeQx2XFIqI0ho+9Les/Yu4zKfmPU17hIUshD6yP1fKw==",
+  "shasum": "0be47912e573a45b488423d48894bffd9ad3c505",
+  "license": "MIT",
+  "vettedOn": "2026-08-25",
+  "verdict": "PASS",
+  "vettedBy": "dependency-vetter",
+  "notes": [
+    "POLICY: install resolves @latest, vets that exact version with dependency-vetter, and installs ONLY on PASS. This file is the fallback + floor, not a fixed target.",
+    "knownGoodVersion is the most recent version a human vetted. If @latest fails its vet, fall back to this version (vet it too before installing). Never install below it.",
+    "No preinstall/install/postinstall scripts declared in the vetted version.",
+    "npm audit against 1.5.0 reports 0 advisories (info/low/moderate/high/critical all 0).",
+    "Single maintainer: colbymchenry <me@colbymchenry.com>.",
+    "Zero runtime dependencies; ships prebuilt native binaries per platform via optionalDependencies (codegraph-<platform>-<arch>).",
+    "Ships anonymous usage telemetry, on by default. Disable with `codegraph telemetry off` after install.",
+    "A self-update command `codegraph upgrade` exists. Do NOT tell users to run it — updates go through the vet, not around it.",
+    "The `codegraph install` subcommand registers an MCP server into agent configs. The pack does not use it; orc talks to the CLI. See README for the opt-in MCP path."
+  ]
+}
