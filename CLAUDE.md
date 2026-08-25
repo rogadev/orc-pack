@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-`orc-pack` is a **source pack** you integrate into your larger projects — it distributes `/orc` (an autonomous, subagent-driven development orchestrator) plus the team of subagents it dispatches. It reaches a project one of two ways: installed as a Claude Code plugin (this repo is also its own plugin marketplace), or copied into that project's `.claude/`. Either way the pack runs *inside those projects*, never in place here. There is no application code in this repo: every deliverable is a Markdown prompt (`skills/*/SKILL.md` and `agents/*.md`) that ships elsewhere. "Editing the product" means editing prompt text, not code.
+`orc-pack` is a **source pack** you integrate into your larger projects — it distributes `/orc` (an autonomous, subagent-driven development orchestrator) plus the team of subagents it dispatches. It reaches a project one of two ways: installed as a Claude Code plugin (this repo is also its own plugin marketplace), or copied into that project's `.claude/`. Either way the pack runs _inside those projects_, never in place here. There is no application code in this repo: every deliverable is a Markdown prompt (`skills/*/SKILL.md` and `agents/*.md`) that ships elsewhere. "Editing the product" means editing prompt text, not code.
 
 Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (written for an AI agent) for how the pack gets copied into a target repo.
 
@@ -34,8 +34,8 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 Each agent pins a `model:` in frontmatter, and the split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
-- **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `next-issue-finder`, `docs-writer`.
-- **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`.
+- **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `codegraph`, `next-issue-finder`, `docs-writer`.
+- **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`, `dependency-vetter`.
 
 When adding or editing an agent, place it on the right tier. **Opus 5 is explicitly banned** for running orc (the skill refuses to dispatch on it) — see the README and the SKILL.md preflight for the rationale; don't reintroduce it as a default anywhere.
 
