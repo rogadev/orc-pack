@@ -12,21 +12,24 @@ Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (writte
 
 - `skills/orc/SKILL.md` — the orchestrator prompt. The core deliverable.
 - `skills/newissue/SKILL.md` — turns a rough idea into a self-contained GitHub issue; orc uses it to file follow-up work.
-- `agents/*.md` — one file per subagent (reviewers, verifier, issue scout, tooling runners). Each has YAML frontmatter: `name`, `pack`, `description`, `model`, optional `tools` and `memory`.
+- `skills/update-orc/SKILL.md` — updates an installed pack to the latest release from any older version, dispatching the `orc-updater` agent.
+- `agents/*.md` — one file per subagent (implementer, reviewers, verifier, issue scout, tooling runners, orc-updater). Each has YAML frontmatter: `name`, `pack`, `description`, `model`, optional `tools` and `memory`.
+- `CHANGELOG.md` — one section per released version; the release guard publishes the matching section as the release body, and `/update-orc` reads it as the update map.
 - `.claude-plugin/plugin.json` — plugin manifest; its `version` is the single source of truth for releases.
 - `.claude-plugin/marketplace.json` — marketplace descriptor.
 - `.github/workflows/release-guard.yml` — the CI that enforces versioning and formatting (see below).
 
 ## No build, lint, or test toolchain
 
-This repo has no `package.json`, no local scripts, and no test suite — it is prompt content. Don't look for a `ready` command or a way to "run" the pack locally. The only automated check is the release-guard workflow, which runs `npx prettier@3 --write .` in CI. If you want to match what CI will do to your Markdown before pushing, run that same Prettier command; otherwise CI formats it for you on the PR into `main`.
+This repo has no `package.json`, no local scripts, and no test suite — it is prompt content. Don't look for a `ready` command or a way to "run" the pack locally. The automated checks are two workflows: `release-guard.yml` runs `npx prettier@3 --write .`, does the version bump/sync, and refuses to release a version with no `CHANGELOG.md` section; `pack-integrity.yml` verifies that every `pack:` marker matches `plugin.json`, that every agent a skill names exists, and that every skill and agent frontmatter parses. If you want to match what CI will do to your Markdown before pushing, run that same Prettier command; otherwise CI formats it for you on the PR into `main`.
 
 ## Versioning is load-bearing — how releases actually ship
 
-Plugin users only receive updates when `.claude-plugin/plugin.json`'s `version` changes. Two coupled facts follow:
+Plugin users only receive updates when `.claude-plugin/plugin.json`'s `version` changes. Three coupled facts follow:
 
 1. **Every file carries a `pack: orc-pack@x.y.z` marker** in its frontmatter (line 3 of each skill and agent). These must all match `plugin.json`'s version.
 2. **You normally don't bump or sync these by hand.** The release-guard workflow, on PRs into `main` (and direct pushes to `main`), detects any change under `skills/` or `agents/` that landed without a version bump, bumps the patch version, rewrites every `pack:` marker to match, runs Prettier, and commits the fixes back onto the branch under review.
+3. **Every released version needs a `CHANGELOG.md` section.** The guard extracts the `## [x.y.z]` section and publishes it verbatim as the GitHub release body; with no section, the job fails and nothing is tagged or published. `/update-orc` reads that body, plus every section between the installed and target versions, as the map an updater agent follows — so write each entry for a stranger who may be jumping several releases: what changed, the exact files, any migration, and the paths to read.
 
 Practical consequence: when editing skill or agent content on `dev`, you can leave the version alone and let the guard bump it, **or** bump `plugin.json` yourself for an intentional minor/major release — but if you bump by hand, sync the `pack:` markers in the same commit so they don't drift. Never hand-edit a `pack:` marker to a version that disagrees with `plugin.json`.
 
@@ -35,7 +38,10 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 Each agent pins a `model:` in frontmatter, and the split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
 - **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `codegraph`, `next-issue-finder`, `docs-writer`.
-- **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`, `dependency-vetter`.
+- **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`, `dependency-vetter`, and `implementer`.
+- **Opus 4.8** — `orc-updater`, the one agent pinned above the Sonnet default: applying a pack release is multi-file integration across an unfamiliar kit, which is where 4.8 earns its cost. Pin the explicit id (`claude-opus-4-8`), never a bare `opus` alias, which resolves to the banned Opus 5.
+
+Claude Code resolves a subagent's model as per-dispatch `model` → frontmatter `model` → `CLAUDE_CODE_SUBAGENT_MODEL` → main model, so the frontmatter is a default and orc can move an agent up a tier on a specific dispatch. `implementer` ships on Sonnet and is the one that gets promoted to Opus 4.8 for multi-file or design-heavy work.
 
 When adding or editing an agent, place it on the right tier. **Opus 5 is explicitly banned** for running orc (the skill refuses to dispatch on it) — see the README and the SKILL.md preflight for the rationale; don't reintroduce it as a default anywhere.
 

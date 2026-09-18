@@ -50,27 +50,30 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 **The skills:**
 
 - `skills/orc/` — the orchestrator itself.
+- `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
 
 **The agents** (`agents/`):
 
-| Agent                    | Role                                                                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                           |
-| `lint`                   | Runs the repo's lint/format chain, reports raw results                                                               |
-| `typecheck`              | Runs the repo's type checker                                                                                         |
-| `test`                   | Runs the repo's test suite(s)                                                                                        |
-| `impact`                 | Diff stats for a change                                                                                              |
-| `fallow`                 | Optional codebase-intelligence audit (JS/TS repos with the `fallow` CLI)                                             |
-| `codegraph`              | Optional impact-radius, callers/callees, and affected tests via the CodeGraph CLI (polyglot; self-skips when absent) |
-| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                      |
-| `architecture-reviewer`  | Structure, module boundaries, framework conventions                                                                  |
-| `quality-reviewer`       | Type safety, error handling, performance, accessibility                                                              |
-| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                                                            |
-| `verifier`               | Skeptical second pass that filters reviewer false positives                                                          |
-| `docs-writer`            | Project documentation                                                                                                |
-| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                            |
-| `dependency-vetter`      | Supply-chain security vet of a package version (CodeGraph, fallow) before install/update                             |
+| Agent                    | Role                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                                |
+| `implementer`            | Writes the code and its tests for one task; never commits — orc owns the history                                          |
+| `orc-updater`            | Applies an orc-pack release to an installed copy, converging it on the target kit (runs on Opus 4.8; used by /update-orc) |
+| `lint`                   | Runs the repo's lint/format chain, reports raw results                                                                    |
+| `typecheck`              | Runs the repo's type checker                                                                                              |
+| `test`                   | Runs the repo's test suite(s)                                                                                             |
+| `impact`                 | Diff stats for a change                                                                                                   |
+| `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
+| `codegraph`              | Impact-radius, callers/callees, and affected tests via the CodeGraph CLI (polyglot; self-skips when absent)               |
+| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |
+| `architecture-reviewer`  | Structure, module boundaries, framework conventions                                                                       |
+| `quality-reviewer`       | Type safety, error handling, performance, accessibility                                                                   |
+| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                                                                 |
+| `verifier`               | Skeptical second pass that filters reviewer false positives                                                               |
+| `docs-writer`            | Project documentation                                                                                                     |
+| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                                 |
+| `dependency-vetter`      | Supply-chain security vet of a package version (CodeGraph, fallow) before install/update                                  |
 
 Orc doesn't run every reviewer on every change — it looks at what the diff touches and **selects the reviewers that apply**. A comment-only tweak doesn't wake the security panel; a change to an upload handler does.
 
@@ -78,15 +81,21 @@ The reviewers, tooling runners, and the scout are all also useful on their own, 
 
 ---
 
-## CodeGraph (optional)
+## CodeGraph
 
-CodeGraph is an optional, purely under-the-hood tool that sharpens orc's review loop. Nothing changes for you — you still just run `/orc`. Internally, the `codegraph` agent shells out to the [CodeGraph](https://colbymchenry.github.io/codegraph/) CLI to answer structural questions with facts instead of guesses: the impact radius of a changed symbol, its callers and callees, and which tests a change affects. It parses 20+ languages via Tree-sitter, so it covers ground `fallow` (JS/TS only) can't. If the CLI isn't installed, the agent self-skips — it's a bonus, never a gate.
+CodeGraph is a standard, under-the-hood part of orc's review loop. It is installed by default (after the vet described below), and you still just run `/orc` — there is nothing to invoke yourself. Internally, the `codegraph` agent shells out to the [CodeGraph](https://colbymchenry.github.io/codegraph/) CLI to answer structural questions with facts instead of guesses: the impact radius of a changed symbol, its callers and callees, and which tests a change affects. It parses 20+ languages via Tree-sitter, so it covers ground `fallow` (JS/TS only) can't. If the CLI is somehow absent, the agent self-skips in one line rather than failing the run.
 
 **It installs the latest version — but only after vetting it.** The policy is _install-latest-after-vet_: at install and every update, the `dependency-vetter` agent resolves the newest CodeGraph version and audits that exact version — install scripts, advisories, integrity, a static read — and CodeGraph is installed only if it passes. So you get current fixes, but the pack never hands you an instruction to install something unvetted. `.claude-plugin/codegraph.known-good.json` records the last human-vetted version as a fallback: if latest ever fails the vet, the installer drops back to that known-good version instead of leaving you with a bad one, and CI (`codegraph-vet.yml`) runs the same checks against current latest as a release canary. It's real risk reduction, not a guarantee — `npm audit` only knows published advisories and prebuilt binaries can't be fully read — so the posture is "install the newest version that passes our vet, with a known-good fallback," not blind trust in whatever's newest.
 
-Two things to know if you enable it: turn telemetry off (`codegraph telemetry off` — it's on by default), and don't run `codegraph upgrade` (updates should go through the vet, not around it).
+Two things to know once it is installed: turn telemetry off (`codegraph telemetry off` — it's on by default), and don't run `codegraph upgrade` (updates should go through the vet, not around it).
 
 **The MCP server is a separate opt-in, and orc doesn't use it.** CodeGraph can register an MCP server into your agent config (`codegraph install`) and expose `codegraph_impact`, `codegraph_explore`, and friends as native tools. That's genuinely nice for your own interactive coding sessions — but orc deliberately talks to the CLI instead: identical graph data, no config to register, works in headless and scheduled runs, and no persistent server or auto-editing of your config. If you want the MCP tools for interactive use, that's your call to make separately — vet the pinned version the same way first.
+
+---
+
+## Fallow
+
+Fallow is the JavaScript/TypeScript companion to CodeGraph: a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. It runs as a standard part of orc's review loop on JS/TS repos — the `fallow` agent scopes `fallow audit` to the task diff and reports the findings, and it self-skips on a non-JS/TS project. Like CodeGraph, it is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
 
 ---
 
@@ -119,6 +128,15 @@ If you'd rather do it by hand, it's just a copy:
 Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
 
 > The pack's agents are written to be generic — they discover your repo's stack, commands, and conventions at runtime by reading your `CLAUDE.md`/`AGENTS.md`, your manifest, and the surrounding code. They work as-copied. If your repo has a `CLAUDE.md` that documents your ready command (like `pnpm ready`) and your working branch (like `dev`), orc picks those up automatically.
+
+---
+
+## Updating the pack
+
+- **Plugin install** — nothing to do by hand. `/plugin update orc-pack@orc-pack` (or an automatic update) picks up a new version once `plugin.json`'s version changes.
+- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 4.8 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes and commit or `/ship` them.
+
+Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 
 ---
 
@@ -166,7 +184,7 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
 3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
 4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
-5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
+5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; `codegraph` supplies the blast radius and the affected-tests list, and `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
 6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
 8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).

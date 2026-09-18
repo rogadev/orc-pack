@@ -10,9 +10,12 @@ name: Release guard
 #   3. Run Prettier over the repo.
 #   4. Commit and push the fixes to the branch under review, so the merge
 #      proceeds with them included.
-#   5. On main only: if no `vX.Y.Z` tag exists for the final version, tag it
-#      and publish a GitHub release with auto-generated notes. This is what
-#      turns "the version changed" into a visible release.
+#   5. Require a CHANGELOG.md section for the final version. This runs on PRs
+#      into main too, so a missing update map is caught before merge.
+#   6. On main only: if no `vX.Y.Z` tag exists for the final version, tag it and
+#      publish a GitHub release whose body is that changelog section verbatim.
+#      This is what turns "the version changed" into a visible release, and the
+#      release body is the update map `/update-orc` reads.
 #
 # Anything that can't be auto-fixed (for example a file Prettier can't parse)
 # fails the job: red check, no merge until it's fixed. Pushes made by the bot
@@ -86,7 +89,7 @@ jobs:
 
           # NEW_VER is validated as ^[0-9]+\.[0-9]+\.[0-9]+$ above, so it is
           # safe to place inside the sed program.
-          sed -i "s/^pack: orc-pack@.*/pack: orc-pack@$NEW_VER/" skills/orc/SKILL.md agents/*.md
+          sed -i "s/^pack: orc-pack@.*/pack: orc-pack@$NEW_VER/" skills/*/SKILL.md agents/*.md
           echo "PACK_VERSION=$NEW_VER" >> "$GITHUB_ENV"
 
       - name: Format (fails the job on files Prettier cannot parse)
@@ -105,6 +108,23 @@ jobs:
           git commit -m "chore: version $PACK_VERSION — auto bump/sync and formatting"
           git push
 
+      - name: Require a changelog entry for this version
+        # Runs on PRs into main and on main itself, so a missing update map is
+        # caught before merge, not after.
+        run: |
+          set -euo pipefail
+          NOTES="$RUNNER_TEMP/release-notes.md"
+          awk -v v="$PACK_VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1 }
+            found && index($0, "## [") == 1 && index($0, "## [" v "]") != 1 { exit }
+            found { print }
+          ' CHANGELOG.md > "$NOTES"
+          if [ ! -s "$NOTES" ]; then
+            echo "::error::CHANGELOG.md has no '## [$PACK_VERSION]' section. Add one (format at the top of CHANGELOG.md) — a release with no update map does not publish."
+            exit 1
+          fi
+          echo "RELEASE_NOTES=$NOTES" >> "$GITHUB_ENV"
+
       - name: Publish GitHub release for the current version
         # Only on main (push or manual run), never on the PR branch. Skips
         # silently when the tag already exists, so re-runs and no-op pushes
@@ -119,5 +139,5 @@ jobs:
             echo "Release $TAG already exists; nothing to publish."
             exit 0
           fi
-          gh release create "$TAG" --target "$(git rev-parse HEAD)" --title "orc-pack $TAG" --generate-notes
+          gh release create "$TAG" --target "$(git rev-parse HEAD)" --title "orc-pack $TAG" --notes-file "$RELEASE_NOTES"
           echo "Published release $TAG"
