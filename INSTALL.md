@@ -1,6 +1,6 @@
 # INSTALL — agent instructions for baking the orc pack into a repo
 
-**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder and asked you to install it). Your job: copy this kit's skill and agents into the current repo's `.claude/` directory, adapt them to the repo, and verify the result — without breaking anything already there.
+**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder, or at its GitHub URL, and asked you to install it). Your job: copy this kit's skill and agents into **that** repo's `.claude/` directory (the repo the session is open in, never the kit's own checkout), adapt them to the repo, and verify the result — without breaking anything already there.
 
 Work through the phases in order. Don't skip verification. When you're done, give the user the short summary at the end.
 
@@ -47,6 +47,22 @@ orc-pack/
 
 ---
 
+## Phase 0 — Lock the target before you touch anything
+
+Two folders are in play and they must never be confused:
+
+- The **target** is the repo the Claude Code session is open in. Resolve it once, from the session's working directory, with `git rev-parse --show-toplevel`, and write that path down. Everything installs under `<target>/.claude/`.
+- The **kit** is this folder — the source you copy _from_. It is never the destination.
+
+How you got here decides where the kit lives:
+
+- **The user gave a URL** (`https://github.com/<owner>/orc-pack`, "install this"): clone the kit into the session scratchpad, never into the target — `gh repo clone <owner>/orc-pack "<scratchpad>/orc-pack" -- --depth 1` — then read the clone's `INSTALL.md` and continue from Phase 1. Do **not** go looking for an existing `orc-pack` checkout on the machine. A local `orc-pack` folder is the pack's source repo or someone's clone; it is neither the install target nor the copy to install from.
+- **The user gave a local folder** (`~/orc-pack`): that folder is the kit. Do not `cd` into it and resolve the repo root from there — the root check above runs in the target.
+
+**Hard stop:** if the target root contains `.claude-plugin/plugin.json` with `"name": "orc-pack"`, the session is open in the kit's own source repo. Do not install. Say so and ask the user which project they meant.
+
+---
+
 ## Phase 1 — Decide the destination (project vs global)
 
 Two valid targets. **Default to project scope** unless the user says otherwise.
@@ -56,7 +72,7 @@ Two valid targets. **Default to project scope** unless the user says otherwise.
 | **Project** (default) | `<repo>/.claude/`                                   | The pack should live with this repo and be shared/committed with it (or kept local to it). This is almost always what's wanted when installing "into this project". |
 | **Global**            | `~/.claude/` (`C:\Users\<you>\.claude\` on Windows) | The user wants `/orc` available in every project on this machine.                                                                                                   |
 
-Confirm the repo root first — run `git rev-parse --show-toplevel`. Everything below is relative to the destination root you chose.
+The destination root for project scope is the **target** you resolved in Phase 0 — the session's repo, not the kit. Everything below is relative to the destination root you chose.
 
 > Note on committing: some repos intentionally gitignore `.claude/` (keep it local); others commit it to share with the team. Check the repo's `.gitignore` and existing `.claude/` tracking before assuming. Don't change that policy as a side effect of installing — match what the repo already does.
 

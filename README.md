@@ -116,8 +116,8 @@ The skill and all agents load automatically after install; the skill is invoked 
 
 The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
-1. Clone this repo somewhere outside the target project.
-2. Open a Claude Code session in the repo you want orc in and point Claude at the clone — for example: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
+1. Open a Claude Code session in the repo you want orc in — that repo is the install target.
+2. Point Claude at this repo's URL, for example: _"Install https://github.com/rogadev/orc-pack into this repo."_ Claude clones the kit into a scratch location and follows `INSTALL.md`. If you already have a clone somewhere outside the target project, you can point at that instead: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
 3. Claude copies the skill to `.claude/skills/orc/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
 
 If you'd rather do it by hand, it's just a copy:
@@ -125,7 +125,7 @@ If you'd rather do it by hand, it's just a copy:
 - `skills/orc/SKILL.md` → `<repo>/.claude/skills/orc/SKILL.md`
 - every file in `agents/` → `<repo>/.claude/agents/<same-name>.md`
 
-Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
+Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. Either way the pack goes into the repo your session is open in, never into a checkout of `orc-pack` itself; if Claude starts "installing" into an `orc-pack` folder it found on your machine, stop it and open the session in the target repo. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
 
 > The pack's agents are written to be generic — they discover your repo's stack, commands, and conventions at runtime by reading your `CLAUDE.md`/`AGENTS.md`, your manifest, and the surrounding code. They work as-copied. If your repo has a `CLAUDE.md` that documents your ready command (like `pnpm ready`) and your working branch (like `dev`), orc picks those up automatically.
 
