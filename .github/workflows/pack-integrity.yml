@@ -1,0 +1,99 @@
+name: Pack integrity
+
+# The pack's own invariants, checked on every change. The release guard bumps
+# and syncs the version, but nothing verified the three things that silently
+# rot:
+#
+#   1. Every per-file `pack: orc-pack@x.y.z` marker equals plugin.json's version
+#      (a drift here means a future install cannot recognize the pack's files).
+#   2. Every agent the orc skill names exists as a file under agents/ (a renamed
+#      or deleted agent makes orc dispatch a name that does not resolve).
+#   3. Every skill and agent has parseable frontmatter with `name` and
+#      `description` (a malformed block makes Claude Code skip the file in
+#      silence), and each agent's `name` matches its filename.
+#
+# Failures are hard: this is cheap to fix locally and expensive to ship.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check pack integrity
+        run: |
+          set -euo pipefail
+          fail=0
+
+          VER=$(jq -r .version .claude-plugin/plugin.json)
+          if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::plugin.json version '$VER' is not a plain x.y.z version"
+            exit 1
+          fi
+          echo "plugin.json version: $VER"
+
+          FILES=$(printf '%s\n' skills/*/SKILL.md agents/*.md)
+
+          # 1. Every pack: marker matches plugin.json.
+          for f in $FILES; do
+            line3=$(sed -n '3p' "$f" | tr -d '\r')
+            if [ "$line3" != "pack: orc-pack@$VER" ]; then
+              echo "::error file=$f,line=3::marker is '$line3', expected 'pack: orc-pack@$VER'"
+              fail=1
+            fi
+          done
+
+          # 3a. Frontmatter parses with name and description.
+          for f in $FILES; do
+            if [ "$(head -1 "$f" | tr -d '\r')" != "---" ]; then
+              echo "::error file=$f::missing opening frontmatter delimiter"
+              fail=1
+              continue
+            fi
+            fm=$(awk 'NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$f")
+            echo "$fm" | grep -qE '^name:[[:space:]]*[^[:space:]]' ||
+              { echo "::error file=$f::frontmatter is missing a non-empty name"; fail=1; }
+            echo "$fm" | grep -qE '^description:[[:space:]]*[^[:space:]]' ||
+              { echo "::error file=$f::frontmatter is missing a non-empty description"; fail=1; }
+          done
+
+          # 3b. Each agent's name matches its filename.
+          for f in agents/*.md; do
+            base=$(basename "$f" .md)
+            nm=$(awk 'NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$f" |
+              sed -n 's/^name:[[:space:]]*//p' | tr -d '\r')
+            if [ "$nm" != "$base" ]; then
+              echo "::error file=$f::name '$nm' does not match filename '$base'"
+              fail=1
+            fi
+          done
+
+          # 2. Every agent a skill names resolves to a file. Agent-looking
+          # backticked tokens end in a known role suffix or are a known role word.
+          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/update-orc/SKILL.md | tr -d '`' | sort -u)
+          for name in $refs; do
+            case "$name" in
+              *-reviewer | *-finder | *-vetter | *-writer | *-updater | implementer | verifier | codegraph | fallow | lint | typecheck | test | impact) ;;
+              *) continue ;;
+            esac
+            if [ ! -f "agents/$name.md" ]; then
+              echo "::error file=skills/orc/SKILL.md::names agent '$name' but agents/$name.md does not exist"
+              fail=1
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Pack integrity check failed."
+            exit 1
+          fi
+          echo "Pack integrity OK (version $VER)."

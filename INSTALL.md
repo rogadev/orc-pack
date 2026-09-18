@@ -19,7 +19,9 @@ orc-pack/
 ├── skills/
 │   ├── orc/
 │   │   └── SKILL.md
-│   └── newissue/
+│   ├── newissue/
+│   │   └── SKILL.md
+│   └── update-orc/
 │       └── SKILL.md
 └── agents/
     ├── architecture-reviewer.md
@@ -28,8 +30,10 @@ orc-pack/
     ├── docs-writer.md
     ├── fallow.md
     ├── impact.md
+    ├── implementer.md
     ├── lint.md
     ├── next-issue-finder.md
+    ├── orc-updater.md
     ├── quality-reviewer.md
     ├── security-reviewer.md
     ├── skill-vetter.md
@@ -66,14 +70,17 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | ---------------------------------- | ------------------------------------------------- |
 | `skills/orc/SKILL.md`              | `<root>/.claude/skills/orc/SKILL.md`              |
 | `skills/newissue/SKILL.md`         | `<root>/.claude/skills/newissue/SKILL.md`         |
+| `skills/update-orc/SKILL.md`       | `<root>/.claude/skills/update-orc/SKILL.md`       |
 | `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
 | `agents/codegraph.md`              | `<root>/.claude/agents/codegraph.md`              |
 | `agents/dependency-vetter.md`      | `<root>/.claude/agents/dependency-vetter.md`      |
 | `agents/docs-writer.md`            | `<root>/.claude/agents/docs-writer.md`            |
 | `agents/fallow.md`                 | `<root>/.claude/agents/fallow.md`                 |
 | `agents/impact.md`                 | `<root>/.claude/agents/impact.md`                 |
+| `agents/implementer.md`            | `<root>/.claude/agents/implementer.md`            |
 | `agents/lint.md`                   | `<root>/.claude/agents/lint.md`                   |
 | `agents/next-issue-finder.md`      | `<root>/.claude/agents/next-issue-finder.md`      |
+| `agents/orc-updater.md`            | `<root>/.claude/agents/orc-updater.md`            |
 | `agents/quality-reviewer.md`       | `<root>/.claude/agents/quality-reviewer.md`       |
 | `agents/security-reviewer.md`      | `<root>/.claude/agents/security-reviewer.md`      |
 | `agents/skill-vetter.md`           | `<root>/.claude/agents/skill-vetter.md`           |
@@ -82,9 +89,9 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `agents/typecheck.md`              | `<root>/.claude/agents/typecheck.md`              |
 | `agents/verifier.md`               | `<root>/.claude/agents/verifier.md`               |
 
-**Do NOT copy `INSTALL.md` or `README.md` into the repo** — they're kit docs, not runtime files.
+**Do NOT copy `INSTALL.md`, `README.md`, or `CHANGELOG.md` into the repo** — they're kit docs, not runtime files. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
 
-Every kit file carries `pack: orc-pack@<version>` in its frontmatter. Leave it in place when copying — it's how a future install recognizes a file as the pack's rather than the repo's own (Phase 3). After copying, write `<root>/.claude/orc-pack.provenance.md` recording the pack version, the install date, the source path, and any files you overwrote or renamed.
+Every kit file carries `pack: orc-pack@<version>` in its frontmatter. Leave it in place when copying — it's how a future install recognizes a file as the pack's rather than the repo's own (Phase 3). After copying, write `<root>/.claude/orc-pack.provenance.md` recording the pack version, the source repo (`owner/repo`) and URL, the install date, and any files you overwrote or renamed. Recording the source repo is what lets `/update-orc` find future releases later.
 
 Create `<root>/.claude/skills/orc/` and `<root>/.claude/agents/` if they don't exist, then copy. On Windows the destination is typically `<repo>\.claude\...`; use the path style the session is running in.
 
@@ -113,40 +120,42 @@ The `skill-vetter` agent in this pack is exactly the tool for a cautious install
 The kit's agents and skill are written to be **project-agnostic**: they discover the repo's stack, commands, and conventions at runtime by reading `CLAUDE.md`/`AGENTS.md`, the manifest, and neighbouring code. So a bare copy already works. But a few quick adaptations make them sharper — do these when the information is readily available:
 
 1. **Confirm the ready command and working branch.** The orc skill runs "the repo's aggregate check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them — no edit needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every agent benefits. Ask the user before creating or editing repo docs.
-2. **Prune what the repo can't use.** `fallow` only applies to JavaScript/TypeScript repos and needs the `fallow` CLI — it self-skips when absent, so it's safe to leave, but you may drop `agents/fallow.md` in a non-JS repo. `impact` is optional metrics; keep or drop per the user's preference. `skills/newissue/` is optional but recommended — it's how orc's Discoveries step files follow-up work well; drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3 as usual) or the repo doesn't track work as GitHub issues. It reads per-repo house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md` — mention that to the user rather than editing the skill.
+2. **Prune what the repo can't use.** `impact` is optional metrics; keep or drop per the user's preference. `fallow` only applies to JavaScript/TypeScript repos, but it self-skips on other stacks, so keep `agents/fallow.md` in place — dropping it gains nothing and desyncs the kit. It is installed by default in Phase 4.5. `skills/newissue/` is optional but recommended — it's how orc's Discoveries step files follow-up work well; drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3 as usual) or the repo doesn't track work as GitHub issues. It reads per-repo house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md` — mention that to the user rather than editing the skill.
 3. **Leave the reviewers generic unless asked.** They adapt per-repo at runtime. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version — that's a bigger, opt-in step, not part of a basic install.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
 
 ---
 
-## Phase 4.5 — CodeGraph (optional, gated by a security vet)
+## Phase 4.5 — CodeGraph and fallow (installed by default, gated by a security vet)
 
-CodeGraph is an optional under-the-hood tool: the `codegraph` agent shells out to the CodeGraph CLI to give orc real impact-radius, callers, callees, and affected tests instead of inferred structure. It's polyglot (20+ languages), so it complements `fallow` (JS/TS only). The user never interacts with it directly — it's purely internal to orc's subagents, exactly like `fallow`. If the CLI isn't installed, the `codegraph` agent self-skips; installing it is opt-in.
+CodeGraph and fallow are standard under-the-hood tools, not opt-ins. The `codegraph` and `fallow` agents shell out to their CLIs to give orc real impact-radius, callers/callees, affected tests, and dead-code/duplication signals instead of inferred structure. The user never interacts with either directly. Install both by default; skip one only if the user explicitly declines. If a CLI ends up absent anyway, its agent self-skips and the run continues.
 
-**Do not enable CodeGraph without vetting first.** The policy is **install-latest-after-vet**: get the newest version so users get current fixes, but only after it passes the security vet. A package can change upstream at any time, so the vet is the gate — not a one-time pin.
+**Do not install either without vetting first.** The policy is **install-latest-after-vet**: get the newest version so users get current fixes, but only after it passes the security vet. A package can change upstream at any time, so the vet is the gate — not a one-time pin.
 
-1. **Ask the user if they want CodeGraph.** If they decline, leave `agents/codegraph.md` copied but inert (it self-skips with no CLI) and move on. Nothing else in the pack depends on it.
-2. **Resolve and vet the latest version.** Read `.claude-plugin/codegraph.known-good.json` for the `package` name and the `knownGoodVersion` fallback. Resolve latest (`npm view <package> version`), then dispatch the `dependency-vetter` agent against that exact resolved version. It inspects the version without executing it and returns PASS / NEEDS-REVIEW / REJECT.
-   - **PASS** → install that version (step 3).
-   - **NEEDS-REVIEW or REJECT** → do NOT install it. Fall back: dispatch `dependency-vetter` against `knownGoodVersion`; if that PASSes, install the fallback instead and note that latest was held back. If neither passes, leave the `codegraph` agent inert, report the verdict, and finish the rest of the install normally. A skipped CodeGraph is a safe outcome — it's optional.
-3. **Install the vetted version** (the resolved latest, or the fallback). Use the exact version the vet passed, never a bare floating tag:
+1. **CodeGraph.** Read `.claude-plugin/codegraph.known-good.json` for the `package` name and the `knownGoodVersion` fallback. Resolve latest (`npm view <package> version`), then dispatch the `dependency-vetter` agent against that exact resolved version. It inspects the version without executing it and returns PASS / NEEDS-REVIEW / REJECT.
+   - **PASS** → install that version.
+   - **NEEDS-REVIEW or REJECT** → do NOT install it. Fall back: dispatch `dependency-vetter` against `knownGoodVersion`; if that PASSes, install the fallback instead and note that latest was held back. If neither passes, leave the `codegraph` agent inert, report the verdict, and continue the install normally.
+2. **Fallow.** Same policy, with no pinned fallback record. Resolve latest (`npm view fallow version`) and dispatch `dependency-vetter` against that exact version.
+   - **PASS** → install it vetted: `npm install -g fallow@<vetted-version>`, or, on a JS/TS project, the repo's own package manager as a **dev dependency** pinned to `<vetted-version>`.
+   - **NEEDS-REVIEW or REJECT** → do not install it; leave `agents/fallow.md` inert (it self-skips) and report the verdict.
+3. **Install CodeGraph** at the vetted version (the resolved latest, or the fallback). Use the exact version the vet passed, never a bare floating tag:
 
    ```bash
    npm install -g @colbymchenry/codegraph@<vetted-version>
    # or run on demand: npx --yes @colbymchenry/codegraph@<vetted-version> <cmd>
    ```
 
-4. **Two setup notes for the user** (both are about keeping it invisible and safe):
+4. **Two setup notes for the user** (both are about keeping CodeGraph invisible and safe):
    - Turn off telemetry — it's on by default: `codegraph telemetry off`.
-   - Do NOT run `codegraph upgrade` or `codegraph install`. `upgrade` moves off the vetted version (updates should go through the vet at update time, not around it); `install` registers a persistent MCP server into your agent config, which orc does not use and does not need. (If you personally want the MCP server for interactive coding sessions, that's a separate opt-in — see the pack's `README.md` — and you should vet the version the same way first.)
-5. **Record it.** Add the installed CodeGraph version, its integrity hash, and the `dependency-vetter` verdict to `<root>/.claude/orc-pack.provenance.md` — a dated record of exactly what was vetted and installed, so a future update (see `UPDATE.md`) knows the baseline and can re-vet the new latest against it.
+   - Do NOT run `codegraph upgrade` or `codegraph install`. `upgrade` moves off the vetted version (updates go through the vet at update time, not around it); `install` registers a persistent MCP server into your agent config, which orc does not use and does not need. (For the MCP server in interactive sessions, see the pack's `README.md` — a separate opt-in, vetted the same way.)
+5. **Record it.** Add the installed CodeGraph and fallow versions, their integrity hashes, and the `dependency-vetter` verdicts to `<root>/.claude/orc-pack.provenance.md` — a dated record of exactly what was vetted and installed, so a future update (see `UPDATE.md`) knows the baseline and can re-vet the new latest against it.
 
 ---
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc`, plus `newissue` unless pruned) and up-to-15 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned) and up to 17 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
@@ -161,7 +170,7 @@ Give them a short, human summary:
 - Where you installed (project or global, and the path).
 - The count: 1 `orc` skill + N agents.
 - Any conflicts you hit and how you resolved them (especially anything you renamed or skipped).
-- CodeGraph's status (Phase 4.5): enabled with the vetted version, declined, or skipped because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
+- CodeGraph and fallow status (Phase 4.5): installed at the vetted versions, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdicts if you ran them.
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on Opus 4.8 and Sonnet 5 — the models this pack runs on. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
 - The model recommendation: **run `/orc` on Opus 4.8 or Sonnet 5, and do not use Opus 5** — the pack is calibrated to the former and Opus 5 drives it poorly. (The skill won't dispatch subagents on Opus 5, but the session model is the user's to set.)
 - That `/orc` is available in a new session.

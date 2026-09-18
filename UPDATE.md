@@ -4,6 +4,8 @@
 
 If the pack was installed as a Claude Code **plugin** (`/plugin install orc-pack@orc-pack`), you don't update by hand — the plugin receives new versions when `.claude-plugin/plugin.json`'s version moves. This doc is for the **copied-into-`.claude/`** install, where the files live in the repo and you refresh them from a fresh clone of the kit.
 
+For a copied install, the `/update-orc` skill automates this document end to end: it finds the latest release, fetches the kit at that tag, and dispatches the `orc-updater` agent to run these phases, with every changelog entry between the installed and target versions as the map. Read this document when you are updating by hand, doing a custom or partial update, or writing or debugging the updater prompt. An install may be several releases behind, so apply the phases against the **target kit** as an absolute state rather than replaying one release at a time.
+
 Work the phases in order.
 
 ---
@@ -29,20 +31,19 @@ Update `.claude/orc-pack.provenance.md` with the new version, the update date, a
 
 ---
 
-## Phase 3 — Re-vet third-party tools (REQUIRED for CodeGraph)
+## Phase 3 — Re-vet third-party tools (REQUIRED for CodeGraph and fallow)
 
-CodeGraph's policy is **install-latest-after-vet**: an update pulls the newest version so the repo gets current fixes, but only after it passes the security vet. **A version is only as trustworthy as its last vet, and a package can be republished or hijacked between releases** — so the vet runs on every update, not just the first install. (Same applies to `fallow` where the repo uses it.)
+CodeGraph and fallow follow **install-latest-after-vet**: an update pulls the newest version so the repo gets current fixes, but only after it passes the security vet. **A version is only as trustworthy as its last vet, and a package can be republished or hijacked between releases** — so the vet runs on every update, not just the first install. Both are installed by default, so run this phase for both.
 
-Only relevant if the repo has CodeGraph enabled (the `codegraph` CLI is installed). If it doesn't, skip this phase.
-
-1. Read the repo's provenance for the currently installed CodeGraph version, and read the kit's `.claude-plugin/codegraph.known-good.json` for the `package` and the `knownGoodVersion` floor.
-2. **Resolve latest** (`npm view <package> version`) and re-vet before adopting it:
+1. **CodeGraph.** Read the repo's provenance for the currently installed version, and read the kit's `.claude-plugin/codegraph.known-good.json` for the `package` and the `knownGoodVersion` floor.
+2. **Resolve and re-vet latest** (`npm view <package> version`) before adopting it:
    - Dispatch the `dependency-vetter` agent against the resolved latest version.
    - **On PASS** → update the install to that version, and record the new version, integrity, and date in the repo's provenance.
    - **On NEEDS-REVIEW or REJECT** → do NOT adopt latest. Leave the currently installed (already-vetted) version in place, report the verdict to the user, and note that the update to latest was held back. This is the whole point of the gate: a bad upstream version must not ride in on a routine pack update.
-3. If latest equals the currently installed version, there's nothing to update; the recorded PASS still stands.
+3. **Fallow.** Same policy, with no pinned fallback record: resolve latest (`npm view fallow version`), dispatch `dependency-vetter` against that exact version, and adopt it only on PASS; otherwise leave the installed version and report.
+4. If latest equals the currently installed version, there's nothing to update; the recorded PASS still stands.
 
-The pack's own CI (`codegraph-vet.yml`) is a canary that vets current latest at release time, but that guards what the pack _ships_. This phase guards what a specific repo _adopts_ — run it regardless.
+The pack's own CI (`codegraph-vet.yml`) is a canary that vets current CodeGraph latest at release time, but that guards what the pack _ships_. This phase guards what a specific repo _adopts_ — run it regardless.
 
 ---
 
