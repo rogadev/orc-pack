@@ -31,19 +31,15 @@ Update `.claude/orc-pack.provenance.md` with the new version, the update date, a
 
 ---
 
-## Phase 3 — Re-vet third-party tools (REQUIRED for CodeGraph and fallow)
+## Phase 3 — Re-vet third-party tools (REQUIRED for fallow)
 
-CodeGraph and fallow follow **install-latest-after-vet**: an update pulls the newest version so the repo gets current fixes, but only after it passes the security vet. **A version is only as trustworthy as its last vet, and a package can be republished or hijacked between releases** — so the vet runs on every update, not just the first install. Both are installed by default, so run this phase for both.
+Fallow follows **install-latest-after-vet**: an update pulls the newest version so the repo gets current fixes, but only after it passes the security vet. **A version is only as trustworthy as its last vet, and a package can be republished or hijacked between releases** — so the vet runs on every update, not just the first install. Fallow is installed by default, so run this phase.
 
-1. **CodeGraph.** Read the repo's provenance for the currently installed version, and read the kit's `.claude-plugin/codegraph.known-good.json` for the `package` and the `knownGoodVersion` floor.
-2. **Resolve and re-vet latest** (`npm view <package> version`) before adopting it:
+1. **Resolve and re-vet latest** (`npm view fallow version`) before adopting it:
    - Dispatch the `dependency-vetter` agent against the resolved latest version.
    - **On PASS** → update the install to that version, and record the new version, integrity, and date in the repo's provenance.
    - **On NEEDS-REVIEW or REJECT** → do NOT adopt latest. Leave the currently installed (already-vetted) version in place, report the verdict to the user, and note that the update to latest was held back. This is the whole point of the gate: a bad upstream version must not ride in on a routine pack update.
-3. **Fallow.** Same policy, with no pinned fallback record: resolve latest (`npm view fallow version`), dispatch `dependency-vetter` against that exact version, and adopt it only on PASS; otherwise leave the installed version and report.
-4. If latest equals the currently installed version, there's nothing to update; the recorded PASS still stands.
-
-The pack's own CI (`codegraph-vet.yml`) is a canary that vets current CodeGraph latest at release time, but that guards what the pack _ships_. This phase guards what a specific repo _adopts_ — run it regardless.
+2. If latest equals the currently installed version, there's nothing to update; the recorded PASS still stands.
 
 ---
 
@@ -51,5 +47,5 @@ The pack's own CI (`codegraph-vet.yml`) is a canary that vets current CodeGraph 
 
 1. Frontmatter on every refreshed file still parses (`---` … `---` with `name` and `description`).
 2. Agent names still match the references in `skills/orc/SKILL.md` (if the update added or renamed any).
-3. Tell the user: the old and new pack versions, what you refreshed, any conflicts and how you resolved them, and — if Phase 3 ran — the `dependency-vetter` verdict and which CodeGraph version is now installed.
+3. Tell the user: the old and new pack versions, what you refreshed, any conflicts and how you resolved them, and — if Phase 3 ran — the `dependency-vetter` verdict and which fallow version is now installed.
 4. Remind them the refreshed skill and agents load in a **new** Claude Code session, not the one running the update.

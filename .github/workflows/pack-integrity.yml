@@ -83,7 +83,7 @@ jobs:
           refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/update-orc/SKILL.md | tr -d '`' | sort -u)
           for name in $refs; do
             case "$name" in
-              *-reviewer | *-finder | *-vetter | *-writer | *-updater | implementer | verifier | codegraph | fallow | lint | typecheck | test | impact) ;;
+              *-reviewer | *-finder | *-vetter | *-writer | *-updater | implementer | verifier | fallow | lint | typecheck | test | impact) ;;
               *) continue ;;
             esac
             if [ ! -f "agents/$name.md" ]; then
