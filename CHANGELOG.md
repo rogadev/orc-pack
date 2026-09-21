@@ -16,6 +16,34 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.5.0] - 2026-09-21
+
+**Summary.** Removes the CodeGraph integration from the pack. CodeGraph proved unreliable in practice — it caused failures and its structural answers were not dependable enough to justify the agent, the CLI install, and the supply-chain vet it carried. orc no longer dispatches a `codegraph` agent, the pack no longer installs or vets the CLI, and a fresh install has nothing to do with CodeGraph. `fallow` is unchanged and stays a default-installed, vetted tool.
+
+**Changed areas.**
+
+- **`agents/codegraph.md` (removed)** — the agent is gone. Delete `<root>/.claude/agents/codegraph.md` from an existing install.
+- **`skills/orc/SKILL.md`** — `codegraph` removed from the review panel, from step 7's affected-tests scoping, and from the Haiku tooling-runner list. Refresh.
+- **`agents/dependency-vetter.md`** — no longer names CodeGraph or its known-good record; the vet now covers `fallow` (and any future third-party tool) on the same install-latest-after-vet policy. Refresh.
+- **`agents/orc-updater.md`** — the update-steps bullet now says "re-vet fallow if named" rather than CodeGraph/fallow. Refresh.
+- **`.claude-plugin/codegraph.known-good.json` (removed)** — the install-latest-after-vet record for CodeGraph is gone. It is kit config that was never copied into an install, so an install has nothing to delete.
+- **`.github/workflows/codegraph-vet.yml` (removed)** — the release canary for CodeGraph is gone. Only relevant if the repo carries the pack's own CI.
+- **`.github/workflows/pack-integrity.yml`** — `codegraph` dropped from the known agent-name list. Refresh if the repo carries this CI.
+- **`README.md`, `INSTALL.md`, `UPDATE.md`, `CLAUDE.md`** — CodeGraph documentation, install phase, and update phase removed; `fallow` is the remaining third-party tool. Refresh.
+
+**Update steps.**
+
+- **Delete the CodeGraph agent from the install**: `<root>/.claude/agents/codegraph.md`. Do not leave it behind — orc no longer dispatches it, so a stale copy is dead weight that misleads the next reader.
+- Remove any CodeGraph entry from `<root>/.claude/orc-pack.provenance.md` (installed version, integrity hash, vet verdict).
+- Nothing installs CodeGraph going forward: do not run its install or its vet again. If the CLI is already on the machine, the pack no longer uses it — leaving or uninstalling it is the user's call.
+- Re-vet `fallow` if the install has it, per the revised `UPDATE.md` Phase 3.
+
+**Breaking changes.** None at runtime. An install that deletes `agents/codegraph.md` and refreshes the skills is consistent with the target kit.
+
+**Files to read before applying.** `UPDATE.md` (Phase 2 and the revised Phase 3), `INSTALL.md` (Phase 2 mapping and the revised Phase 4.5), `skills/orc/SKILL.md`, this entry.
+
+---
+
 ## [1.4.0] - 2026-09-18
 
 **Summary.** Adds `/update-orc` and its `orc-updater` agent so an installed pack can be refreshed from a release in one pass, plus this curated changelog that drives it. Also lands the previously unreleased 1.3.0 work: a defined implementer agent, pack-integrity CI, CodeGraph and fallow wired into the loop and installed by default, a run budget, an untrusted-input rule, CI reporting, and a license.

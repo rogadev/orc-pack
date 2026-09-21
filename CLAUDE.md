@@ -37,7 +37,7 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 Each agent pins a `model:` in frontmatter, and the split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
-- **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `codegraph`, `next-issue-finder`, `docs-writer`.
+- **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `next-issue-finder`, `docs-writer`.
 - **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`, `dependency-vetter`, and `implementer`.
 - **Opus 4.8** — `orc-updater`, the one agent pinned above the Sonnet default: applying a pack release is multi-file integration across an unfamiliar kit, which is where 4.8 earns its cost. Pin the explicit id (`claude-opus-4-8`), never a bare `opus` alias, which resolves to the banned Opus 5.
 

@@ -1,6 +1,6 @@
 ---
 name: update-orc
-pack: orc-pack@1.4.0
+pack: orc-pack@1.5.0
 description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 4.8) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 
@@ -85,7 +85,7 @@ The update passes only when the install matches the target kit:
 - No file the target kit dropped remains in the install.
 - Every agent the refreshed skills name resolves to a file under the install's `agents/`.
 - `.claude/orc-pack.provenance.md` records the target version, the date, the source, and every file overwritten, renamed, added, or removed.
-- Any CodeGraph/fallow re-vet named in the in-range **Update steps** ran.
+- Any third-party-tool re-vet named in the in-range **Update steps** ran.
 
 A file that differs outside that allowed list is a failure, not a nit — report it under `UPDATE FAILED`.
 

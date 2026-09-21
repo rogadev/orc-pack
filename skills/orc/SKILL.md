@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.4.0
+pack: orc-pack@1.5.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list, dispatch implementer and reviewer subagents, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint".
 ---
 
@@ -134,7 +134,6 @@ git diff <base> HEAD > "<scratchpad>/task-<n>-diff.txt"
 - **`architecture-reviewer`** — structure, module boundaries, framework conventions, routing, data flow, where code lives.
 - **`quality-reviewer`** — almost always applies: type safety, error handling, performance, style conventions, accessibility.
 - **`test-coverage-reviewer`** — any change to logic that can regress. Skip only for pure docs, comments, or no-behavior config.
-- **`codegraph`** — when the diff changes symbols with a non-trivial call graph, dispatch it for the impact radius, callers/callees, and the affected-tests list; scope step 7's tests from that list. It is a standard part of the loop; if the CLI is absent, the agent self-skips in one line and you note it in the report.
 - **`fallow`** — on a JavaScript/TypeScript repo, dispatch it over the task diff for dead code, duplication, complexity, and circular dependencies. It self-skips on a non-JS/TS project.
 
 An irrelevant reviewer wastes tokens and invites fabricated findings; skipping a relevant one misses defects. Give each reviewer the diff path, the acceptance criteria verbatim, and the repo constraints — **nothing about the implementer's reasoning**. Ask for a verdict plus findings, each marked blocking or minor. Never tell a reviewer what not to flag; adjudicate suspected false positives at the next step.
@@ -174,7 +173,7 @@ Add a task for each discovery action so it doesn't slip.
 
 ### 7. Ready
 
-Run the ready command you noted in step 1 (`pnpm ready`, `npm run check`, `make check`, `cargo test && cargo clippy`, …). If the repo has no aggregate, dispatch the `lint`, `typecheck`, and `test` agents in sequence and treat their reports as the gate. Scope the test run to the `codegraph` affected-tests list when one was produced.
+Run the ready command you noted in step 1 (`pnpm ready`, `npm run check`, `make check`, `cargo test && cargo clippy`, …). If the repo has no aggregate, dispatch the `lint`, `typecheck`, and `test` agents in sequence and treat their reports as the gate.
 
 Fix failures at the root. **No suppressions** — no ignore comments, no deleting failing tests, no `--no-verify`; suppression hands the user a green tree that lies. Bounded retries: a few honest attempts, then stop — commits stay local, nothing pushed, nothing closed; report not-finished with the failing output. When green, amend fixes into the relevant task commit or add one `chore:` commit; don't leave the tree dirty.
 
@@ -250,7 +249,7 @@ The tiers:
 
 - **Implementer (`implementer`):** Sonnet 5 for a single-file mechanical change with a complete spec; Opus 4.8 for multi-file work, integration, or design judgement. When genuinely unsure, go up.
 - **Reviewers and the verifier:** Sonnet 5 as the economical default; Opus 4.8 for security-sensitive or architecturally tricky diffs. Don't review an expensive model's work with a light one.
-- **Scouts and tooling runners** (`next-issue-finder`, `lint`, `typecheck`, `test`, `impact`, `fallow`, `codegraph`): Haiku.
+- **Scouts and tooling runners** (`next-issue-finder`, `lint`, `typecheck`, `test`, `impact`, `fallow`): Haiku.
 - **Fix rounds:** still failing review at round three → send the next implementer up a tier (Sonnet 5 → Opus 4.8).
 
 ## Outcomes

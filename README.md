@@ -65,7 +65,6 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | `test`                   | Runs the repo's test suite(s)                                                                                             |
 | `impact`                 | Diff stats for a change                                                                                                   |
 | `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
-| `codegraph`              | Impact-radius, callers/callees, and affected tests via the CodeGraph CLI (polyglot; self-skips when absent)               |
 | `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |
 | `architecture-reviewer`  | Structure, module boundaries, framework conventions                                                                       |
 | `quality-reviewer`       | Type safety, error handling, performance, accessibility                                                                   |
@@ -73,7 +72,7 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | `verifier`               | Skeptical second pass that filters reviewer false positives                                                               |
 | `docs-writer`            | Project documentation                                                                                                     |
 | `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                                 |
-| `dependency-vetter`      | Supply-chain security vet of a package version (CodeGraph, fallow) before install/update                                  |
+| `dependency-vetter`      | Supply-chain security vet of a package version (fallow) before install/update                                             |
 
 Orc doesn't run every reviewer on every change — it looks at what the diff touches and **selects the reviewers that apply**. A comment-only tweak doesn't wake the security panel; a change to an upload handler does.
 
@@ -81,21 +80,9 @@ The reviewers, tooling runners, and the scout are all also useful on their own, 
 
 ---
 
-## CodeGraph
-
-CodeGraph is a standard, under-the-hood part of orc's review loop. It is installed by default (after the vet described below), and you still just run `/orc` — there is nothing to invoke yourself. Internally, the `codegraph` agent shells out to the [CodeGraph](https://colbymchenry.github.io/codegraph/) CLI to answer structural questions with facts instead of guesses: the impact radius of a changed symbol, its callers and callees, and which tests a change affects. It parses 20+ languages via Tree-sitter, so it covers ground `fallow` (JS/TS only) can't. If the CLI is somehow absent, the agent self-skips in one line rather than failing the run.
-
-**It installs the latest version — but only after vetting it.** The policy is _install-latest-after-vet_: at install and every update, the `dependency-vetter` agent resolves the newest CodeGraph version and audits that exact version — install scripts, advisories, integrity, a static read — and CodeGraph is installed only if it passes. So you get current fixes, but the pack never hands you an instruction to install something unvetted. `.claude-plugin/codegraph.known-good.json` records the last human-vetted version as a fallback: if latest ever fails the vet, the installer drops back to that known-good version instead of leaving you with a bad one, and CI (`codegraph-vet.yml`) runs the same checks against current latest as a release canary. It's real risk reduction, not a guarantee — `npm audit` only knows published advisories and prebuilt binaries can't be fully read — so the posture is "install the newest version that passes our vet, with a known-good fallback," not blind trust in whatever's newest.
-
-Two things to know once it is installed: turn telemetry off (`codegraph telemetry off` — it's on by default), and don't run `codegraph upgrade` (updates should go through the vet, not around it).
-
-**The MCP server is a separate opt-in, and orc doesn't use it.** CodeGraph can register an MCP server into your agent config (`codegraph install`) and expose `codegraph_impact`, `codegraph_explore`, and friends as native tools. That's genuinely nice for your own interactive coding sessions — but orc deliberately talks to the CLI instead: identical graph data, no config to register, works in headless and scheduled runs, and no persistent server or auto-editing of your config. If you want the MCP tools for interactive use, that's your call to make separately — vet the pinned version the same way first.
-
----
-
 ## Fallow
 
-Fallow is the JavaScript/TypeScript companion to CodeGraph: a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. It runs as a standard part of orc's review loop on JS/TS repos — the `fallow` agent scopes `fallow audit` to the task diff and reports the findings, and it self-skips on a non-JS/TS project. Like CodeGraph, it is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
+Fallow is a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. It runs as a standard part of orc's review loop on JS/TS repos — the `fallow` agent scopes `fallow audit` to the task diff and reports the findings, and it self-skips on a non-JS/TS project. It is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
 
 ---
 
@@ -116,8 +103,8 @@ The skill and all agents load automatically after install; the skill is invoked 
 
 The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
-1. Clone this repo somewhere outside the target project.
-2. Open a Claude Code session in the repo you want orc in and point Claude at the clone — for example: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
+1. Open a Claude Code session in the repo you want orc in — that repo is the install target.
+2. Point Claude at this repo's URL, for example: _"Install https://github.com/rogadev/orc-pack into this repo."_ Claude clones the kit into a scratch location and follows `INSTALL.md`. If you already have a clone somewhere outside the target project, you can point at that instead: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
 3. Claude copies the skill to `.claude/skills/orc/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
 
 If you'd rather do it by hand, it's just a copy:
@@ -125,7 +112,7 @@ If you'd rather do it by hand, it's just a copy:
 - `skills/orc/SKILL.md` → `<repo>/.claude/skills/orc/SKILL.md`
 - every file in `agents/` → `<repo>/.claude/agents/<same-name>.md`
 
-Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
+Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. Either way the pack goes into the repo your session is open in, never into a checkout of `orc-pack` itself; if Claude starts "installing" into an `orc-pack` folder it found on your machine, stop it and open the session in the target repo. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
 
 > The pack's agents are written to be generic — they discover your repo's stack, commands, and conventions at runtime by reading your `CLAUDE.md`/`AGENTS.md`, your manifest, and the surrounding code. They work as-copied. If your repo has a `CLAUDE.md` that documents your ready command (like `pnpm ready`) and your working branch (like `dev`), orc picks those up automatically.
 
@@ -184,7 +171,7 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
 3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
 4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
-5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; `codegraph` supplies the blast radius and the affected-tests list, and `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
+5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
 6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
 8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).

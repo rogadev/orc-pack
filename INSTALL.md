@@ -1,6 +1,6 @@
 # INSTALL — agent instructions for baking the orc pack into a repo
 
-**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder and asked you to install it). Your job: copy this kit's skill and agents into the current repo's `.claude/` directory, adapt them to the repo, and verify the result — without breaking anything already there.
+**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder, or at its GitHub URL, and asked you to install it). Your job: copy this kit's skill and agents into **that** repo's `.claude/` directory (the repo the session is open in, never the kit's own checkout), adapt them to the repo, and verify the result — without breaking anything already there.
 
 Work through the phases in order. Don't skip verification. When you're done, give the user the short summary at the end.
 
@@ -25,7 +25,6 @@ orc-pack/
 │       └── SKILL.md
 └── agents/
     ├── architecture-reviewer.md
-    ├── codegraph.md
     ├── dependency-vetter.md
     ├── docs-writer.md
     ├── fallow.md
@@ -43,7 +42,21 @@ orc-pack/
     └── verifier.md
 ```
 
-> `.claude-plugin/codegraph.known-good.json` in the kit records the CodeGraph install policy (install-latest-after-vet), the last human-vetted version to fall back to, and its integrity hash. It's kit config, not a runtime file — you don't copy it into the repo, but Phase 4.5 reads it.
+---
+
+## Phase 0 — Lock the target before you touch anything
+
+Two folders are in play and they must never be confused:
+
+- The **target** is the repo the Claude Code session is open in. Resolve it once, from the session's working directory, with `git rev-parse --show-toplevel`, and write that path down. Everything installs under `<target>/.claude/`.
+- The **kit** is this folder — the source you copy _from_. It is never the destination.
+
+How you got here decides where the kit lives:
+
+- **The user gave a URL** (`https://github.com/<owner>/orc-pack`, "install this"): clone the kit into the session scratchpad, never into the target — `gh repo clone <owner>/orc-pack "<scratchpad>/orc-pack" -- --depth 1` — then read the clone's `INSTALL.md` and continue from Phase 1. Do **not** go looking for an existing `orc-pack` checkout on the machine. A local `orc-pack` folder is the pack's source repo or someone's clone; it is neither the install target nor the copy to install from.
+- **The user gave a local folder** (`~/orc-pack`): that folder is the kit. Do not `cd` into it and resolve the repo root from there — the root check above runs in the target.
+
+**Hard stop:** if the target root contains `.claude-plugin/plugin.json` with `"name": "orc-pack"`, the session is open in the kit's own source repo. Do not install. Say so and ask the user which project they meant.
 
 ---
 
@@ -56,7 +69,7 @@ Two valid targets. **Default to project scope** unless the user says otherwise.
 | **Project** (default) | `<repo>/.claude/`                                   | The pack should live with this repo and be shared/committed with it (or kept local to it). This is almost always what's wanted when installing "into this project". |
 | **Global**            | `~/.claude/` (`C:\Users\<you>\.claude\` on Windows) | The user wants `/orc` available in every project on this machine.                                                                                                   |
 
-Confirm the repo root first — run `git rev-parse --show-toplevel`. Everything below is relative to the destination root you chose.
+The destination root for project scope is the **target** you resolved in Phase 0 — the session's repo, not the kit. Everything below is relative to the destination root you chose.
 
 > Note on committing: some repos intentionally gitignore `.claude/` (keep it local); others commit it to share with the team. Check the repo's `.gitignore` and existing `.claude/` tracking before assuming. Don't change that policy as a side effect of installing — match what the repo already does.
 
@@ -72,7 +85,6 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/newissue/SKILL.md`         | `<root>/.claude/skills/newissue/SKILL.md`         |
 | `skills/update-orc/SKILL.md`       | `<root>/.claude/skills/update-orc/SKILL.md`       |
 | `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
-| `agents/codegraph.md`              | `<root>/.claude/agents/codegraph.md`              |
 | `agents/dependency-vetter.md`      | `<root>/.claude/agents/dependency-vetter.md`      |
 | `agents/docs-writer.md`            | `<root>/.claude/agents/docs-writer.md`            |
 | `agents/fallow.md`                 | `<root>/.claude/agents/fallow.md`                 |
@@ -127,35 +139,22 @@ Don't over-engineer this phase. The pack is designed to work as-copied; adaptati
 
 ---
 
-## Phase 4.5 — CodeGraph and fallow (installed by default, gated by a security vet)
+## Phase 4.5 — Fallow (installed by default, gated by a security vet)
 
-CodeGraph and fallow are standard under-the-hood tools, not opt-ins. The `codegraph` and `fallow` agents shell out to their CLIs to give orc real impact-radius, callers/callees, affected tests, and dead-code/duplication signals instead of inferred structure. The user never interacts with either directly. Install both by default; skip one only if the user explicitly declines. If a CLI ends up absent anyway, its agent self-skips and the run continues.
+Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shells out to its CLI to give orc dead-code, duplication, complexity, and circular-dependency signals instead of inferred structure, and it self-skips on a non-JS/TS project. The user never interacts with it directly. Install it by default; skip it only if the user explicitly declines.
 
-**Do not install either without vetting first.** The policy is **install-latest-after-vet**: get the newest version so users get current fixes, but only after it passes the security vet. A package can change upstream at any time, so the vet is the gate — not a one-time pin.
+**Do not install it without vetting first.** The policy is **install-latest-after-vet**: get the newest version so users get current fixes, but only after it passes the security vet. A package can change upstream at any time, so the vet is the gate — not a one-time pin.
 
-1. **CodeGraph.** Read `.claude-plugin/codegraph.known-good.json` for the `package` name and the `knownGoodVersion` fallback. Resolve latest (`npm view <package> version`), then dispatch the `dependency-vetter` agent against that exact resolved version. It inspects the version without executing it and returns PASS / NEEDS-REVIEW / REJECT.
-   - **PASS** → install that version.
-   - **NEEDS-REVIEW or REJECT** → do NOT install it. Fall back: dispatch `dependency-vetter` against `knownGoodVersion`; if that PASSes, install the fallback instead and note that latest was held back. If neither passes, leave the `codegraph` agent inert, report the verdict, and continue the install normally.
-2. **Fallow.** Same policy, with no pinned fallback record. Resolve latest (`npm view fallow version`) and dispatch `dependency-vetter` against that exact version.
+1. **Fallow.** Resolve latest (`npm view fallow version`) and dispatch the `dependency-vetter` agent against that exact version. It inspects the version without executing it and returns PASS / NEEDS-REVIEW / REJECT.
    - **PASS** → install it vetted: `npm install -g fallow@<vetted-version>`, or, on a JS/TS project, the repo's own package manager as a **dev dependency** pinned to `<vetted-version>`.
    - **NEEDS-REVIEW or REJECT** → do not install it; leave `agents/fallow.md` inert (it self-skips) and report the verdict.
-3. **Install CodeGraph** at the vetted version (the resolved latest, or the fallback). Use the exact version the vet passed, never a bare floating tag:
-
-   ```bash
-   npm install -g @colbymchenry/codegraph@<vetted-version>
-   # or run on demand: npx --yes @colbymchenry/codegraph@<vetted-version> <cmd>
-   ```
-
-4. **Two setup notes for the user** (both are about keeping CodeGraph invisible and safe):
-   - Turn off telemetry — it's on by default: `codegraph telemetry off`.
-   - Do NOT run `codegraph upgrade` or `codegraph install`. `upgrade` moves off the vetted version (updates go through the vet at update time, not around it); `install` registers a persistent MCP server into your agent config, which orc does not use and does not need. (For the MCP server in interactive sessions, see the pack's `README.md` — a separate opt-in, vetted the same way.)
-5. **Record it.** Add the installed CodeGraph and fallow versions, their integrity hashes, and the `dependency-vetter` verdicts to `<root>/.claude/orc-pack.provenance.md` — a dated record of exactly what was vetted and installed, so a future update (see `UPDATE.md`) knows the baseline and can re-vet the new latest against it.
+2. **Record it.** Add the installed fallow version, its integrity hash, and the `dependency-vetter` verdict to `<root>/.claude/orc-pack.provenance.md` — a dated record of exactly what was vetted and installed, so a future update (see `UPDATE.md`) knows the baseline and can re-vet the new latest against it.
 
 ---
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned) and up to 17 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned) and up to 16 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
@@ -170,7 +169,7 @@ Give them a short, human summary:
 - Where you installed (project or global, and the path).
 - The count: 1 `orc` skill + N agents.
 - Any conflicts you hit and how you resolved them (especially anything you renamed or skipped).
-- CodeGraph and fallow status (Phase 4.5): installed at the vetted versions, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdicts if you ran them.
+- Fallow status (Phase 4.5): installed at the vetted version, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on Opus 4.8 and Sonnet 5 — the models this pack runs on. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
 - The model recommendation: **run `/orc` on Opus 4.8 or Sonnet 5, and do not use Opus 5** — the pack is calibrated to the former and Opus 5 drives it poorly. (The skill won't dispatch subagents on Opus 5, but the session model is the user's to set.)
 - That `/orc` is available in a new session.
