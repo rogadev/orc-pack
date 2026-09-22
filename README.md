@@ -1,12 +1,12 @@
 # The orc pack
 
+> **Updated for Claude Opus 5.5** (released 2026-09-22). Since v1.6.1, orc runs its implementer, security reviewer, verifier, and issue scout on Opus 5.5, with an effort level tuned to each job, and recommends Opus 5.5 as the model to run orc on. See the [changelog](CHANGELOG.md#161---2026-09-22) for what changed.
+
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 
 Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, implementers that write the code, a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
 
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
-
-> **Run it on Opus 5.5.** Orc is tuned for Opus 5.5 (`claude-opus-5-5`) and drives well on any strong Claude model except **Opus 5** (`claude-opus-5`, the 5.0 release), which hallucinated and drifted off task in our testing. The skill refuses to start on Opus 5. Opus 5.5 fixed those problems and is a different model, so it's the recommended one. Inside a run, orc puts picking the next issue, implementing, security review, and verifying on Opus 5.5, puts the routine architecture, quality, and test-coverage reviews on Sonnet 5, and runs lint, typecheck, and tests on Haiku. Each agent's effort level is tuned to its job. There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-newer-models) below.
 
 ---
 
