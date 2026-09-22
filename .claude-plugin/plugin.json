@@ -1,5 +1,5 @@
 {
   "name": "orc-pack",
   "description": "Autonomous orchestrator skill (/orc) plus its subagent team: code reviewers, a finding verifier, an issue scout, and tooling runners.",
-  "version": "1.5.0"
+  "version": "1.6.1"
 }

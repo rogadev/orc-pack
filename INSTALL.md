@@ -170,8 +170,8 @@ Give them a short, human summary:
 - The count: 1 `orc` skill + N agents.
 - Any conflicts you hit and how you resolved them (especially anything you renamed or skipped).
 - Fallow status (Phase 4.5): installed at the vetted version, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
-- The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on Opus 4.8 and Sonnet 5 — the models this pack runs on. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
-- The model recommendation: **run `/orc` on Opus 4.8 or Sonnet 5, and do not use Opus 5** — the pack is calibrated to the former and Opus 5 drives it poorly. (The skill won't dispatch subagents on Opus 5, but the session model is the user's to set.)
+- The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
+- The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The pack is calibrated for Opus 5.5, and Opus 5 drives it poorly. (The skill refuses to start on Opus 5, but the session model is the user's to set.)
 - That `/orc` is available in a new session.
 
 Do **not** run `/orc` yourself to "test" it unless the user asks — it's an autonomous run that commits code. Installation is done when the files are in place and verified.

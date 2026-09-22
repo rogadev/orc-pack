@@ -1,7 +1,7 @@
 ---
 name: update-orc
-pack: orc-pack@1.5.0
-description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 4.8) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
+pack: orc-pack@1.6.1
+description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 5.5) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 
 # Update Orc
@@ -67,7 +67,7 @@ Confirm `<scratchpad>/orc-pack-<target>/skills/orc/SKILL.md` exists and its mark
 
 ### 5. Dispatch the updater
 
-Dispatch `orc-updater` with **`model: claude-opus-4-8`** explicitly (never a bare `opus` alias). Give it:
+Dispatch `orc-updater` with **`model: claude-opus-5-5`** explicitly. Never pass a bare `opus` alias: Claude Code runs an alias subagent on the session's own model when both are Opus, so a session on Opus 5 would take the updater with it. Give it:
 
 - The fetched kit path and the target install root.
 - The installed version, the target version, and the full range between them.

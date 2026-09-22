@@ -1,8 +1,9 @@
 ---
 name: quality-reviewer
-pack: orc-pack@1.5.0
+pack: orc-pack@1.6.1
 description: Code quality specialist — type safety, error handling, performance, style-convention compliance, and accessibility. Use proactively during code reviews for changes that are "just code". Covers everything outside security, architecture, and test coverage.
-model: sonnet
+model: claude-sonnet-5
+effort: high
 tools:
   - Read
   - Grep

@@ -16,6 +16,61 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.6.1] - 2026-09-22
+
+**Summary.** Moves the three routine reviewers back to Sonnet 5 and lowers the verifier's effort. Security review and verification stay on Opus 5.5. The routine reviewers only need to not miss real problems, because the Opus 5.5 verifier filters out their false positives. Keeping them at `high` effort on Sonnet 5 costs less per task without weakening the security path.
+
+**Changed areas.**
+
+- **`agents/architecture-reviewer.md`, `agents/quality-reviewer.md`, `agents/test-coverage-reviewer.md`** — `model: claude-sonnet-5`, `effort: high` (were `claude-opus-5-5`, `medium`). Refresh.
+- **`agents/verifier.md`** — `effort: medium` (was `high`); model unchanged (`claude-opus-5-5`). Refresh.
+- **`skills/orc/SKILL.md`** — **Model selection** now lists the routine reviewers on Sonnet 5 and requires that security review and verification always stay on Opus 5.5. Refresh.
+- **`CLAUDE.md`, `README.md`** — tier descriptions updated to match. Refresh `README.md` if the install carries it.
+
+**Update steps.**
+
+- Refresh the four agent files and `skills/orc/SKILL.md`. If a repo-local edit changed one of those agents' `model:` or `effort:` lines, keep the local choice.
+- Sonnet 5 (`claude-sonnet-5`) must be available to the account or platform.
+- No re-vet, CI, or environment change is required.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/orc/SKILL.md` (**Model selection**), `CLAUDE.md` (**Model assignments are intentional**), and the frontmatter of the four changed agents.
+
+---
+
+## [1.6.0] - 2026-09-22
+
+**Summary.** Re-tiers every agent for Claude Opus 5.5 (`claude-opus-5-5`, released 2026-09-22). Every agent that makes a judgement call now runs on Opus 5.5, and a new `effort:` frontmatter line sets how hard each one thinks. The Sonnet tier is gone: on the Artificial Analysis Intelligence Index, Opus 5.5 at `low` effort (42) outscores Sonnet 5 at `max` (38). Opus 4.8 is no longer used anywhere. The Opus 5 ban now names only the 5.0 release (`claude-opus-5`), and orc recommends Opus 5.5 as the model to run it on. The five command runners stay on Haiku.
+
+**Changed areas.**
+
+- **`agents/*.md` (frontmatter)** — new `model` and `effort` values. Refresh every agent file.
+  - `claude-opus-5-5`, `effort: high`: `security-reviewer`, `verifier`, `skill-vetter`, `dependency-vetter`, `orc-updater` (was Opus 4.8).
+  - `claude-opus-5-5`, `effort: medium`: `implementer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer` (were `sonnet`).
+  - `claude-opus-5-5`, `effort: low`: `next-issue-finder`, `docs-writer` (were `haiku`).
+  - Unchanged, `haiku`, no `effort` line: `lint`, `typecheck`, `test`, `impact`, `fallow`.
+- **`agents/orc-updater.md`** — the description now says it runs on Opus 5.5.
+- **`skills/orc/SKILL.md`**:
+  - The preflight blocks only Opus 5 (`claude-opus-5`) and tells the user to switch to `claude-opus-5-5`.
+  - **Model selection** puts judgement agents on Opus 5.5, command runners on Haiku, and the round-three implementer on Fable 5.1 (`claude-fable-5-1`) when a blocking finding survives two fix rounds. It requires explicit model ids, because Claude Code runs an `opus` alias subagent on the session's own model when that model is also an Opus.
+  - A new rule under **This run is autonomous** tells orc never to end a turn with a status summary while work remains. Opus 5.5 sometimes ends turns that way in unattended runs, which stops the run.
+- **`skills/update-orc/SKILL.md`** — dispatches `orc-updater` with `model: claude-opus-5-5` (was `claude-opus-4-8`).
+- **`README.md`, `INSTALL.md`, `CLAUDE.md`** — model recommendation, tier descriptions, and to-do-tool notes updated for Opus 5.5.
+
+**Update steps.**
+
+- Refresh every file under `<root>/.claude/agents/` and `<root>/.claude/skills/` from the kit. If a repo-local edit changed an agent's `model:` line, keep the local choice but add the kit's `effort:` line under it.
+- The `effort:` frontmatter field needs a Claude Code version that supports it for subagents. Older versions ignore it, and the agent runs at its model's default effort (`medium` on Opus 5.5).
+- Opus 5.5 must be available to the account or platform. If it isn't, set the agents' `model:` to the best available model and note the change in provenance.
+- No re-vet, CI, or environment change is required.
+
+**Breaking changes.** None to behavior contracts. Cost profile changes: the judgement agents move from Sonnet 5 ($2 / $10 per million input / output tokens) to Opus 5.5 ($4 / $20), offset by effort levels tuned per agent. The scout and `docs-writer` move off Haiku.
+
+**Files to read.** `skills/orc/SKILL.md` (**Preflight** and **Model selection**), `CLAUDE.md` (**Model assignments are intentional**), and the frontmatter of every file in `agents/`.
+
+---
+
 ## [1.5.0] - 2026-09-21
 
 **Summary.** Removes the CodeGraph integration from the pack. CodeGraph proved unreliable in practice — it caused failures and its structural answers were not dependable enough to justify the agent, the CLI install, and the supply-chain vet it carried. orc no longer dispatches a `codegraph` agent, the pack no longer installs or vets the CLI, and a fresh install has nothing to do with CodeGraph. `fallow` is unchanged and stays a default-installed, vetted tool.
