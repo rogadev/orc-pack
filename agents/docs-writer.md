@@ -1,6 +1,6 @@
 ---
 name: docs-writer
-pack: orc-pack@1.6.1
+pack: orc-pack@1.7.0
 description: Documentation specialist for writing and updating project documentation, READMEs, API docs, architecture guides, and inline code docs. Use when documentation needs to be created, updated, or improved.
 model: claude-opus-5-5
 effort: low
@@ -22,6 +22,7 @@ Read `CLAUDE.md` / `AGENTS.md` and look at the existing docs before writing. Mat
 - **Where docs live.** Find the docs directory and its organizing scheme (by audience, by feature, by layer). Place new files in the folder that already covers the topic; don't create a sibling silo. If there's a docs index/README, update it when you add a file.
 - **The house style.** Match heading conventions, code-fence languages, and the level of formality already in use.
 - **The inline-comment bar.** Find the best existing examples of comments that explain a _constraint a future reader would otherwise violate_ — that's the bar. Match it.
+- **The comments standard.** When the dispatch lists `comments.md` (or it exists under `.claude/skills/orc/references/standards/`), it governs every doc comment and inline comment you write: the cold-read test, JSDoc on exports, and no slop comments. The repo's own rules still win.
 
 ## What you write
 

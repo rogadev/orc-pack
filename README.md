@@ -1,6 +1,6 @@
 # The orc pack
 
-> **Updated for Claude Opus 5.5** (released 2026-09-22). Since v1.6.1, orc runs its implementer, security reviewer, verifier, and issue scout on Opus 5.5, with an effort level tuned to each job, and recommends Opus 5.5 as the model to run orc on. See the [changelog](CHANGELOG.md#161---2026-09-22) for what changed.
+> **New in v1.7.0:** shared code, comment, structure, and UI standards; framework playbooks for Next.js, Nuxt, SvelteKit, and Astro; design, comment, and UI reviewers; per-task sizing so each change gets only the review it needs; and a cleanup mode for slop code and comments. Orc runs its judgement agents on Claude Opus 5.5. See the [changelog](CHANGELOG.md#170---2026-09-22) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -37,6 +37,15 @@ Give it an issue number (or "finish the epic", "do #18") and it skips the scouti
 
 Describe the work in plain language and orc treats your sentence as the spec. It reads the relevant code, turns your one-liner into a concrete, testable definition of done, and builds it — no issue required.
 
+The same mode runs **cleanups**. Point orc at existing code and it improves it to the pack's standards without changing what it does:
+
+```
+/orc clean up the slop in src/lib/billing
+/orc tidy the comments in the dashboard components
+```
+
+Orc audits the target with its reviewers, pins today's behavior with characterization tests where coverage is thin, then refactors in small, reviewed `refactor:` and `docs:` commits. If the audit finds nothing worth changing, it says so and stops.
+
 In every mode, orc ends with one explicit line so you know the outcome at a glance:
 
 - **`FINISHED`** — work landed, green, pushed, issue closed.
@@ -49,7 +58,7 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 **The skills:**
 
-- `skills/orc/` — the orchestrator itself.
+- `skills/orc/` — the orchestrator itself, plus `references/`: the shared standards its agents write and review against (see [The standards](#the-standards)).
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
 
@@ -66,17 +75,34 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | `impact`                 | Diff stats for a change                                                                                                   |
 | `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
 | `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |
-| `architecture-reviewer`  | Structure, module boundaries, framework conventions                                                                       |
-| `quality-reviewer`       | Type safety, error handling, performance, accessibility                                                                   |
+| `design-reviewer`        | Approves a design brief before code is written, for structural tasks                                                      |
+| `architecture-reviewer`  | Separation of concerns, module boundaries, file and folder structure, framework conventions                               |
+| `quality-reviewer`       | Readability, AI slop code, type safety, error handling, async and state, reuse, performance                               |
+| `comment-reviewer`       | Cold-read test on every comment in touched files; JSDoc on exports; slop comments                                         |
+| `ui-reviewer`            | Design system and theme, states, interaction, responsive, accessibility, copy; screenshots when the app runs locally      |
 | `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                                                                 |
 | `verifier`               | Skeptical second pass that filters reviewer false positives                                                               |
 | `docs-writer`            | Project documentation                                                                                                     |
 | `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                                 |
 | `dependency-vetter`      | Supply-chain security vet of a package version (fallow) before install/update                                             |
 
-Orc doesn't run every reviewer on every change — it looks at what the diff touches and **selects the reviewers that apply**. A comment-only tweak doesn't wake the security panel; a change to an upload handler does.
+Orc doesn't run every reviewer on every change. It **sizes each task** — trivial, standard, or structural — and dispatches only the reviewers that the size and the diff's surfaces call for. A one-line copy fix gets a single reviewer; a change to an upload handler wakes the security reviewer; a new screen gets a design review before any code is written and a UI review after. The verifier drops findings that are only a matter of taste, so no fix round is spent on preference.
 
 The reviewers, tooling runners, and the scout are all also useful on their own, outside of orc — for example during a manual code review.
+
+---
+
+## The standards
+
+The quality bar lives in `skills/orc/references/`, and the implementer writes to the same files the reviewers check against, so most problems never reach a review:
+
+- **`standards/code.md`** — readability, types, errors, async, state, reuse, and a named list of AI slop code patterns (defensive noise, pass-through layers, reinvented utilities, synced state, and more).
+- **`standards/comments.md`** — the cold-read test (every comment must make sense to someone who sees only the file), JSDoc on exports following Google's style guides, and the slop comments to remove.
+- **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
+- **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
+- **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when orc detects that stack, and tells the agents to trust the installed version's docs over the playbook.
+
+Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch are listed in the report as cleanup targets, not rewritten on the side.
 
 ---
 
@@ -109,7 +135,7 @@ The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
 If you'd rather do it by hand, it's just a copy:
 
-- `skills/orc/SKILL.md` → `<repo>/.claude/skills/orc/SKILL.md`
+- `skills/orc/` (the whole directory, including `references/`) → `<repo>/.claude/skills/orc/`
 - every file in `agents/` → `<repo>/.claude/agents/<same-name>.md`
 
 Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. Either way the pack goes into the repo your session is open in, never into a checkout of `orc-pack` itself; if Claude starts "installing" into an `orc-pack` folder it found on your machine, stop it and open the session in the target repo. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
@@ -171,8 +197,8 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
 3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
 4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
-5. **Build → review → fix, looping.** Per task: an implementer writes code and tests; the applicable reviewers check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives; blocking findings go back for a fix. Bounded at three rounds so it can't loop forever.
-6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
+5. **Design → build → review → fix, looping.** Per task: for structural work, the implementer writes a short design brief and the design reviewer approves it first; then the implementer writes code and tests to the shared standards; the reviewers that apply check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives and matters of taste; real defects and warnings go back for a fix. Bounded at three rounds so it can't loop forever.
+6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. The one exception is quality debt in files the run doesn't touch: those are listed in the report as cleanup targets for a later `/orc clean up …` run, so a small issue never turns into a sweep of the codebase. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
 8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
 

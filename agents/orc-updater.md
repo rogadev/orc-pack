@@ -1,6 +1,6 @@
 ---
 name: orc-updater
-pack: orc-pack@1.6.1
+pack: orc-pack@1.7.0
 description: Applies orc-pack releases to an installed copy, from any older version to the latest in one pass. Reads the in-range changelog sections and the fetched kit's UPDATE.md, converges the install on the target kit without clobbering repo-local files, re-records provenance, and reports what changed. Dispatched by /update-orc; runs on Opus 5.5.
 tools:
   - Read
@@ -27,7 +27,7 @@ You apply one or more releases of the orc pack to an installed copy in a target 
 1. **Read the fetched `UPDATE.md` in full** and follow its phases in order. It is authoritative for how a file is refreshed, renamed, or removed, and for conflict handling.
 2. **Build the target inventory.** List every file under the fetched kit's `skills/` and `agents/`. This is the set the install must end up matching. Note files the install has that the kit no longer ships — those are removals.
 3. **Make the update for the whole gap at once.** Read the migration map for every in-range version. For each entry: apply the file changes, run the non-file steps, and honour the breaking changes. Do not stop at the latest release's entry; earlier entries carry renames and migrations the latest one assumes you already did.
-4. **Never clobber a file without a `pack:` marker.** That file belongs to the repo; route it through `UPDATE.md` Phase 3 conflict handling and report it.
+4. **Never clobber a file without a `pack:` marker** — except the reference files. A marker-less file belongs to the repo; route it through `UPDATE.md` Phase 3 conflict handling and report it. Files under `.claude/skills/orc/references/` are the exception: they are pack-owned whenever the install's `skills/orc/SKILL.md` carries a marker, so refresh them from the kit, re-apply local edits, and remove any the kit dropped.
 5. **Preserve repo-specific edits.** Where a pack-owned file was locally edited, overwrite with the kit version, then re-apply the local edits (the repo's git history for that file shows them) and list the file as preserved.
 6. **Remove files the target kit dropped**, per `UPDATE.md` Phase 2.
 7. **Run every in-range Update steps item**: re-record provenance, re-vet fallow if named, apply any CI or environment change.
