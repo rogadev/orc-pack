@@ -1,8 +1,9 @@
 ---
 name: verifier
-pack: orc-pack@1.5.0
+pack: orc-pack@1.6.0
 description: Skeptical validator that independently checks review findings against the actual code. Use after code-review subagents return findings to filter out false positives and confirm real issues before acting on them.
-model: sonnet
+model: claude-opus-5-5
+effort: high
 tools:
   - Read
   - Grep

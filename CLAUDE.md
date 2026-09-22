@@ -35,18 +35,23 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 ## Model assignments are intentional
 
-Each agent pins a `model:` in frontmatter, and the split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
+Each agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter. The split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
-- **Haiku** — lightweight scan-and-report agents: `lint`, `typecheck`, `test`, `impact`, `fallow`, `next-issue-finder`, `docs-writer`.
-- **Sonnet** — judgment-heavy agents: the reviewers (`security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`), `verifier`, `skill-vetter`, `dependency-vetter`, and `implementer`.
-- **Opus 4.8** — `orc-updater`, the one agent pinned above the Sonnet default: applying a pack release is multi-file integration across an unfamiliar kit, which is where 4.8 earns its cost. Pin the explicit id (`claude-opus-4-8`), never a bare `opus` alias, which resolves to the banned Opus 5.
+- **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `impact`, `fallow`. Haiku doesn't support `effort`, so these carry no `effort:` line. The alias follows new Haiku releases.
+- **Opus 5.5** (`claude-opus-5-5`) — every agent that makes a judgement call, with `effort` as the cost control:
+  - `high` — `security-reviewer`, `verifier`, `skill-vetter`, `dependency-vetter`, `orc-updater`: the highest-stakes or rarely run jobs.
+  - `medium` (Opus 5.5's default) — `implementer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`: the per-task work.
+  - `low` — `next-issue-finder`, `docs-writer`: triage and prose.
+- **Fable 5.1** (`claude-fable-5-1`) — never a frontmatter default. Orc uses it only for the round-three implementer when a blocking finding survives two fix rounds.
 
-Claude Code resolves a subagent's model as per-dispatch `model` → frontmatter `model` → `CLAUDE_CODE_SUBAGENT_MODEL` → main model, so the frontmatter is a default and orc can move an agent up a tier on a specific dispatch. `implementer` ships on Sonnet and is the one that gets promoted to Opus 4.8 for multi-file or design-heavy work.
+There is no Sonnet tier: on the Artificial Analysis Intelligence Index (2026-09-22), Opus 5.5 at `low` effort scores 42 and Sonnet 5 at `max` scores 38, so Opus 5.5 at a lower effort beats Sonnet 5 at any effort. Revisit the tiers when Sonnet 5.5 and Haiku 5.5 ship.
 
-When adding or editing an agent, place it on the right tier. **Opus 5 is explicitly banned** for running orc (the skill refuses to dispatch on it) — see the README and the SKILL.md preflight for the rationale; don't reintroduce it as a default anywhere.
+Claude Code resolves a subagent's model as per-dispatch `model` → frontmatter `model` → `CLAUDE_CODE_SUBAGENT_MODEL` → main model, so the frontmatter is a default and orc can move an agent to another model on a specific dispatch. A dispatch can't change `effort`, so the frontmatter value always applies.
+
+Pin Opus as the explicit id `claude-opus-5-5`, never the bare `opus` alias: Claude Code runs an alias subagent on the session's own model when both are in the same family, so an alias would follow a session running on Opus 5. **Opus 5 (`claude-opus-5`, the 5.0 release) stays banned** for running orc (the skill refuses to start on it); don't reintroduce it as a default anywhere. Opus 5.5 is a different model and is the recommended one.
 
 ## Conventions when editing prompts
 
 - **The agents are repo-agnostic by design.** They discover the target repo's stack, commands, and conventions at runtime by reading its `CLAUDE.md`/`AGENTS.md`, manifest, and code. Don't hardcode a stack, command, or path (like `pnpm ready` or a `dev` branch) into an agent — keep it general and let it discover.
-- **Frontmatter shape must stay consistent** across files: `name` and `pack` first, then `description`, then `model`. The `description` is what triggers the skill/agent, so it carries the trigger phrases — keep it specific.
+- **Frontmatter shape must stay consistent** across files: `name` and `pack` first, then `description`, then `model` and `effort`. The `description` is what triggers the skill/agent, so it carries the trigger phrases — keep it specific.
 - The working branch is `dev`; `main` is the release branch that the guard and plugin consumers track. Open PRs from `dev` into `main`.

@@ -1,12 +1,13 @@
 ---
 name: skill-vetter
-pack: orc-pack@1.5.0
+pack: orc-pack@1.6.0
 description: Read-only static security auditor for untrusted Claude Code skills, subagents, commands, and plugins. Use BEFORE promoting any acquired artifact into .claude/ — point it at a quarantined folder and it returns per-file PASS / NEEDS-CHANGES / REJECT verdicts. Never executes code or touches the network.
 tools:
   - Read
   - Grep
   - Glob
-model: sonnet
+model: claude-opus-5-5
+effort: high
 ---
 
 # Skill Vetter — static, read-only security review

@@ -1,6 +1,6 @@
 ---
 name: lint
-pack: orc-pack@1.5.0
+pack: orc-pack@1.6.0
 description: Run the repo's lint/format chain and report raw results. Use when you need to check formatting and lint rules before or after code changes.
 tools:
   - Bash

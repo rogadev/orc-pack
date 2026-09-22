@@ -1,8 +1,9 @@
 ---
 name: docs-writer
-pack: orc-pack@1.5.0
+pack: orc-pack@1.6.0
 description: Documentation specialist for writing and updating project documentation, READMEs, API docs, architecture guides, and inline code docs. Use when documentation needs to be created, updated, or improved.
-model: haiku
+model: claude-opus-5-5
+effort: low
 tools:
   - Read
   - Grep

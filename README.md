@@ -6,7 +6,7 @@ Under the hood it runs **subagent-driven development**. The orchestrator keeps i
 
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
 
-> **Run it on any capable model — just not Opus 5.** Orc drives well on essentially any strong Claude model (Opus 4.8 and Sonnet 5 are what we use day to day). The one model to avoid is **Opus 5**: it hallucinates, goes off script, and generally wastes review and fix rounds, so we don't use it or recommend it. The numbers back the concern — on the AA-Omniscience knowledge benchmark, Opus 5 hallucinates on **50.1%** of items, and even [head-to-head reviews that rate Opus 5 higher overall](https://buda.im/blog/claude-opus-5-vs-opus-4-8) concede it "should not be described as universally more reliable than Opus 4.8." For an unattended tool that has to trust its own findings, that regression is disqualifying. Everything else works great. The skill enforces this internally too: it won't dispatch its subagents on Opus 5. For our full breakdown, see [our benchmarks](https://rogadigital.com/labs/benchmarks/). Inside a run, orc uses the capable models for the thinking work (implementing, reviewing, verifying) and Haiku for the lightweight scan-and-report work (picking the next issue, running lint/tests). There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-newer-models) below.
+> **Run it on Opus 5.5.** Orc is tuned for Opus 5.5 (`claude-opus-5-5`) and drives well on any strong Claude model except **Opus 5** (`claude-opus-5`, the 5.0 release), which hallucinated and drifted off task in our testing. The skill refuses to start on Opus 5. Opus 5.5 fixed those problems and is a different model, so it's the recommended one. Inside a run, orc puts every judgement job (picking the next issue, implementing, reviewing, verifying) on Opus 5.5 and tunes each agent's effort level to its job, and runs lint, typecheck, and tests on Haiku. There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-newer-models) below.
 
 ---
 
@@ -18,7 +18,7 @@ This pack contains the `/orc` skill plus all the agents it relies on, written to
 /orc
 ```
 
-With no argument, orc dispatches a lightweight scout agent (`next-issue-finder`, on Haiku) that reads your GitHub issue board and picks the single highest-value issue to work on next, using a four-signal ruleset: does it unblock other work, how severe/impactful is it, how ready is it to execute, and how old is it. Then it runs the whole build-review-commit-close cycle on that issue.
+With no argument, orc dispatches a lightweight scout agent (`next-issue-finder`, on Opus 5.5 at low effort) that reads your GitHub issue board and picks the single highest-value issue to work on next, using a four-signal ruleset: does it unblock other work, how severe/impactful is it, how ready is it to execute, and how old is it. Then it runs the whole build-review-commit-close cycle on that issue.
 
 **2. Directed at an issue — "do this specific one."**
 
@@ -59,7 +59,7 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                                |
 | `implementer`            | Writes the code and its tests for one task; never commits — orc owns the history                                          |
-| `orc-updater`            | Applies an orc-pack release to an installed copy, converging it on the target kit (runs on Opus 4.8; used by /update-orc) |
+| `orc-updater`            | Applies an orc-pack release to an installed copy, converging it on the target kit (runs on Opus 5.5; used by /update-orc) |
 | `lint`                   | Runs the repo's lint/format chain, reports raw results                                                                    |
 | `typecheck`              | Runs the repo's type checker                                                                                              |
 | `test`                   | Runs the repo's test suite(s)                                                                                             |
@@ -121,7 +121,7 @@ Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every
 ## Updating the pack
 
 - **Plugin install** — nothing to do by hand. `/plugin update orc-pack@orc-pack` (or an automatic update) picks up a new version once `plugin.json`'s version changes.
-- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 4.8 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes and commit or `/ship` them.
+- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes and commit or `/ship` them.
 
 Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 
@@ -131,7 +131,7 @@ Every release's notes come from `CHANGELOG.md`, and the release guard refuses to
 
 Orc runs best when it can build its plan as a **live task list** and work it top to bottom — that's how an unsupervised run never drops a step. The task list is orc's spine.
 
-Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8** and **Sonnet 5** (and Fable 5). The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
+Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8**, **Sonnet 5**, and Fable 5, and likely the models released since, such as Opus 5.5. The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
 
 **The fix — set one environment variable before launching Claude Code:**
 
