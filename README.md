@@ -1,5 +1,7 @@
 # The orc pack
 
+> **Updated for Claude Opus 5.5** (released 2026-09-22). Since v1.6.1, orc runs its implementer, security reviewer, verifier, and issue scout on Opus 5.5, with an effort level tuned to each job, and recommends Opus 5.5 as the model to run orc on. See the [changelog](CHANGELOG.md#161---2026-09-22) for what changed.
+
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 
 Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, implementers that write the code, a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
