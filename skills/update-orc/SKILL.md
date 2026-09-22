@@ -1,6 +1,6 @@
 ---
 name: update-orc
-pack: orc-pack@1.6.1
+pack: orc-pack@1.7.0
 description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 5.5) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 
@@ -74,14 +74,14 @@ Dispatch `orc-updater` with **`model: claude-opus-5-5`** explicitly. Never pass 
 - The migration map from step 3 (or the diff fallback), quoted verbatim.
 - The latest release body.
 - Instruction to follow the fetched kit's `UPDATE.md` phases in order, converge the install on the fetched kit file by file, re-apply preserved local edits, run every in-range **Update steps** item, and re-record provenance.
-- The constraint that files without a `pack:` marker belong to the repo and are never clobbered.
+- The constraint that files without a `pack:` marker belong to the repo and are never clobbered — except files under `skills/orc/references/`, which are pack-owned and refreshed from the kit like any marked file.
 
 ### 6. Verify convergence
 
 The update passes only when the install matches the target kit:
 
 - Every file under the fetched kit's `skills/` and `agents/` exists in the install with the same content, **except** files with a documented, intentional repo-local edit (which must be listed).
-- Every refreshed file's `pack:` marker equals the target version, and every frontmatter block still parses (`name` and `description`).
+- Every refreshed skill and agent file's `pack:` marker equals the target version, and every frontmatter block still parses (`name` and `description`). Reference files carry no marker; they pass when their content matches the kit's.
 - No file the target kit dropped remains in the install.
 - Every agent the refreshed skills name resolves to a file under the install's `agents/`.
 - `.claude/orc-pack.provenance.md` records the target version, the date, the source, and every file overwritten, renamed, added, or removed.
@@ -116,7 +116,7 @@ Nothing after it.
 ## Guardrails
 
 - **Converge, do not replay.** The target kit is the source of truth; the changelog explains the special cases. A file copy that matches the kit is correct even if no changelog entry mentions it.
-- **Never clobber a file without a `pack:` marker**, and never silently drop a repo-local edit.
+- **Never clobber a file without a `pack:` marker** (the pack-owned `skills/orc/references/` files excepted), and never silently drop a repo-local edit.
 - **Do not commit or push** unless the user asks. Leave the refreshed files in the working tree and say so.
 - **Never force-push, rebase, or rewrite history.**
 - **Do not run `/orc`.** This skill only refreshes the pack.

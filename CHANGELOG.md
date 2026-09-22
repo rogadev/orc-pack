@@ -16,6 +16,56 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.7.0] - 2026-09-22
+
+**Summary.** Raises orc's quality bar and makes it cheaper to hold. A new set of shared standards files (code, comments, structure, and UI) plus detection-gated framework and platform playbooks (Next.js, Nuxt, SvelteKit, Astro, Cloudflare, Vercel) now live beside the orc skill. The implementer writes to them and every reviewer checks against them. Three new reviewers join the panel: `design-reviewer` approves a design brief before code is written for structural tasks, `comment-reviewer` applies a cold-read test to every comment in touched files, and `ui-reviewer` checks UI changes against the design system and, when the app runs locally, reviews screenshots of the rendered screens. Orc now sizes each task (trivial, standard, or structural) and dispatches only the reviewers the task's size and surfaces call for. The verifier gains a "preference" verdict so reviewers' taste never costs a fix round. A new cleanup mode (`/orc clean up the slop in <path>`) runs behavior-preserving refactors of slop code and comments. `quality-reviewer` and `architecture-reviewer` move to Opus 5.5.
+
+**Changed areas.**
+
+- **`skills/orc/references/` (new directory)** — the standards orc passes to its agents: `standards/code.md`, `standards/comments.md`, `standards/structure.md`, `standards/ui.md`, `frameworks/next.md`, `frameworks/nuxt.md`, `frameworks/sveltekit.md`, `frameworks/astro.md`, `platforms/cloudflare.md`, `platforms/vercel.md`, and the `design-brief.md` template. Copy the whole directory to `<root>/.claude/skills/orc/references/`. These files carry no `pack:` marker; they belong to the orc skill directory, which is pack-owned.
+- **`agents/design-reviewer.md` (new)** — reviews a structural task's design brief before implementation. Opus 5.5, medium effort. Copy in.
+- **`agents/comment-reviewer.md` (new)** — the cold-read test, JSDoc on exports, and slop comments, across every comment in a touched file. Opus 5.5, low effort. Copy in.
+- **`agents/ui-reviewer.md` (new)** — design system, hierarchy, states, interaction, responsive, accessibility, and copy, plus an optional visual pass through the repo's own Playwright. It never installs packages or browsers. Opus 5.5, medium effort. Copy in.
+- **`agents/quality-reviewer.md`** — rewritten around readability and the AI slop code signatures. Accessibility and design-system checks move to `ui-reviewer`, comments move to `comment-reviewer`, and the stale reference to a non-existent "duplication reviewer" is gone. `model: claude-opus-5-5`, `effort: medium` (was `claude-sonnet-5`, `high`). Refresh.
+- **`agents/architecture-reviewer.md`** — adds separation of concerns, file and folder structure, and design-brief conformance. `model: claude-opus-5-5`, `effort: medium` (was `claude-sonnet-5`, `high`). Refresh.
+- **`agents/implementer.md`** — gains a `brief` mode that writes a design brief without touching the repo, reads the standards before building, cleans up slop in the files it touches (behavior-preserving), and reports UI surfaces and cleanup candidates. Refresh.
+- **`agents/verifier.md`** — new 🎨 Preference and 🧭 Out-of-scope verdicts, and a "does the fix make the code genuinely better" check. Refresh.
+- **`agents/security-reviewer.md`, `agents/test-coverage-reviewer.md`, `agents/docs-writer.md`** — read the playbooks or standards they are given. The test-coverage reviewer gains a cleanup mode that pins current behavior with characterization tests. Refresh.
+- **Review scope for `quality-reviewer`, `architecture-reviewer`, and `comment-reviewer`** — pre-existing slop in a file the diff touches is now in scope and fixed in the task, tagged **(touched file)**. A touched file that needs more than the task can fix proportionately is raised once as a **Cleanup candidate** and becomes its own task. Quality debt in untouched files is a **cleanup target**, listed in the report for a later run. `comment-reviewer` requires JSDoc only on exports the diff adds or changes; older undocumented exports are cleanup work.
+- **`skills/orc/SKILL.md`**:
+  - New **Standards** section: how orc finds `references/` (the skill's base directory, then a glob fallback) and which files go to which agent.
+  - Step 1 detects the framework, deploy target, and UI to resolve the standards set.
+  - Step 4 sizes every task: trivial, standard, or structural.
+  - Step 5 adds the design-brief step for structural tasks, replaces reviewer selection with a size and surface routing table, skips the verifier when the panel returns no findings, runs fix rounds on Blockers or Warnings (never on Nits alone), and requires commit subjects that name the change rather than the review process.
+  - New **Cleanup runs** section and a **Directed — cleanup** mode.
+  - **Discoveries** no longer chases quality debt in untouched files; those files are listed under **Your call** as cleanup targets.
+  - **Model selection** updated to the new tiers, and a new **No make-work** rule.
+  - Commits stage exactly the task's files with `git add -- <files>` instead of relying on whatever is staged.
+  - Fixes the review diff recipe. It was `git diff <base> HEAD`, which is empty because the implementer never commits; it is now `git add --intent-to-add .` followed by `git diff <base>`, so new files appear too.
+- **`.github/workflows/pack-integrity.yml`** — new check 4: every standards file and playbook the orc skill names must exist under `skills/orc/references/`.
+- **`INSTALL.md`, `UPDATE.md`, `skills/update-orc/SKILL.md`, `agents/orc-updater.md`** — the new reference files carry no `pack:` marker, so every install and update procedure now treats files under `skills/orc/references/` as pack-owned: refreshed from the kit, local edits re-applied, and dropped files removed. Without this, a later update would route them into conflict handling as repo-owned files.
+- **`README.md`, `CLAUDE.md`** — layout, agent table, standards, and model tiers updated.
+
+**Update steps.**
+
+- Copy the new `skills/orc/references/` directory in full, and the three new agent files.
+- Refresh every other agent file and `skills/orc/SKILL.md`. If a repo-local edit changed `quality-reviewer` or `architecture-reviewer`'s `model:` or `effort:` lines, keep the local choice.
+- A repo that wants its own house rules to beat the pack's standards needs no change: every standards file already defers to the repo's `CLAUDE.md`/`AGENTS.md` and established patterns. To tune the standards for one repo, edit that install's copies under `.claude/skills/orc/references/` and record the edit in provenance.
+- `ui-reviewer`'s visual pass uses Playwright only when the repo already has it with browsers installed. Nothing new is installed or vetted.
+- No re-vet, CI, or environment change is required in the target repo.
+
+**Breaking changes.** None to invocation or outcomes. Behavior changes to expect:
+
+- Reviews are stricter on readability, comments, and structure, and pre-existing slop in touched files is now fixed in the task, so diffs can be larger than before.
+- Fix rounds now run on verified Warnings as well as Blockers.
+- A cleanup audit that finds nothing ends `FINISHED (no build)`.
+- Structural tasks add two dispatches (a brief and its review) before implementation.
+- Cost moves up for the two reviewers that moved to Opus 5.5, and down for trivial tasks, which now get a single reviewer and skip the verifier when it finds nothing.
+
+**Files to read.** `skills/orc/SKILL.md` (**Standards**, step 1, steps 4 and 5, **Cleanup runs**, **Discoveries**, and **Model selection**), every file under `skills/orc/references/`, `UPDATE.md`, `agents/implementer.md`, `agents/design-reviewer.md`, `agents/comment-reviewer.md`, `agents/ui-reviewer.md`, `agents/quality-reviewer.md`, `agents/architecture-reviewer.md`, and `agents/verifier.md`.
+
+---
+
 ## [1.6.1] - 2026-09-22
 
 **Summary.** Moves the three routine reviewers back to Sonnet 5 and lowers the verifier's effort. Security review and verification stay on Opus 5.5. The routine reviewers only need to not miss real problems, because the Opus 5.5 verifier filters out their false positives. Keeping them at `high` effort on Sonnet 5 costs less per task without weakening the security path.

@@ -12,7 +12,7 @@ Work the phases in order.
 
 ## Phase 1 — Locate the current install and the new kit
 
-1. Find the installed pack: `.claude/skills/orc/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers. Read the recorded version from `.claude/orc-pack.provenance.md`.
+1. Find the installed pack: `.claude/skills/orc/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers, plus the `.claude/skills/orc/references/` directory beside the skill. Read the recorded version from `.claude/orc-pack.provenance.md`.
 2. Have the new kit checked out somewhere outside the repo (the user points you at it).
 3. Compare versions. If the kit is not newer, there's nothing to do — say so and stop.
 
@@ -23,7 +23,8 @@ Work the phases in order.
 For every kit file (the mapping table in `INSTALL.md` Phase 2 is authoritative):
 
 - **File has a `pack:` marker** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits the repo made since (its git history for that file shows them).
-- **File has no `pack:` marker** → the repo's own artifact. Do not clobber it; route through `INSTALL.md` Phase 3 conflict handling.
+- **File has no `pack:` marker** → the repo's own artifact. Do not clobber it; route through `INSTALL.md` Phase 3 conflict handling. The one exception is the reference directory:
+- **Reference files are pack-owned.** Files under `.claude/skills/orc/references/` carry no `pack:` marker, but they belong to the pack whenever `.claude/skills/orc/SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
 - **A new agent or skill in the kit that isn't in the repo yet** → copy it in, same as a fresh install.
 - **A file the new kit dropped** → remove the stale copy and note it in the report.
 
