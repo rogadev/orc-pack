@@ -1,6 +1,6 @@
 ---
 name: update-orc
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 5.5) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 

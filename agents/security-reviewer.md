@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Security specialist. Use when reviewing code for input validation, secret and data exposure, XSS, SSRF, injection, path traversal, and unsafe deserialization. Reviews only the changed code and reports genuine, exploitable issues.
 model: claude-opus-5-5
 effort: high

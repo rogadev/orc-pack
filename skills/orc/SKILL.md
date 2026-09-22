@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list, dispatch implementer and reviewer subagents, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint".
 ---
 
@@ -249,7 +249,9 @@ Each agent's frontmatter also sets an `effort` level, which a dispatch can't ove
 
 The tiers:
 
-- **Implementer, reviewers, verifier, and scout** (`implementer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`, `verifier`, `next-issue-finder`): Opus 5.5 (`claude-opus-5-5`). Opus 5.5 at low effort outscores Sonnet 5 at max, so there is no cheaper judgement tier worth dropping to; effort is the cost control. Security and the verifier run at high effort, the per-task reviewers and the implementer at medium, and the scout at low.
+- **Implementer, security reviewer, verifier, and scout** (`implementer`, `security-reviewer`, `verifier`, `next-issue-finder`): Opus 5.5 (`claude-opus-5-5`). The security reviewer runs at high effort, the implementer and the verifier at medium, and the scout at low.
+- **Routine reviewers** (`architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`): Sonnet 5 (`claude-sonnet-5`) at high effort. Recall matters most here: a false positive costs little because the verifier filters it.
+- **Security review and verification always stay on Opus 5.5**, even when the implementer ran on a stronger model. Don't move either down to Sonnet to save cost.
 - **Tooling runners** (`lint`, `typecheck`, `test`, `impact`, `fallow`): Haiku (`haiku`). They run a command and relay its output; the alias follows Haiku releases.
 - **Fix rounds:** if a blocking finding survives two fix rounds, run round three's implementer on Fable 5.1 (`claude-fable-5-1`), the one model above Opus 5.5 for work it keeps getting wrong.
 

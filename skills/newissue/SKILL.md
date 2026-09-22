@@ -1,6 +1,6 @@
 ---
 name: newissue
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
 ---
 

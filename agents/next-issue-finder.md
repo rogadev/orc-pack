@@ -1,6 +1,6 @@
 ---
 name: next-issue-finder
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Scout for undirected /orc runs — surveys the GitHub issue board, picks the next issue with orc's four-signal ruleset, and returns a structured pick. Read-only; never edits files, git, or the board. Dispatched by orc; skipped on directed runs.
 tools:
   - Bash

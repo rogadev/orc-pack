@@ -38,13 +38,14 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 Each agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter. The split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
 - **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `impact`, `fallow`. Haiku doesn't support `effort`, so these carry no `effort:` line. The alias follows new Haiku releases.
-- **Opus 5.5** (`claude-opus-5-5`) — every agent that makes a judgement call, with `effort` as the cost control:
-  - `high` — `security-reviewer`, `verifier`, `skill-vetter`, `dependency-vetter`, `orc-updater`: the highest-stakes or rarely run jobs.
-  - `medium` (Opus 5.5's default) — `implementer`, `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`: the per-task work.
+- **Sonnet 5** (`claude-sonnet-5`, `effort: high`) — the routine per-task reviewers: `architecture-reviewer`, `quality-reviewer`, `test-coverage-reviewer`. The Opus 5.5 verifier filters their false positives, so what matters is recall, and `high` protects it.
+- **Opus 5.5** (`claude-opus-5-5`) — every other agent that makes a judgement call, with `effort` as the cost control:
+  - `high` — `security-reviewer`, `skill-vetter`, `dependency-vetter`, `orc-updater`: security work, plus jobs that run too rarely for effort to matter to cost.
+  - `medium` (Opus 5.5's default) — `implementer`, `verifier`: the per-task and per-round work.
   - `low` — `next-issue-finder`, `docs-writer`: triage and prose.
 - **Fable 5.1** (`claude-fable-5-1`) — never a frontmatter default. Orc uses it only for the round-three implementer when a blocking finding survives two fix rounds.
 
-There is no Sonnet tier: on the Artificial Analysis Intelligence Index (2026-09-22), Opus 5.5 at `low` effort scores 42 and Sonnet 5 at `max` scores 38, so Opus 5.5 at a lower effort beats Sonnet 5 at any effort. Revisit the tiers when Sonnet 5.5 and Haiku 5.5 ship.
+Security review and verification stay on Opus 5.5 regardless of cost; only the routine reviewers drop to Sonnet. Sonnet is pinned to the explicit id `claude-sonnet-5` so that moving to Sonnet 5.5 is a decision, not a silent change; Haiku stays on the `haiku` alias because its runners make no judgement calls. Revisit the tiers when Sonnet 5.5 and Haiku 5.5 ship. The effort levels are informed defaults, not measured ones. The cheapest check is to compare verifier-confirmed findings per reviewer and fix rounds per task across real runs.
 
 Claude Code resolves a subagent's model as per-dispatch `model` → frontmatter `model` → `CLAUDE_CODE_SUBAGENT_MODEL` → main model, so the frontmatter is a default and orc can move an agent to another model on a specific dispatch. A dispatch can't change `effort`, so the frontmatter value always applies.
 

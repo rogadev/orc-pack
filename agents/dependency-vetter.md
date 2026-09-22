@@ -1,6 +1,6 @@
 ---
 name: dependency-vetter
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Supply-chain security audit of a third-party package (npm today) at ONE exact resolved version, run BEFORE it is installed or updated. Resolves @latest to a concrete version, then inspects metadata, install scripts, and advisories WITHOUT executing the package. Returns PASS / NEEDS-REVIEW / REJECT. Use to vet fallow — or any third-party tool the pack installs — before the pack installs a version.
 tools:
   - Bash

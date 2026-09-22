@@ -16,6 +16,29 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.6.1] - 2026-09-22
+
+**Summary.** Moves the three routine reviewers back to Sonnet 5 and lowers the verifier's effort. Security review and verification stay on Opus 5.5. The routine reviewers only need to not miss real problems, because the Opus 5.5 verifier filters out their false positives. Keeping them at `high` effort on Sonnet 5 costs less per task without weakening the security path.
+
+**Changed areas.**
+
+- **`agents/architecture-reviewer.md`, `agents/quality-reviewer.md`, `agents/test-coverage-reviewer.md`** — `model: claude-sonnet-5`, `effort: high` (were `claude-opus-5-5`, `medium`). Refresh.
+- **`agents/verifier.md`** — `effort: medium` (was `high`); model unchanged (`claude-opus-5-5`). Refresh.
+- **`skills/orc/SKILL.md`** — **Model selection** now lists the routine reviewers on Sonnet 5 and requires that security review and verification always stay on Opus 5.5. Refresh.
+- **`CLAUDE.md`, `README.md`** — tier descriptions updated to match. Refresh `README.md` if the install carries it.
+
+**Update steps.**
+
+- Refresh the four agent files and `skills/orc/SKILL.md`. If a repo-local edit changed one of those agents' `model:` or `effort:` lines, keep the local choice.
+- Sonnet 5 (`claude-sonnet-5`) must be available to the account or platform.
+- No re-vet, CI, or environment change is required.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/orc/SKILL.md` (**Model selection**), `CLAUDE.md` (**Model assignments are intentional**), and the frontmatter of the four changed agents.
+
+---
+
 ## [1.6.0] - 2026-09-22
 
 **Summary.** Re-tiers every agent for Claude Opus 5.5 (`claude-opus-5-5`, released 2026-09-22). Every agent that makes a judgement call now runs on Opus 5.5, and a new `effort:` frontmatter line sets how hard each one thinks. The Sonnet tier is gone: on the Artificial Analysis Intelligence Index, Opus 5.5 at `low` effort (42) outscores Sonnet 5 at `max` (38). Opus 4.8 is no longer used anywhere. The Opus 5 ban now names only the 5.0 release (`claude-opus-5`), and orc recommends Opus 5.5 as the model to run it on. The five command runners stay on Haiku.

@@ -1,9 +1,9 @@
 ---
 name: architecture-reviewer
-pack: orc-pack@1.6.0
+pack: orc-pack@1.6.1
 description: Software architecture specialist. Use when reviewing structure, module boundaries, framework-convention correctness, data flow, and where code lives. Use proactively during code reviews.
-model: claude-opus-5-5
-effort: medium
+model: claude-sonnet-5
+effort: high
 tools:
   - Read
   - Grep
