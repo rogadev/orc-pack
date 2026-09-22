@@ -6,8 +6,6 @@ Under the hood it runs **subagent-driven development**. The orchestrator keeps i
 
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
 
-> **Run it on Opus 5.5.** Orc is tuned for Opus 5.5 (`claude-opus-5-5`) and drives well on any strong Claude model except **Opus 5** (`claude-opus-5`, the 5.0 release), which hallucinated and drifted off task in our testing. The skill refuses to start on Opus 5. Opus 5.5 fixed those problems and is a different model, so it's the recommended one. Inside a run, orc puts picking the next issue, implementing, security review, and verifying on Opus 5.5, puts the routine architecture, quality, and test-coverage reviews on Sonnet 5, and runs lint, typecheck, and tests on Haiku. Each agent's effort level is tuned to its job. There's also one setup step you'll almost certainly need: turning the to-do list tool back on. See ["Turn on the to-do list"](#turn-on-the-to-do-list-newer-models) below.
-
 ---
 
 ## The three ways to run it
