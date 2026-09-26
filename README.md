@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.8.0:** orc keeps its prompt cache warm while subagents run, catches stalled agents on each heartbeat, and stops at a context limit, so long runs no longer pay to re-cache their whole context. See the [changelog](CHANGELOG.md#180---2026-09-25) for what changed.
+> **New in v1.8.0:** orc keeps a heartbeat on its prompt cache while subagents run, so a long wait no longer forces it to re-cache its whole context at twice the price. See the [changelog](CHANGELOG.md#180---2026-09-25) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 

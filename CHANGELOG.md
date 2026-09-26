@@ -18,28 +18,22 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ## [1.8.0] - 2026-09-25
 
-**Summary.** Stops long runs from paying to re-cache the orchestrator's whole context. The prompt cache lasts about an hour, and orc makes no requests while a subagent runs, so any wait longer than that forced the next turn to re-cache the full context at about twice the input price (a warm read costs about a tenth). Orc now keeps a background heartbeat timer while agents run, uses each heartbeat to catch a stalled agent, gives every dispatch a time budget, and stops at a context limit the same way it stops at the run budget.
+**Summary.** Stops orc from paying to re-cache its whole context after a long subagent wait. The prompt cache lasts about an hour, and orc makes no requests while a subagent runs, so any wait longer than that made the next turn re-cache the full context at about twice the input price (a warm read costs about a tenth). Orc now keeps a background heartbeat timer while agents run, so the main thread touches its cache before it expires.
 
 **Changed areas.**
 
-- **`skills/orc/SKILL.md`**:
-  - New **Waiting on subagents** section. Before ending a turn to wait on a subagent, orc starts a background timer of about 50 minutes (for example, `sleep 3000`). Each wake reads the still-warm cache, checks running agents for stalls, stops and re-dispatches any stuck one, and re-arms the timer. Every dispatch has a 45-minute budget. When orc's own context passes about 200k tokens, it finishes the task in flight, runs **Ready**, lands what is green, and reports the rest under **Your call**.
-  - **Outcomes** — a run that stops at that context limit with work landed is `FINISHED`, like a run that reaches the run budget.
+- **`skills/orc/SKILL.md`** — new **Waiting on subagents** section. Before ending a turn to wait on a subagent, orc starts a background timer of about 50 minutes (for example, `sleep 3000`). Each wake reads the still-warm cache, re-arms the timer if agents are still running, and ends. Orc stops the timer when the last agent finishes.
 - **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.8.0`. No other agent content changed.
 
 **Update steps.**
 
 - Refresh `skills/orc/SKILL.md`, and re-apply any repo-local edits the install's history shows.
 - Update the `pack:` marker on every agent and skill file to `orc-pack@1.8.0`; their bodies are unchanged.
-- The heartbeat needs the main session to be able to run a background shell command that wakes it on exit. Claude Code's Bash tool with `run_in_background` does this. No re-vet, CI, or environment change is required.
+- The heartbeat needs the main session to run a background shell command that wakes it on exit. Claude Code's Bash tool with `run_in_background` does this. No re-vet, CI, or environment change is required.
 
-**Breaking changes.** None to invocation. Behavior changes to expect:
+**Breaking changes.** None. Long runs show a short heartbeat turn about every 50 minutes while agents work.
 
-- Long runs show periodic heartbeat turns while agents work.
-- An agent running past 45 minutes with no visible progress is stopped and its remaining work re-dispatched as a narrower task.
-- A run whose orchestrator context passes about 200k tokens ends `FINISHED` with the rest under **Your call**, where it used to keep going.
-
-**Files to read.** `skills/orc/SKILL.md` (**Waiting on subagents** and **Outcomes**).
+**Files to read.** `skills/orc/SKILL.md` (**Waiting on subagents**).
 
 ---
 

@@ -54,18 +54,9 @@ As soon as you know what the work decomposes into (after **Make it buildable**),
 
 ## Waiting on subagents
 
-Your context is cached between turns, and the cache lasts about an hour. While a subagent runs you make no requests, so a wait longer than an hour lets the cache expire, and your next turn re-caches your whole context at about twice the normal input price instead of reading it at about a tenth. On a long run that's the single largest avoidable cost. Three habits keep it down.
+Your context is cached between turns, and the cache lasts about an hour. While a subagent runs you make no requests, so a wait longer than that lets the cache expire, and when the subagent returns your next turn re-caches your whole context at about twice the normal input price instead of reading it at about a tenth.
 
-**Keep a heartbeat while anything runs in the background.** Before you end a turn to wait on a subagent, start a background timer shorter than the cache: a background shell command such as `sleep 3000` (50 minutes). Its completion wakes you, and that turn reads your context from the still-warm cache, which also resets its expiry. Each heartbeat turn does two things and ends:
-
-- **Checks for a stalled agent.** Look at each running agent's elapsed time and whether its output is still moving. An agent past its **dispatch budget**, or one making no visible progress since the last heartbeat, is stuck: stop it, and re-dispatch the remaining work as a narrower task with what it already produced. A stopped agent's partial edits are still in the working tree; diff before re-dispatching so the new agent starts from what is actually there.
-- **Re-arms the timer** if anything is still running.
-
-A heartbeat turn carries no status summary. When the last agent finishes, stop the timer so it doesn't wake you mid-task. Don't shorten the interval to "stay extra warm"; one read an hour is the whole cost, and more frequent wakes just add turns.
-
-**Give every dispatch a time budget.** Size tasks so an implementer finishes in well under an hour, and treat 45 minutes as the budget for any one dispatch. A review lane or a docs edit that runs past it is almost never slow; it's looping. The heartbeat is where you catch it.
-
-**Keep your own context small.** A cold cache costs in proportion to your context, so a lean orchestrator pays little even when a wait outruns the heartbeat. Take each agent's verdict and paths, not its transcript. Don't read report files end to end when the finding list is what you need. When your context passes about **200k tokens**, treat it like the **Run budget**: finish the task in flight, run **Ready**, land what is green, and report the remainder under **Your call** so a fresh run picks it up with a clean context.
+**Keep a heartbeat while anything runs in the background.** Before you end a turn to wait on a subagent, start a background timer shorter than the cache: a background shell command such as `sleep 3000` (50 minutes). Its completion wakes you, and that turn reads your context from the still-warm cache, which resets its expiry. A heartbeat turn only re-arms the timer if anything is still running, then ends; it carries no status summary. When the last agent finishes, stop the timer so it doesn't wake you mid-task. Don't shorten the interval to stay extra warm: one read per hour is the whole cost, and more frequent wakes only add turns.
 
 ## Untrusted input
 
@@ -347,7 +338,7 @@ The tiers:
 
 Three, and only three.
 
-**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget**, or stopped at the context limit in **Waiting on subagents**, with work landed is `FINISHED`; name the remainder under **Your call**.
+**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget** with work landed is `FINISHED`; name the remainder under **Your call**.
 
 **FINISHED (no build).** Nothing to build — no open issues, every one reached rung e, or a cleanup audit found the target already meets the standards — _and_ the run shows it: evidence comments, labels, filed discoveries, or the audit's scope and verdict in the report. A `FINISHED (no build)` that changed nothing is a failed run wearing a success label.
 
