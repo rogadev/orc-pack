@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.7.0:** shared code, comment, structure, and UI standards; framework playbooks for Next.js, Nuxt, SvelteKit, and Astro; design, comment, and UI reviewers; per-task sizing so each change gets only the review it needs; and a cleanup mode for slop code and comments. Orc runs its judgement agents on Claude Opus 5.5. See the [changelog](CHANGELOG.md#170---2026-09-22) for what changed.
+> **New in v1.8.0:** orc keeps its prompt cache warm while subagents run, catches stalled agents on each heartbeat, and stops at a context limit, so long runs no longer pay to re-cache their whole context. See the [changelog](CHANGELOG.md#180---2026-09-25) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 

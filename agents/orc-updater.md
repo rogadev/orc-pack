@@ -1,6 +1,6 @@
 ---
 name: orc-updater
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Applies orc-pack releases to an installed copy, from any older version to the latest in one pass. Reads the in-range changelog sections and the fetched kit's UPDATE.md, converges the install on the target kit without clobbering repo-local files, re-records provenance, and reports what changed. Dispatched by /update-orc; runs on Opus 5.5.
 tools:
   - Read

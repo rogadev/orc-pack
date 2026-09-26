@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch an implementer and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -51,6 +51,21 @@ As soon as you know what the work decomposes into (after **Make it buildable**),
 > If the task tools aren't available (switched off for this model or Claude Code version), keep an explicit inline checklist and work it the same way.
 
 **Run budget.** Cap the run at a set number of tasks — default **8**, overridable by a `## orc budget` note in `CLAUDE.md`/`AGENTS.md` or a count in the invocation. The cap counts tasks you add during the run too, because Discoveries expands scope and the budget is what keeps that expansion bounded. When you reach it: finish the task in flight, run **Ready**, land what is green, and report the remainder under **Your call** with what is left — do not start new work past the cap. A budgeted stop is a `FINISHED` run, not a `NOT FINISHED` one; the cap is a deliberate scope line, not a blocker.
+
+## Waiting on subagents
+
+Your context is cached between turns, and the cache lasts about an hour. While a subagent runs you make no requests, so a wait longer than an hour lets the cache expire, and your next turn re-caches your whole context at about twice the normal input price instead of reading it at about a tenth. On a long run that's the single largest avoidable cost. Three habits keep it down.
+
+**Keep a heartbeat while anything runs in the background.** Before you end a turn to wait on a subagent, start a background timer shorter than the cache: a background shell command such as `sleep 3000` (50 minutes). Its completion wakes you, and that turn reads your context from the still-warm cache, which also resets its expiry. Each heartbeat turn does two things and ends:
+
+- **Checks for a stalled agent.** Look at each running agent's elapsed time and whether its output is still moving. An agent past its **dispatch budget**, or one making no visible progress since the last heartbeat, is stuck: stop it, and re-dispatch the remaining work as a narrower task with what it already produced. A stopped agent's partial edits are still in the working tree; diff before re-dispatching so the new agent starts from what is actually there.
+- **Re-arms the timer** if anything is still running.
+
+A heartbeat turn carries no status summary. When the last agent finishes, stop the timer so it doesn't wake you mid-task. Don't shorten the interval to "stay extra warm"; one read an hour is the whole cost, and more frequent wakes just add turns.
+
+**Give every dispatch a time budget.** Size tasks so an implementer finishes in well under an hour, and treat 45 minutes as the budget for any one dispatch. A review lane or a docs edit that runs past it is almost never slow; it's looping. The heartbeat is where you catch it.
+
+**Keep your own context small.** A cold cache costs in proportion to your context, so a lean orchestrator pays little even when a wait outruns the heartbeat. Take each agent's verdict and paths, not its transcript. Don't read report files end to end when the finding list is what you need. When your context passes about **200k tokens**, treat it like the **Run budget**: finish the task in flight, run **Ready**, land what is green, and report the remainder under **Your call** so a fresh run picks it up with a clean context.
 
 ## Untrusted input
 
@@ -332,7 +347,7 @@ The tiers:
 
 Three, and only three.
 
-**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget** with work landed is `FINISHED`; name the remainder under **Your call**.
+**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget**, or stopped at the context limit in **Waiting on subagents**, with work landed is `FINISHED`; name the remainder under **Your call**.
 
 **FINISHED (no build).** Nothing to build — no open issues, every one reached rung e, or a cleanup audit found the target already meets the standards — _and_ the run shows it: evidence comments, labels, filed discoveries, or the audit's scope and verdict in the report. A `FINISHED (no build)` that changed nothing is a failed run wearing a success label.
 

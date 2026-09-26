@@ -1,6 +1,6 @@
 ---
 name: design-reviewer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Reviews an implementer's design brief BEFORE any code is written - placement, separation of concerns, reuse, data flow, contracts, and for UI work the states, theme fit, and interaction design. Returns APPROVED or REVISE with specific changes. Use for structural tasks (new modules, routes, components, data flows, or UI features) so design mistakes are caught before they become a diff.
 model: claude-opus-5-5
 effort: medium

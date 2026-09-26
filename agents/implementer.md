@@ -1,6 +1,6 @@
 ---
 name: implementer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Implements one task from an orchestrator's plan - writes a design brief first when asked, then the code and its tests together to the pack's code, comment, structure, and UI standards, runs the covering tests, and reports the exact command and output. Cleans up slop in the files it touches. Never commits; the orchestrator owns git history. Dispatched by orc.
 tools:
   - Read

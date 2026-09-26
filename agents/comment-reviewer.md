@@ -1,6 +1,6 @@
 ---
 name: comment-reviewer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Comment and documentation-comment specialist. Applies the cold-read test to every comment in the files a change touches - flags AI slop comments (conversation residue, narration, stale or orphan comments), missing or malformed JSDoc on exports, and comments that do not make sense without the conversation that produced them. Use during code review of any source change, and in cleanup audits.
 model: claude-opus-5-5
 effort: low

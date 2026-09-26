@@ -1,6 +1,6 @@
 ---
 name: quality-reviewer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Code quality specialist - readability, clean code, AI slop code, type safety, error handling, async and state correctness, reuse, and performance. Holds a change to a high bar of clean, well-written, easy-to-read code. Use during code review of any code change, and in cleanup audits. Covers everything outside security, architecture, UI/UX, comments, and test coverage.
 model: claude-opus-5-5
 effort: medium
