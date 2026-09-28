@@ -1,6 +1,6 @@
 # Code standard
 
-The implementer writes to this standard and the reviewers check against it. It applies to every language the repo uses, with examples in TypeScript because that is where most of the pack's work lands.
+Every builder writes to this standard and the reviewers check against it. It applies to every language the repo uses, with examples in TypeScript because that is where most of the pack's work lands.
 
 ## Precedence
 

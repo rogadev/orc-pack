@@ -4,7 +4,17 @@
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
 
-Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, implementers that write the code, a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
+Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, specialist builders that write the code (UI, API, data, and a general builder for everything else), a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
+
+![Animation: one AI agent's context window fills and it starts cutting corners, then an orchestrator splits the same job across specialist subagents](docs/media/orchestrator-explainer.gif)
+
+_An illustration of the idea; the figures are illustrative, not benchmarks. In orc, specialist builders take UI, API, and data tasks one at a time, and specialist reviewers check every diff._ [Watch in higher quality (MP4)](docs/media/orchestrator-explainer.mp4)
+
+### Why an orchestrator?
+
+An agent does its most careful work while its context window has room to spare. As one window fills past about three-quarters, it starts skimming files, assuming interfaces, and deferring tests. Orc keeps every window small by giving each subagent one focused brief, so even the busiest window in a run stays well under that line.
+
+![Chart: the busiest context window and an illustrative quality score for four runs. One tight task, 20% full, scores 96; a bigger job, 51%, scores 84; a rabbit hole, 85%, scores 55; the same job with an orchestrator, 34% in its busiest window, scores 94](docs/media/orchestrator-four-runs.png)
 
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
 
@@ -67,7 +77,10 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | Agent                    | Role                                                                                                                      |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                                |
-| `implementer`            | Writes the code and its tests for one task; never commits — orc owns the history                                          |
+| `implementer`            | General builder: tooling, config, scripts, cross-cutting changes, and cleanup runs, plus any task no specialist fits      |
+| `ui-implementer`         | Builds components, pages, styles, and copy on the repo's design system, with every state, keyboard support, and themes    |
+| `api-implementer`        | Builds endpoints, services, integrations, and jobs: boundary validation, error contracts, authorization, bounded retries  |
+| `data-implementer`       | Writes schema changes, migrations, backfills, and indexes; runs them only against a local or test database                |
 | `orc-updater`            | Applies an orc-pack release to an installed copy, converging it on the target kit (runs on Opus 5.5; used by /update-orc) |
 | `lint`                   | Runs the repo's lint/format chain, reports raw results                                                                    |
 | `typecheck`              | Runs the repo's type checker                                                                                              |
@@ -86,6 +99,8 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 | `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                                 |
 | `dependency-vetter`      | Supply-chain security vet of a package version (fallow) before install/update                                             |
 
+Every builder writes code and tests together and never commits; orc owns the history. Orc assigns each task the builder for its main surface and runs builders one at a time, because concurrent writers conflict. There is no security or architecture builder on purpose: security is a lens on code written in some other domain, and architecture is checked before building (the design review of the brief) and after (the architecture review of the diff).
+
 Orc doesn't run every reviewer on every change. It **sizes each task** — trivial, standard, or structural — and dispatches only the reviewers that the size and the diff's surfaces call for. A one-line copy fix gets a single reviewer; a change to an upload handler wakes the security reviewer; a new screen gets a design review before any code is written and a UI review after. The verifier drops findings that are only a matter of taste, so no fix round is spent on preference.
 
 The reviewers, tooling runners, and the scout are all also useful on their own, outside of orc — for example during a manual code review.
@@ -94,12 +109,14 @@ The reviewers, tooling runners, and the scout are all also useful on their own, 
 
 ## The standards
 
-The quality bar lives in `skills/orc/references/`, and the implementer writes to the same files the reviewers check against, so most problems never reach a review:
+The quality bar lives in `skills/orc/references/`, and the builders write to the same files the reviewers check against, so most problems never reach a review:
 
 - **`standards/code.md`** — readability, types, errors, async, state, reuse, and a named list of AI slop code patterns (defensive noise, pass-through layers, reinvented utilities, synced state, and more).
 - **`standards/comments.md`** — the cold-read test (every comment must make sense to someone who sees only the file), JSDoc on exports following Google's style guides, and the slop comments to remove.
 - **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
 - **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
+- **`standards/data.md`** — migrations, expand/contract changes, locks, backfills, indexes, and query safety.
+- **`builder-contract.md`** — the rules every builder shares: the dispatch, brief and build modes, scope, no commits, no suppressions, fix rounds, and the report.
 - **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when orc detects that stack, and tells the agents to trust the installed version's docs over the playbook.
 
 Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch are listed in the report as cleanup targets, not rewritten on the side.
@@ -197,7 +214,7 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
 3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
 4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
-5. **Design → build → review → fix, looping.** Per task: for structural work, the implementer writes a short design brief and the design reviewer approves it first; then the implementer writes code and tests to the shared standards; the reviewers that apply check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives and matters of taste; real defects and warnings go back for a fix. Bounded at three rounds so it can't loop forever.
+5. **Design → build → review → fix, looping.** Per task: orc assigns the builder for the task's surface (UI, API, data, or general); for structural work, that builder writes a short design brief and the design reviewer approves it first; then the builder writes code and tests to the shared standards; the reviewers that apply check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives and matters of taste; real defects and warnings go back for a fix. Bounded at three rounds so it can't loop forever.
 6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. The one exception is quality debt in files the run doesn't touch: those are listed in the report as cleanup targets for a later `/orc clean up …` run, so a small issue never turns into a sweep of the codebase. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
 8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
