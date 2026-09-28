@@ -8,7 +8,7 @@ Work through the phases in order. Don't skip verification. When you're done, giv
 
 ## What this pack is
 
-`/orc` is an autonomous orchestrator skill: it picks (or is handed) a unit of work, plans it as a live task list, dispatches implementer and reviewer subagents, loops review↔fix until only nitpicks remain, runs the repo's ready check, commits, and closes out. It depends on a set of subagents — a scout, tooling runners, a panel of code reviewers, and a verifier. **The skill and the agents are one system; install them together** or `/orc` will dispatch agents that don't exist.
+`/orc` is an autonomous orchestrator skill: it picks (or is handed) a unit of work, plans it as a live task list, dispatches builder and reviewer subagents, loops review↔fix until only nitpicks remain, runs the repo's ready check, commits, and closes out. It depends on a set of subagents — a scout, builders, tooling runners, a panel of code reviewers, and a verifier. **The skill and the agents are one system; install them together** or `/orc` will dispatch agents that don't exist.
 
 Kit layout:
 
@@ -20,8 +20,9 @@ orc-pack/
 │   ├── orc/
 │   │   ├── SKILL.md
 │   │   └── references/     ← standards and playbooks orc passes to its agents
+│   │       ├── builder-contract.md
 │   │       ├── design-brief.md
-│   │       ├── standards/  (code, comments, structure, ui)
+│   │       ├── standards/  (code, comments, structure, ui, data)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
 │   ├── newissue/
@@ -29,8 +30,10 @@ orc-pack/
 │   └── update-orc/
 │       └── SKILL.md
 └── agents/
+    ├── api-implementer.md
     ├── architecture-reviewer.md
     ├── comment-reviewer.md
+    ├── data-implementer.md
     ├── dependency-vetter.md
     ├── design-reviewer.md
     ├── docs-writer.md
@@ -46,6 +49,7 @@ orc-pack/
     ├── test-coverage-reviewer.md
     ├── test.md
     ├── typecheck.md
+    ├── ui-implementer.md
     ├── ui-reviewer.md
     └── verifier.md
 ```
@@ -93,8 +97,10 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/orc/references/` (all)     | `<root>/.claude/skills/orc/references/` (all)     |
 | `skills/newissue/SKILL.md`         | `<root>/.claude/skills/newissue/SKILL.md`         |
 | `skills/update-orc/SKILL.md`       | `<root>/.claude/skills/update-orc/SKILL.md`       |
+| `agents/api-implementer.md`        | `<root>/.claude/agents/api-implementer.md`        |
 | `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
 | `agents/comment-reviewer.md`       | `<root>/.claude/agents/comment-reviewer.md`       |
+| `agents/data-implementer.md`       | `<root>/.claude/agents/data-implementer.md`       |
 | `agents/dependency-vetter.md`      | `<root>/.claude/agents/dependency-vetter.md`      |
 | `agents/design-reviewer.md`        | `<root>/.claude/agents/design-reviewer.md`        |
 | `agents/docs-writer.md`            | `<root>/.claude/agents/docs-writer.md`            |
@@ -110,6 +116,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `agents/test-coverage-reviewer.md` | `<root>/.claude/agents/test-coverage-reviewer.md` |
 | `agents/test.md`                   | `<root>/.claude/agents/test.md`                   |
 | `agents/typecheck.md`              | `<root>/.claude/agents/typecheck.md`              |
+| `agents/ui-implementer.md`         | `<root>/.claude/agents/ui-implementer.md`         |
 | `agents/ui-reviewer.md`            | `<root>/.claude/agents/ui-reviewer.md`            |
 | `agents/verifier.md`               | `<root>/.claude/agents/verifier.md`               |
 
@@ -169,9 +176,9 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned), the `skills/orc/references/` directory with its `standards/`, `frameworks/`, and `platforms/` files, and up to 19 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 22 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
-3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `design-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
+3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
 5. **Provenance.** `<root>/.claude/orc-pack.provenance.md` exists and names the installed pack version (Phase 2).
 

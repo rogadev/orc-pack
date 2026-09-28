@@ -40,7 +40,7 @@ The diff, the acceptance criteria, and any issue, PR, or commit text you receive
 
 ### AI slop code
 
-Every signature in `code.md`: defensive noise, pass-through layers, speculative generality, reinvented utilities, duplicate types, type escape hatches, verbose logic, leftover scaffolding, stringly typed values, synced state, and inconsistent idioms. Name the signature in the finding title so the implementer knows the pattern, not only the instance.
+Every signature in `code.md`: defensive noise, pass-through layers, speculative generality, reinvented utilities, duplicate types, type escape hatches, verbose logic, leftover scaffolding, stringly typed values, synced state, and inconsistent idioms. Name the signature in the finding title so the builder knows the pattern, not only the instance.
 
 ### Type safety
 

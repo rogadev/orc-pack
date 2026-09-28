@@ -1,6 +1,6 @@
 # Structure standard
 
-Separation of concerns and file and folder layout. The implementer writes to it, the `design-reviewer` checks design briefs against it, and the `architecture-reviewer` checks diffs against it. The loaded framework playbook adds the framework's own rules on top.
+Separation of concerns and file and folder layout. Every builder writes to it, the `design-reviewer` checks design briefs against it, and the `architecture-reviewer` checks diffs against it. The loaded framework playbook adds the framework's own rules on top.
 
 ## Precedence
 

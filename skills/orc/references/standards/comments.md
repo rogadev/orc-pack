@@ -1,6 +1,6 @@
 # Comments standard
 
-The implementer writes to this standard, and the `comment-reviewer` and `docs-writer` check against it. It follows the Google TypeScript and JavaScript style guides. Where the repo documents its own commenting rules, the repo wins.
+Every builder writes to this standard, and the `comment-reviewer` and `docs-writer` check against it. It follows the Google TypeScript and JavaScript style guides. Where the repo documents its own commenting rules, the repo wins.
 
 ## The cold-read test
 

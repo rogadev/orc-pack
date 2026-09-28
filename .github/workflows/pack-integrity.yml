@@ -85,7 +85,7 @@ jobs:
           refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/update-orc/SKILL.md | tr -d '`' | sort -u)
           for name in $refs; do
             case "$name" in
-              *-reviewer | *-finder | *-vetter | *-writer | *-updater | implementer | verifier | fallow | lint | typecheck | test | impact) ;;
+              *-reviewer | *-finder | *-vetter | *-writer | *-updater | *-implementer | implementer | verifier | fallow | lint | typecheck | test | impact) ;;
               *) continue ;;
             esac
             if [ ! -f "agents/$name.md" ]; then
@@ -97,7 +97,7 @@ jobs:
           # 4. Every reference file the orc skill names exists. Orc hands these
           # paths to its agents; a missing one silently drops a standard.
           REF_ROOT=skills/orc/references
-          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`|`design-brief\.md`' skills/orc/SKILL.md | tr -d '`' | sort -u)
+          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`|`(design-brief|builder-contract)\.md`' skills/orc/SKILL.md | tr -d '`' | sort -u)
           for ref in $prefs; do
             if [ ! -f "$REF_ROOT/$ref" ]; then
               echo "::error file=skills/orc/SKILL.md::names reference '$ref' but $REF_ROOT/$ref does not exist"
