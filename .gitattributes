@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Media is binary: never normalize line endings or diff it as text
+*.gif binary
+*.mp4 binary
+*.png binary

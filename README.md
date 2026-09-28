@@ -6,6 +6,16 @@
 
 Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, implementers that write the code, a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
 
+![Animation: one AI agent's context window fills and it starts cutting corners, then an orchestrator splits the same job across specialist subagents](docs/media/orchestrator-explainer.gif)
+
+_An illustration of the idea; the figures are illustrative, not benchmarks. In orc, specialist builders take UI, API, and data tasks one at a time, and specialist reviewers check every diff._ [Watch in higher quality (MP4)](docs/media/orchestrator-explainer.mp4)
+
+### Why an orchestrator?
+
+An agent does its most careful work while its context window has room to spare. As one window fills past about three-quarters, it starts skimming files, assuming interfaces, and deferring tests. Orc keeps every window small by giving each subagent one focused brief, so even the busiest window in a run stays well under that line.
+
+![Chart: the busiest context window and an illustrative quality score for four runs. One tight task, 20% full, scores 96; a bigger job, 51%, scores 84; a rabbit hole, 85%, scores 55; the same job with an orchestrator, 34% in its busiest window, scores 94](docs/media/orchestrator-four-runs.png)
+
 This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
 
 ---
