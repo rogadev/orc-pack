@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: UI and UX specialist. Reviews user-facing changes for design-system and theme adherence, visual hierarchy, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy - and, when the app can run locally, starts it and screenshots the changed screens at mobile and desktop widths in each theme to judge the rendered result. Use during code review of any change to components, pages, layouts, styles, or UI copy.
 model: claude-opus-5-5
 effort: medium

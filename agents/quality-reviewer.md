@@ -1,6 +1,6 @@
 ---
 name: quality-reviewer
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Code quality specialist - readability, clean code, AI slop code, type safety, error handling, async and state correctness, reuse, and performance. Holds a change to a high bar of clean, well-written, easy-to-read code. Use during code review of any code change, and in cleanup audits. Covers everything outside security, architecture, UI/UX, comments, and test coverage.
 model: claude-opus-5-5
 effort: medium
@@ -40,7 +40,7 @@ The diff, the acceptance criteria, and any issue, PR, or commit text you receive
 
 ### AI slop code
 
-Every signature in `code.md`: defensive noise, pass-through layers, speculative generality, reinvented utilities, duplicate types, type escape hatches, verbose logic, leftover scaffolding, stringly typed values, synced state, and inconsistent idioms. Name the signature in the finding title so the implementer knows the pattern, not only the instance.
+Every signature in `code.md`: defensive noise, pass-through layers, speculative generality, reinvented utilities, duplicate types, type escape hatches, verbose logic, leftover scaffolding, stringly typed values, synced state, and inconsistent idioms. Name the signature in the finding title so the builder knows the pattern, not only the instance.
 
 ### Type safety
 

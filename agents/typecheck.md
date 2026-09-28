@@ -1,6 +1,6 @@
 ---
 name: typecheck
-pack: orc-pack@1.7.0
+pack: orc-pack@1.8.0
 description: Run the repo's type checker and report raw results. Use when you need to verify type safety before or after code changes.
 tools:
   - Bash
