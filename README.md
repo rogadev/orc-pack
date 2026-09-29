@@ -1,8 +1,8 @@
 # The orc pack
 
-> **New in v1.8.0:** orc keeps a heartbeat on its prompt cache while subagents run, so a long wait no longer forces it to re-cache its whole context at twice the price. See the [changelog](CHANGELOG.md#180---2026-09-25) for what changed.
+> **New in v1.9.0:** start orc on Sonnet 5.5 for [efficiency mode](#pick-a-model-default-or-efficiency-mode), a lower token bill at slightly lower quality, and the test-coverage reviewer now runs on Sonnet 5.5. See the [changelog](CHANGELOG.md#190---2026-09-28) for what changed.
 
-`/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off, walk away, come back to a finished issue and a written summary of what it did and why.
+`/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Sonnet 5.5, after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
 Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, specialist builders that write the code (UI, API, data, and a general builder for everything else), a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
 
@@ -28,7 +28,7 @@ This pack contains the `/orc` skill plus all the agents it relies on, written to
 /orc
 ```
 
-With no argument, orc dispatches a lightweight scout agent (`next-issue-finder`, on Opus 5.5 at low effort) that reads your GitHub issue board and picks the single highest-value issue to work on next, using a four-signal ruleset: does it unblock other work, how severe/impactful is it, how ready is it to execute, and how old is it. Then it runs the whole build-review-commit-close cycle on that issue.
+With no argument, orc dispatches a lightweight scout agent (`next-issue-finder`, on Opus 5.5 at low effort, or Sonnet 5.5 in [efficiency mode](#pick-a-model-default-or-efficiency-mode)) that reads your GitHub issue board and picks the single highest-value issue to work on next, using a four-signal ruleset: does it unblock other work, how severe/impactful is it, how ready is it to execute, and how old is it. Then it runs the whole build-review-commit-close cycle on that issue.
 
 **2. Directed at an issue — "do this specific one."**
 
@@ -61,6 +61,33 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 - **`FINISHED`** — work landed, green, pushed, issue closed.
 - **`FINISHED (no build)`** — there was genuinely nothing to build (empty board, or every issue was blocked), so it did board work instead — filed evidence, labels, new issues.
 - **`NOT FINISHED`** — a real human-only blocker (dirty tree, missing credential, a decision only you can make). It tells you exactly what to do to unblock it.
+
+---
+
+## Pick a model: default or efficiency mode
+
+The model you start orc on sets how it spends tokens.
+
+- **Opus 5.5 (`claude-opus-5-5`) — the default.** Orc starts right away and runs with its full quality settings. Use this when quality matters most.
+- **Sonnet 5.5 (`claude-sonnet-5-5`) — efficiency mode.** Orc first asks you to confirm, then runs just as autonomously. Expect a lower token bill and slightly lower quality.
+
+In efficiency mode, orc itself runs on Sonnet 5.5, the model you started it on. It also moves three smaller jobs from Opus 5.5 to Sonnet 5.5:
+
+- **Picking the next issue.** Orc still checks the pick before building.
+- **Building a trivial task**, such as a typo, a constant, or a copy change. The task's reviewer still checks it on Opus 5.5.
+- **A first round of fixes for minor review findings.** Anything blocking, or anything from the security reviewer, stays on Opus 5.5, and an Opus 5.5 reviewer re-checks the fix.
+
+Everything else keeps its usual model: every reviewer and the verifier, data and migration work, and the first build of every larger change. To offset running the coordinator on a cheaper model, orc also leaves more decisions to its Opus agents: it doesn't edit code itself, and it defers to the design reviewer on a disputed design. It skips the verifier only when a task's reviews turn up nothing but nitpicks.
+
+Run Sonnet 5.5 at high effort (`/effort high`) for this mode; Claude Code's default is medium.
+
+To skip the confirmation, for example in a non-interactive run, start the invocation with `efficiency mode`:
+
+```
+/orc efficiency mode 123
+```
+
+The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus 5 (`claude-opus-5`); it refuses to start there.
 
 ---
 
@@ -174,7 +201,7 @@ Every release's notes come from `CHANGELOG.md`, and the release guard refuses to
 
 Orc runs best when it can build its plan as a **live task list** and work it top to bottom — that's how an unsupervised run never drops a step. The task list is orc's spine.
 
-Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8**, **Sonnet 5**, and Fable 5, and likely the models released since, such as Opus 5.5. The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
+Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8**, **Sonnet 5**, and Fable 5, and likely the models released since, such as Opus 5.5 and Sonnet 5.5. The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
 
 **The fix — set one environment variable before launching Claude Code:**
 

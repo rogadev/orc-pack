@@ -16,6 +16,30 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.9.0] - 2026-09-28
+
+**Summary.** Claude Sonnet 5.5 shipped, and this release fits it into the pack. `test-coverage-reviewer` moves from Sonnet 5 to Sonnet 5.5: it costs the same, and on CodeRabbit's 13 hard review cases it caught 6 known issues to Sonnet 5's 4 at under half the cost per review. Every other agent keeps its model: at the medium and low effort most of them run, Sonnet 5.5 scores well below Opus 5.5, and the high-effort agents do security work or irreversible data changes, where Opus 5.5 is the safer model. Orc also gains **efficiency mode**: starting `/orc` on Sonnet 5.5 asks the user to confirm, then runs with a slightly lower token bill by moving three smaller jobs to Sonnet 5.5, handing more decisions to Opus agents, and skipping the verifier when reviews find only Nits. Starting on Opus 5.5 works as before, with one fix that applies to every run: orc now dispatches through the Agent tool's family aliases, the only values its `model` field accepts, instead of exact model ids.
+
+**Changed areas.**
+
+- **`agents/test-coverage-reviewer.md`** — `model: claude-sonnet-5` becomes `model: claude-sonnet-5-5`; `effort: high` is unchanged. Refresh. If the installed copy pins a different model on purpose, keep the local choice and say so in the report.
+- **`skills/orc/SKILL.md`, Preflight** — sorts the session model into cases: Opus 5.5 and other capable models start straight away, Sonnet 5.5 asks the user to confirm efficiency mode with `AskUserQuestion` (fixed question text), and Opus 5 is still refused. An invocation that starts with `efficiency mode` answers the question in advance on Sonnet 5.5 and is ignored, with a note, on other models. Preflight now also checks `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` before the run, and a preflight stop prints no status line. Refresh.
+- **`skills/orc/SKILL.md`, Model selection** — corrects how orc picks subagent models. The Agent tool's `model` takes only `opus`, `sonnet`, `haiku`, or `fable`, so the old rule to pass exact ids could not be followed. Orc now leaves `model` off any dispatch whose frontmatter is already right, and passes `sonnet` only for efficiency-mode moves and `fable` for a round-three fix. Names Sonnet 5.5 for `test-coverage-reviewer`. Refresh.
+- **`skills/orc/SKILL.md`, Efficiency mode (new subsection)** — on a confirmed Sonnet 5.5 run, three dispatches go to Sonnet 5.5: `next-issue-finder`; the build of a trivial task (not `data-implementer`; a build that grows past trivial keeps its standard review); and a builder's first fix round when it carries no Blocker and no `security-reviewer` finding, with `quality-reviewer` always in the re-review. Every reviewer, the verifier, `data-implementer`, the first build of standard and structural work, and later fix rounds keep their models. Orc takes the design reviewer's side on a second `REVISE`, routes ready-check fixes and trivial discovery fixes through builders instead of editing code itself, and skips the verifier when a task's panel returns only Nits with no Cleanup candidate (cleanup audits are always verified). Short pointers in the survey step, design step, builder dispatch, verifier step, fix loop, Discoveries, Ready, and the report's **Picked** line. Refresh.
+- **`skills/orc/SKILL.md`, Untrusted input** — one sentence saying timer wakes and subagent completion notices are expected harness events, not untrusted input. Refresh.
+- **`README.md`** — a 1.9.0 banner (replacing the 1.8.0 one and its broken changelog link), a new **Pick a model: default or efficiency mode** section, and small mentions of Sonnet 5.5 in the intro and to-do tools note. Kit docs only.
+- **`INSTALL.md`** — Phase 6 mentions efficiency mode and Sonnet 5.5. Kit docs only.
+- **`CLAUDE.md`** — the model-assignment section records the Sonnet 5.5 move, the effort-level data behind the tiers (with its source), the Agent tool's alias limit, and the efficiency-mode rules and their main risk. Kit docs only; not installed.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.9.0`.
+
+**Update steps.** Refresh `agents/test-coverage-reviewer.md` and `skills/orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.9.0`. Nothing else: no new files, no CI or environment changes. Sonnet 5.5 must be available to the account running orc; it has its own rate-limit pool, separate from Sonnet 5's.
+
+**Breaking changes.** None for runs started on Opus 5.5. A run started on Sonnet 5.5 now stops for a one-question confirmation, or stops outright in a non-interactive run, unless the invocation starts with `efficiency mode`. A scheduled or scripted `/orc` on Sonnet 5.5 must add those words.
+
+**Files to read.** `skills/orc/SKILL.md` (Preflight, Model selection, and Efficiency mode) and `agents/test-coverage-reviewer.md`.
+
+---
+
 ## [1.8.0] - 2026-09-28
 
 **Summary.** Two changes. First, orc gains specialist builders: `ui-implementer`, `api-implementer`, and `data-implementer` join the general `implementer`, orc assigns each task a builder by its primary surface, and every builder now reads one shared `builder-contract.md` that holds the rules the old `implementer.md` carried. A new `standards/data.md` gives data work a standard to write and review against. Second, orc stops paying to re-cache its whole context after a long subagent wait. The prompt cache lasts about an hour, and orc makes no requests while a subagent runs, so any wait longer than that made the next turn re-cache the full context at about twice the input price (a warm read costs about a tenth). Orc now keeps a background heartbeat timer while agents run, so the main thread touches its cache before it expires.
