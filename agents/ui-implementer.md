@@ -1,6 +1,6 @@
 ---
 name: ui-implementer
-pack: orc-pack@1.9.0
+pack: orc-pack@1.9.1
 description: UI builder for one task from an orchestrator's plan - components, pages, layouts, styles, tokens, client state and interaction, and user-facing copy. Writes a UI design brief first when asked, then builds on the repo's own design system with every state, keyboard and screen-reader support, and responsive layout, tests it, and reports the exact command and output plus the UI surfaces to check. Never commits; the orchestrator owns git history. Dispatched by orc.
 tools:
   - Read

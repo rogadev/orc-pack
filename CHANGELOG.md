@@ -16,6 +16,23 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.9.1] - 2026-09-28
+
+**Summary.** A one-paragraph fix to `/update-orc`. It told the dispatcher to pass `model: claude-opus-5-5` to the `orc-updater` agent, but the Agent tool's `model` field accepts only a family alias (`opus`, `sonnet`, `haiku`, or `fable`), so the instruction could not be followed as written. 1.9.0 fixed the same problem in the `orc` skill and missed this copy. `/update-orc` now dispatches `orc-updater` with no `model`, so the agent's frontmatter pins it to Opus 5.5.
+
+**Changed areas.**
+
+- **`skills/update-orc/SKILL.md`** — step 5 dispatches `orc-updater` without a `model` parameter and explains why an `opus` alias is still avoided. Refresh.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.9.1`.
+
+**Update steps.** Refresh `skills/update-orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.9.1`. Nothing else. An install coming from 1.8.0 or earlier also applies the `[1.9.0]` entry below.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/update-orc/SKILL.md` (step 5).
+
+---
+
 ## [1.9.0] - 2026-09-28
 
 **Summary.** Claude Sonnet 5.5 shipped, and this release fits it into the pack. `test-coverage-reviewer` moves from Sonnet 5 to Sonnet 5.5: it costs the same, and on CodeRabbit's 13 hard review cases it caught 6 known issues to Sonnet 5's 4 at under half the cost per review. Every other agent keeps its model: at the medium and low effort most of them run, Sonnet 5.5 scores well below Opus 5.5, and the high-effort agents do security work or irreversible data changes, where Opus 5.5 is the safer model. Orc also gains **efficiency mode**: starting `/orc` on Sonnet 5.5 asks the user to confirm, then runs with a slightly lower token bill by moving three smaller jobs to Sonnet 5.5, handing more decisions to Opus agents, and skipping the verifier when reviews find only Nits. Starting on Opus 5.5 works as before, with one fix that applies to every run: orc now dispatches through the Agent tool's family aliases, the only values its `model` field accepts, instead of exact model ids.
