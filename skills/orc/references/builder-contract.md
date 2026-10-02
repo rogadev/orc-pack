@@ -74,6 +74,12 @@ End with a short report, point-first:
 - **UI surfaces** - required for any change that affects UI: each route or page to check, how to reach the changed state (for example "open `/invoices`, then filter to an empty result"), and whether it needs sign-in. Omit it otherwise.
 - **Deploy notes** - when your agent file asks for it: the order in which migrations, backfills, and code must ship, and anything that must run outside the repo, or "none".
 - **Cleanup candidates** - files this task touched that have more slop than it could fix proportionately, one line each, or "none".
-- **Cleanup targets** - untouched files you read that need cleanup, one line each, or "none". Orc lists these for a later run; it does not act on them now.
-- **Out of scope noticed** - problems you found but did not fix, one line each, or "none".
+- **Cleanup targets** - untouched files you read that need cleanup, one line each, or "none". Orc does not clean them in this run; it hands each area back to the user as a follow-up to decide on.
+- **Out of scope noticed** - problems you found but did not fix, one line each, or "none". Orc usually does a Small one in this run and hands a Medium or Large one back to the user.
 - **Assumptions** - any judgement call or deviation from the brief, or "none".
+
+Start each line under **Cleanup targets** and **Out of scope noticed** with its size, for example `Medium - src/lib/billing: ...`, so orc can route it without sizing it again. Size by scope, never by guessed hours, and take the larger band when in doubt:
+
+- **Small** - fits in the current run as one task.
+- **Medium** - needs one dedicated run of 2 to 4 tasks.
+- **Large** - needs several runs, its own issue, and usually a spec. This includes what orc calls Huge, an epic that needs a plan first.
