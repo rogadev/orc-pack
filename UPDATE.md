@@ -25,6 +25,7 @@ For every kit file (the mapping table in `INSTALL.md` Phase 2 is authoritative):
 - **File has a `pack:` marker** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits the repo made since (its git history for that file shows them).
 - **File has no `pack:` marker** → the repo's own artifact. Do not clobber it; route through `INSTALL.md` Phase 3 conflict handling. The one exception is the reference directory:
 - **Reference files are pack-owned.** Files under `.claude/skills/orc/references/` carry no `pack:` marker, but they belong to the pack whenever `.claude/skills/orc/SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
+- **Re-applied edits keep what orc parses.** Orc routes on fixed parts of its agents' reports, so a repo-local edit must not drop them. In particular, a locally edited `builder-contract.md` must keep the size that starts each **Cleanup targets** and **Out of scope noticed** line, and a locally edited `agents/verifier.md` must keep the **Size:** field on out-of-scope findings (both added in 1.10.0). If a local edit conflicts with the kit's format, keep the kit's format and note the conflict in the report.
 - **A new agent or skill in the kit that isn't in the repo yet** → copy it in, same as a fresh install.
 - **A file the new kit dropped** → remove the stale copy and note it in the report.
 
