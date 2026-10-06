@@ -105,7 +105,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/update-orc/SKILL.md`    | `<root>/.claude/skills/update-orc/SKILL.md`   |
 | `agents/<name>.md` (every file) | `<root>/.claude/agents/<name>.md` (same name) |
 
-**Copy nothing else.** `INSTALL.md`, `UPDATE.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `LICENSE`, `docs/`, `.claude-plugin/`, and `.github/` are kit docs and kit CI, not runtime files. The kit's own `.claude/` holds this repo's `required-secrets.md` and `smoke-checklist.md`, which are repo-owned: never copy them over the target's. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
+**Copy nothing else.** `INSTALL.md`, `UPDATE.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `LICENSE`, `docs/`, `.claude-plugin/`, and `.github/` are kit docs and kit CI, not runtime files. The kit's own `.claude/` holds this repo's `required-secrets.md` and `smoke-checklist.md`, which are repo-owned: never copy them over the target's. It also holds `skills/condense/`, a maintainer skill for this repo only: never copy it. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
 
 **Copy `skills/orc/references/` as a whole directory, keeping its subfolders.** Orc hands those files to its agents by path; without them the agents fall back to their generic rubrics and the pack's standards are lost.
 
