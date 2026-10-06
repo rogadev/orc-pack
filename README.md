@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.10.0:** orc does small follow-ups during the run and hands everything bigger back as a sized card with a recommendation and its issue status, so you can tell at a glance what needs you and how big a "yes" is. See the [changelog](CHANGELOG.md#1100---2026-10-02) for what changed.
+> **New in v1.11.0:** `/shipcheck` verifies a push all the way to the live build: CI, secrets, the deployed commit, and browser smoke checks at phone and desktop widths in both themes. Undirected `/orc` runs also stop picking issues that are already fixed. See the [changelog](CHANGELOG.md#1110---2026-10-06) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Sonnet 5.5, after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -98,6 +98,7 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 - `skills/orc/` — the orchestrator itself, plus `references/`: the shared standards its agents write and review against (see [The standards](#the-standards)).
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
+- `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` in Chrome at 390px and 1440px in light and dark mode. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test or an issue with screenshots. It drafts both files from your code the first time.
 
 **The agents** (`agents/`):
 

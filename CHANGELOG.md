@@ -16,21 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
-## [1.10.1] - 2026-10-06
+## [1.11.0] - 2026-10-06
 
-**Summary.** Undirected orc runs stop picking issues that are already fixed. Issues often stay open after their fix lands, for example when the fixing commit had no closing keyword. Before this release, the issue scout could pick one, and orc found out only in **Make it buildable**, after spending a cycle on it. The scout now checks each plausible candidate against the integration branch's history before it ranks it, never picks a stale one, and lists stale issues with evidence so orc can confirm and close them.
+**Summary.** A new optional skill, `/shipcheck`, verifies a pushed commit all the way to the live build: it waits for CI and fixes a red run, checks that the target environment has every required secret, waits until the deployment serves that exact commit, and runs browser smoke checks at phone and desktop widths in both themes. Separately, undirected orc runs stop picking issues that are already fixed: the issue scout checks each candidate against the integration branch's history first, and orc closes the stale ones with evidence.
 
 **Changed areas.**
 
+- **`skills/shipcheck/SKILL.md` (new)** — run after a push. Watches the commit's CI runs with `gh run watch`; on a red run it reproduces the failing command locally, dispatches a builder to fix it, and re-pushes, at most 2 attempts, never onto `main`, `master`, or `production`. Compares the secret names in `.claude/required-secrets.md` with what the target environment has (GitHub Actions, GitHub environments, Vercel, Cloudflare Workers), never reading a value, and stops on any missing name. Proves the deployment serves the pushed SHA before testing. Runs every flow in `.claude/smoke-checklist.md` in Claude in Chrome at 390px and 1440px in light and dark mode, with a screenshot per step. Stops with exact unlock instructions at an SSO, auth, or VPN wall. Turns each confirmed regression into a `fix/<slug>` branch with a reproducing test (pushed, never merged), or an issue with screenshot paths and a root-cause hypothesis. Both `.claude/` files are repo-owned; shipcheck drafts them from the code when they are missing. Copy it in for a copied install.
 - **`agents/next-issue-finder.md`** — new **Screen out stale candidates** section: two `git log` calls per candidate (by issue number, and by the paths the issue names) and a code read only on a hit. The output block gains an optional `STALE:` section, one line per stale issue with the commit and the code evidence. `PICK: NONE` now also covers a board where every candidate is stale. The agent stays read-only. Refresh.
 - **`skills/orc/SKILL.md`, 1. Survey** — orc confirms each `STALE` entry itself, comments the commit and what the code now does, and closes the issue; if the evidence doesn't hold, it leaves the issue alone. Refresh.
-- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.10.1`.
+- **`.github/workflows/pack-integrity.yml`** — the agent-name check also scans `skills/shipcheck/SKILL.md`. Kit CI only.
+- **`INSTALL.md`, `README.md`** — list the new skill and its optional status, and a 1.11.0 banner. Kit docs only.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.11.0`.
 
-**Update steps.** Refresh `agents/next-issue-finder.md` and `skills/orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.10.1`. No new or removed files, and no CI, environment, or dependency changes. If the install has local edits to `next-issue-finder.md`, keep the `STALE:` section of its output block: orc reads it. An install coming from 1.9.x or earlier also applies `[1.10.0]` and every entry in between.
+**Update steps.** Copy `skills/shipcheck/SKILL.md` to `.claude/skills/shipcheck/SKILL.md` unless the user declines it (it is optional, like `newissue`). Refresh `agents/next-issue-finder.md` and `skills/orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.11.0`. Never create or overwrite `.claude/required-secrets.md` or `.claude/smoke-checklist.md`; they are repo-owned. No CI, environment, or dependency changes in the target repo. If the install has local edits to `next-issue-finder.md`, keep the `STALE:` section of its output block: orc reads it. An install coming from 1.9.x or earlier also applies `[1.10.0]` and every entry in between.
 
 **Breaking changes.** None. Anything that parses the scout's output must tolerate the new optional `STALE:` section between `SET_ASIDE:` and `GUARDS:`.
 
-**Files to read.** `agents/next-issue-finder.md` (Screen out stale candidates, Output) and `skills/orc/SKILL.md` (1. Survey).
+**Files to read.** `skills/shipcheck/SKILL.md`, `agents/next-issue-finder.md` (Screen out stale candidates, Output), and `skills/orc/SKILL.md` (1. Survey).
 
 ---
 
