@@ -91,16 +91,15 @@ If the work outgrows the approved band mid-run, stop at the band the way you sto
 
 ## Progress bar
 
-When the [paceline](https://github.com/rogadev/paceline) progress tools (`progress_start`, `progress_step`, `progress_label`, `progress_add_steps`, `progress_finish`) are available, mirror the task list as a bar on the user's status line. They are optional: when they aren't available, skip this section silently, and never install, mention, or ask about them. When they are deferred, load all five in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through these tools, as a loop that drives orc can: paceline keeps one run per repository, so starting yours would replace the caller's.
+When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. They are optional: without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
 
-The bar is a convenience, never a step of the run. Send each call in the same message as a tool call you are already making, such as a dispatch or a commit, never in a turn of its own. If a call fails, drop the bar for the rest of the run and carry on.
+The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If one fails, drop the bar and carry on.
 
-- **Start** when **Plan the tasks** has created the tasks: `progress_start` with name `orc` and one step per task, in order. Give each step the task number as `id`; a `label` of at most 12 characters, such as `#42 t2` or a short slug; a `weight` by size, Trivial 1, Standard 3, Structural 8; and `stages` `["build", "review", "commit"]`, with `design` first on a structural task. A run that plans no tasks starts no bar.
-- **Advance** with `progress_step`: set `stage` as a task enters each stage (the first one makes it active), and `status: done` once it commits.
-- **Fix rounds** go on the label, not the stage: `progress_label` `fix 1/3` when a round starts, and an empty label when its re-review comes back clean. Never move a step back a stage; the bar would run backwards.
-- **New tasks** from **Discoveries** or a review get `progress_add_steps`, sized and staged the same way. Tasks the **Run budget** leaves undone become `skipped`.
-- **Ready** sets the label to `ready check`.
-- **Finish** before the report: `progress_finish done` for `FINISHED`; for `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
+- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, one step per task in order, with the task number as `id`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review", "commit"]`, with `design` first on a structural task.
+- **Advance** with `progress_step`: the `stage` as a task enters it, then `status: done` once it commits.
+- **Fix rounds** go on the label, never a stage back, which would run the bar backwards: `progress_label` `fix 1/3`, then an empty label once its re-review is clean.
+- **New tasks** from **Discoveries** or a review: `progress_add_steps`, sized and staged the same way. Tasks the **Run budget** leaves undone: `skipped`.
+- **Ready**: label `ready check`. **Finish** before the report: `progress_finish done`; on `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents
 

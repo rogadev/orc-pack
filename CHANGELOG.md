@@ -18,11 +18,11 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ## [1.13.0] - 2026-10-06
 
-**Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), a status line whose `paceline-mcp` server gives agents five progress tools. Once orc has planned its tasks, it starts a bar with one step per task, weighted by size (Trivial 1, Standard 3, Structural 8), and moves each task through its stages (design on structural tasks, then build, review, and commit), so the percentage tracks the real work rather than a task count. Fix rounds and the ready check show on the bar's label. The integration is optional: without the paceline tools, orc skips it silently. Each update goes in the same message as a call orc is already making, so it adds no turns.
+**Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), whose `paceline-mcp` server gives agents progress tools. After planning, orc starts a bar with one step per task, weighted by size and moved through each task's stages (design on structural tasks, then build, review, and commit), so the percentage tracks the real work. The integration is optional, and each update rides along with a call orc already makes, so it adds no turns.
 
 **Changed areas.**
 
-- **`skills/orc/SKILL.md`, new Progress bar section** (after **The task list is your spine**) — when the `progress_*` tools are available, orc calls `progress_start` once the tasks exist, `progress_step` as each task changes stage and when it commits, `progress_label` for fix rounds (`fix 1/3`) and the ready check, `progress_add_steps` for tasks added mid-run, and `progress_finish` (`done`, or `halted` with the task in flight marked `blocked`) before the report. Tasks the run budget leaves undone are marked `skipped`. Orc skips the bar when the tools are missing, when a call fails, and when the invocation says the caller reports its own progress through paceline, since paceline keeps one run per repository. A caller that draws its bar some other way needs no change: both bars show. Refresh.
+- **`skills/orc/SKILL.md`, new Progress bar section** (after **The task list is your spine**) — the calls orc makes at each point of a run, and when it skips the bar: the tools are missing, a call fails, or the invocation says the caller reports its own progress through paceline, which keeps one run per repository. A caller that draws its bar some other way needs no change; both bars show. Refresh.
 - **`README.md`** — new **Progress on your status line** section linking to paceline. Kit docs only.
 - **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.13.0`.
 
