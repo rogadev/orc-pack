@@ -22,6 +22,7 @@ orc-pack/
 │   │   └── references/     ← standards and playbooks orc passes to its agents
 │   │       ├── builder-contract.md
 │   │       ├── design-brief.md
+│   │       ├── work-contract.md
 │   │       ├── standards/  (code, comments, structure, ui, data)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
@@ -46,6 +47,7 @@ orc-pack/
     ├── next-issue-finder.md
     ├── orc-updater.md
     ├── quality-reviewer.md
+    ├── scope-reviewer.md
     ├── security-reviewer.md
     ├── skill-vetter.md
     ├── test-coverage-reviewer.md
@@ -114,6 +116,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `agents/next-issue-finder.md`      | `<root>/.claude/agents/next-issue-finder.md`      |
 | `agents/orc-updater.md`            | `<root>/.claude/agents/orc-updater.md`            |
 | `agents/quality-reviewer.md`       | `<root>/.claude/agents/quality-reviewer.md`       |
+| `agents/scope-reviewer.md`         | `<root>/.claude/agents/scope-reviewer.md`         |
 | `agents/security-reviewer.md`      | `<root>/.claude/agents/security-reviewer.md`      |
 | `agents/skill-vetter.md`           | `<root>/.claude/agents/skill-vetter.md`           |
 | `agents/test-coverage-reviewer.md` | `<root>/.claude/agents/test-coverage-reviewer.md` |
@@ -179,9 +182,9 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 22 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
-3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
+3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `scope-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
 5. **Provenance.** `<root>/.claude/orc-pack.provenance.md` exists and names the installed pack version (Phase 2).
 
