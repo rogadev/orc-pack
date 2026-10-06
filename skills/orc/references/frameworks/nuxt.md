@@ -1,6 +1,6 @@
 # Nuxt playbook
 
-Loaded when the repo has `nuxt` in its dependencies or a `nuxt.config.*` file. It adds Nuxt-specific rules on top of the standards files. The repo's own docs and patterns still win.
+Nuxt-specific rules on top of the standards files. The repo's own docs and patterns still win.
 
 ## Check the version first
 
@@ -17,7 +17,7 @@ Read the installed `nuxt` version. Nuxt 4 moves app code into an `app/` director
 
 - **`useFetch` or `useAsyncData` for data a page or component needs on render.** They run on the server, transfer the result to the client, and avoid a double fetch. Give `useAsyncData` a stable, unique key.
 - **`$fetch` for event-driven calls** (a button click, a form submit), never at the top level of `setup` for render data, which fetches twice.
-- **Parallelize independent requests**, and use `pick` or `transform` to keep payloads small.
+- **`pick` or `transform`** to keep payloads small.
 - **Handle `pending`, `error`, and empty states** from the returned refs (see `ui.md`).
 
 ## Server routes
@@ -34,7 +34,6 @@ Read the installed `nuxt` version. Nuxt 4 moves app code into an `app/` director
 ## Vue-specific quality
 
 - **`<script setup lang="ts">`** with typed `defineProps` and `defineEmits`.
-- **`computed` for derived values**, not a `watch` that writes another ref.
 - **Do not mutate props**; emit an event or use `defineModel`.
 - **Stable `:key`s on `v-for`**, never the index for lists that reorder.
 - **Never put `v-if` and `v-for` on the same element.**

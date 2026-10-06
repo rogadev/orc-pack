@@ -50,7 +50,7 @@ A UI that handles only the success state is unfinished. For each data-driven vie
 
 ## Responsive
 
-- **Mobile first.** Check at about 390 px, 768 px, and 1280 px or wider.
+- **Mobile first.** Design for about 390 px, 768 px, and 1280 px or wider. The `ui-reviewer` renders 390 px and 1440 px and checks the tablet width statically.
 - **No horizontal scrolling** at any width, except inside a component designed for it, such as a data table.
 - **Touch targets** at least 44 by 44 px on touch layouts (WCAG 2.2 sets 24 px as the minimum).
 - **Layouts reflow**, they do not shrink. Container queries beat viewport breakpoints for reusable components.

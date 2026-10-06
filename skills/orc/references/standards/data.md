@@ -24,7 +24,7 @@ A data change is safe to deploy while the old code is still running, safe to re-
 - **One logical change per migration.** Adding a table and reworking an unrelated index in one file is a finding; split it.
 - **Never edit a migration that has shipped.** Once a migration may have run anywhere beyond a developer's machine, a fix is a new migration. Editing or deleting a shipped migration is a Blocker.
 - **Reversible where the tool supports it.** The down path restores the prior shape: the same columns, types, nullability, defaults, constraints, and indexes. A down step that is empty, only partial, or throws without saying why is a finding. When a change genuinely cannot be reversed (for example it discards data), the migration says so explicitly in the tool's way.
-- **Schema and data changes are separate** where the tool allows it. Structure goes in one migration, data movement in its own migration or a backfill (see **Backfills**).
+- **Schema and data changes are separate** where the tool allows it (see **Backfills**).
 - **Schema source and migrations agree.** When the repo keeps a schema file, generated types, or a snapshot beside the migrations, the diff updates them together.
 
 ## Live changes (expand and contract)
@@ -39,7 +39,7 @@ Assume the old version of the app keeps running against the new schema during a 
 
 ## Locks and large tables
 
-- **Know what each operation locks** on the repo's engine and version. Check your engine's docs; do not assume. A migration on a large or hot table with no statement of its locking behavior is a finding.
+- **Know what each operation locks** on the repo's engine and version. A migration on a large or hot table with no statement of its locking behavior is a finding.
 - **Prefer online or concurrent operations** where the engine offers them, most often for index builds. Some of these cannot run inside a transaction; follow the migration tool's way of opting out.
 - **Avoid table rewrites on big tables.** Type changes, some default changes, and column reordering can rewrite every row; check whether the operation rewrites on this engine before using it.
 - **Keep transactions short.** A migration that holds locks while it does slow work (a large update, an index build, a call out of the database) is a finding. Set a lock or statement timeout where the repo's tooling supports one, so a blocked migration fails instead of stalling traffic.
@@ -58,7 +58,6 @@ Assume the old version of the app keeps running against the new schema during a 
 - **No speculative indexes.** An index added "just in case" or on every foreign key by reflex, with no query that needs it, is a finding.
 - **Check for an existing index first.** A new index whose columns are the leading columns of an existing one is usually redundant.
 - **Note the write cost.** Every index slows writes and takes space. On a write-heavy table, say why the read win is worth it.
-- **Build large indexes online** (see **Locks and large tables**).
 
 ## Query safety
 

@@ -1,6 +1,6 @@
 ---
 name: test
-pack: orc-pack@1.11.0
+pack: orc-pack@1.12.0
 description: Run the repo's test suite(s) and report raw results. Use when you need to verify tests pass before or after code changes.
 tools:
   - Bash

@@ -30,7 +30,7 @@ Code is written for the next reader, not for the compiler. A reviewer should be 
 ## Types
 
 - **Strict types, no escape hatches.** No `any`, no `as` casts to silence the checker, no non-null `!`, no `@ts-ignore`. The one sanctioned cast is at a boundary right after the value was validated, and it carries a comment saying so.
-- **Suppressions are a last resort.** A `@ts-expect-error` or `eslint-disable` is acceptable only when the cause is outside the repo's control (for example a wrong third-party type), the repo's rules allow it, and a comment at the site gives the reason and, where one exists, the upstream issue. Everywhere else, fix the cause. This is the one rule every reviewer applies.
+- **Suppressions are a last resort.** A `@ts-expect-error` or `eslint-disable` is acceptable only when the cause is outside the repo's control (for example a wrong third-party type), the repo's rules allow it, and a comment at the site gives the reason and, where one exists, the upstream issue. Everywhere else, fix the cause.
 - **Validate at the boundary, trust inside.** Untrusted data (request bodies, params, form data, upstream responses, `localStorage`, environment variables) is parsed with the repo's schema library (for example Zod or Valibot) where it enters. After that point the types are true, and code inside does not re-check them.
 - **Derive types from one source of truth.** Infer from the schema (`z.infer`), the database layer's generated types, or the function (`ReturnType`, `Awaited`). Re-declaring a shape that already exists is duplication.
 - **Model states, not flags.** A discriminated union (`{ status: 'loading' } | { status: 'error'; error: E } | { status: 'ready'; data: T }`) beats three booleans that can contradict each other.
@@ -41,7 +41,7 @@ Code is written for the next reader, not for the compiler. A reviewer should be 
 - **Fail loudly and early.** Throw or return an error at the point where the problem is known. An empty array returned on failure is a lie the caller cannot detect.
 - **Catch only what you can handle.** A `catch` either recovers, translates the error into the framework's error mechanism, or adds context and rethrows (`new Error('Could not load invoice', { cause })`). A catch that only logs and continues is a finding unless the operation is genuinely optional, and then the code says why.
 - **Narrow before use.** `catch (error)` gives `unknown`; check `error instanceof` before reading properties.
-- **Expected failures use the framework's mechanism**: `error()` and `fail()` in SvelteKit, `createError` in Nuxt, `notFound()` and error boundaries in Next, and a thrown `ActionError` in an Astro action (the caller receives it as the action's `error`). See the loaded framework playbook.
+- **Expected failures use the framework's mechanism** (see the loaded framework playbook).
 - **Users see a message they can act on**, never a raw exception or stack trace.
 - **Log through the repo's logger**, with enough context to debug, and never log secrets or personal data.
 
@@ -70,7 +70,7 @@ Code is written for the next reader, not for the compiler. A reviewer should be 
 
 These are the signatures of code written to look finished rather than to be right. Each is a finding. In a file the task touches, fix it as part of the task (see **Touched files** below).
 
-1. **Defensive noise.** Null checks on values the types guarantee, `try`/`catch` around code that cannot throw, `?? ''` and `|| []` fallbacks that hide a bug instead of surfacing it, the same validation repeated at every layer. Validate once at the boundary and trust the types after.
+1. **Defensive noise.** Null checks on values the types guarantee, `try`/`catch` around code that cannot throw, `?? ''` and `|| []` fallbacks that hide a bug instead of surfacing it, the same validation repeated at every layer.
 2. **Pass-through layers.** A function that only calls another function with the same arguments, a `Manager`, `Helper`, or `Service` class with one method and no state, a wrapper component that forwards every prop. Inline it or give it a real job.
 3. **Speculative generality.** Options, generics, factory functions, strategy patterns, or config flags with one caller and no second on the way. Build for the case that exists.
 4. **Reinvented utilities.** A hand-rolled debounce, date formatter, class-name joiner, deep clone, or fetch wrapper when the repo or the platform already has one.

@@ -1,6 +1,6 @@
 # Vercel playbook
 
-Loaded when the repo deploys to Vercel: a `vercel.json` or `vercel.ts` file, a `.vercel/` project link, `@vercel/*` packages, or a Vercel adapter (`@sveltejs/adapter-vercel`, `@astrojs/vercel`, a Nitro `vercel` preset). Next.js repos with no other deployment target usually deploy here too. The repo's own docs and patterns still win.
+Rules for repos that deploy to Vercel, on top of the standards files. The repo's own docs and patterns still win.
 
 ## Runtimes
 

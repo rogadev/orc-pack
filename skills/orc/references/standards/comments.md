@@ -1,10 +1,10 @@
 # Comments standard
 
-Every builder writes to this standard, and the `comment-reviewer` and `docs-writer` check against it. It follows the Google TypeScript and JavaScript style guides. Where the repo documents its own commenting rules, the repo wins.
+Every builder and the `docs-writer` write to this standard. The `comment-reviewer` checks against it, as does the `quality-reviewer` when orc assigns it a trivial task's comments. It follows the Google TypeScript and JavaScript style guides. Where the repo documents its own commenting rules, the repo wins.
 
 ## The cold-read test
 
-Every comment must make sense to someone who opens the file cold: no conversation, no ticket, no memory of the previous version of the code. They see only the file.
+Every comment must make sense to someone who opens the file cold: no conversation, no ticket, no memory of the previous version of the code.
 
 Ask of each comment:
 
@@ -22,7 +22,7 @@ A comment that fails any of the three gets rewritten or deleted. No comment beat
 
 ## JSDoc: what gets one
 
-- **Every exported function, class, method, component, hook or composable, and type or interface.** Google's rule is that all top-level exports are documented.
+- **Every exported function, class, method, component, hook or composable, and type or interface.**
 - **Exported constants** whose meaning or unit is not obvious from the name (`/** Session lifetime in seconds. */`).
 - **Props, when a component takes any.** Document the props interface or type, one short comment per prop that needs one.
 - **Non-exported functions** only when the purpose or contract is not obvious from the name and signature.
@@ -76,26 +76,18 @@ Write in full sentences, in plain language, in the same voice as the rest of the
 
 ## Slop comments
 
-These are the signatures of a comment written for a conversation instead of for the file. Each is a finding.
+These are the signatures of a comment written for a conversation instead of for the file. Each is a finding, and unless the item says otherwise, the fix is to delete it.
 
-1. **Conversation residue.** The comment refers to a discussion, a request, or a change instead of the code: "as requested", "as discussed", "per your feedback", "now we", "let's", "here we", "the user wants", "this fixes the issue where...", "updated to use...", "changed from X to Y", "instead of the old approach", "the previous implementation", "NEW:", "FIX:", "UPDATED:". History belongs in the commit message.
+1. **Conversation residue.** The comment refers to a discussion, a request, or a change instead of the code: "as requested", "as discussed", "per your feedback", "now we", "let's", "here we", "the user wants", "this fixes the issue where...", "updated to use...", "changed from X to Y", "instead of the old approach", "the previous implementation", "NEW:", "FIX:", "UPDATED:". History belongs in the commit message. If the residue carried a real reason, rewrite it as a why-comment that stands on its own.
 2. **Narration.** The comment restates the next line: `// increment the counter`, `// return the result`, `// import dependencies`, `// loop over the items`, `// call the API`.
 3. **Step-by-step play-by-play** on straightforward code: `// Step 1: validate`, `// Step 2: save`, `// Step 3: return`. If the steps need labels, they want to be named functions.
 4. **Section banners** in files small enough to see whole: `// ===== Helpers =====`, `// --- State ---`.
 5. **Restated types or signatures:** `// takes a string and returns a number`.
 6. **Emphasis and hedging:** `// IMPORTANT!!!`, `// CRITICAL`, `// This should work`, `// hopefully`, `// for now` with no plan, emojis.
-7. **Stale comments** that no longer describe the code beside them.
+7. **Stale comments** that no longer describe the code beside them. Rewrite them to match the code, or delete them.
 8. **Commented-out code.** Version control keeps it.
-9. **Orphan `TODO`s** with no issue reference or owner. A `TODO` names an issue (`// TODO(#142): ...`) or becomes one.
+9. **Orphan `TODO`s** with no issue reference or owner. A `TODO` names an issue (`// TODO(#142): ...`), or is deleted and the work goes in the report.
 10. **Apologies for a hack** instead of fixing it or explaining the constraint that forces it.
-11. **Undocumented exports** that the change adds or modifies (see **JSDoc: what gets one**). Older undocumented exports in a touched file are cleanup work, documented in a cleanup run rather than as a side effect of an unrelated change.
-
-## Fixing slop comments
-
-- **Narration, banners, emphasis, and residue:** delete them. If the residue carried a real reason, rewrite it as a why-comment that stands on its own.
-- **Stale comments:** rewrite them to match the code, or delete them.
-- **Commented-out code:** delete it.
-- **Orphan `TODO`s:** reference an existing issue, or delete the `TODO` and put the work in the report.
-- **Missing JSDoc on an export the change adds or modifies:** add it.
+11. **Undocumented exports** that the change adds or modifies (see **JSDoc: what gets one**). Add the JSDoc. Older undocumented exports in a touched file are cleanup work, documented in a cleanup run rather than as a side effect of an unrelated change.
 
 Keep license headers, generated-file markers, and tool directives the build depends on.

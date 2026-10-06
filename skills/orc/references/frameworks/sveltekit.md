@@ -1,6 +1,6 @@
 # SvelteKit playbook
 
-Loaded when the repo has `@sveltejs/kit` in its dependencies. It adds SvelteKit-specific rules on top of the standards files. The repo's own docs and patterns still win.
+SvelteKit-specific rules on top of the standards files. The repo's own docs and patterns still win.
 
 ## Check the version first
 
@@ -20,7 +20,7 @@ Read the installed `svelte` and `@sveltejs/kit` versions. Svelte 5 uses runes (`
 ## Data loading
 
 - **Return data from `load`**, not from `onMount` fetches.
-- **Parallelize independent requests in a load** with `Promise.all`, and return unawaited promises for slow, non-critical data so the page can stream.
+- **Return unawaited promises from a load** for slow, non-critical data so the page can stream.
 - **Use the `fetch` passed to `load`**, which carries cookies and avoids a second request during hydration.
 - **Invalidate deliberately** with `depends` and `invalidate` rather than reloading the page.
 
@@ -33,8 +33,7 @@ Read the installed `svelte` and `@sveltejs/kit` versions. Svelte 5 uses runes (`
 
 ## Svelte 5 quality
 
-- **`$derived` for computed values.** An `$effect` that assigns state is a finding.
-- **`$effect` only for side effects** that touch the outside world, with cleanup returned.
+- **`$effect` returns its cleanup.**
 - **Typed `$props()`** with a documented props type; `$bindable` only where two-way binding is the intent.
 - **Snippets instead of slots** in Svelte 5 code.
 - **Shared reactive state** in a `.svelte.ts` module, and never module-level state for per-request data on the server; use `event.locals` or context.
