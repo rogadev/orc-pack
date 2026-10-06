@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.12.0:** orc builds new screens and UI features on Fable 5.1, which designs them with stronger visual taste, and keeps all other work on Opus 5.5, which matches or beats it for less. Every agent also loads fewer tokens, and the `fallow`, `impact`, and `dependency-vetter` agents report more accurately. See the [changelog](CHANGELOG.md#1120---2026-10-06) for what changed.
+> **New in v1.12.0:** orc builds new screens and UI features on Fable 5.1, which designs them with stronger visual taste, and keeps all other work on Opus 5.5, which matches or beats it for less. Each run now logs what every agent cost to a token ledger and reports the total, every agent loads fewer tokens, and the `fallow`, `impact`, and `dependency-vetter` agents report more accurately. See the [changelog](CHANGELOG.md#1120---2026-10-06) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -77,7 +77,7 @@ In efficiency mode, orc itself runs on Sonnet 5.5, the model you started it on. 
 - **Building a trivial task**, such as a typo, a constant, or a copy change. The task's reviewer still checks it on Opus 5.5.
 - **A first round of fixes for minor review findings.** Anything blocking, or anything from the security reviewer, stays on Opus 5.5, and an Opus 5.5 reviewer re-checks the fix.
 
-Everything else keeps its usual model: every reviewer and the verifier, data and migration work, and the first build of every larger change. To offset running the coordinator on a cheaper model, orc also leaves more decisions to its Opus agents: it doesn't edit code itself, and it defers to the design reviewer on a disputed design. It skips the verifier only when a task's reviews turn up nothing but nitpicks.
+Everything else keeps its usual model: every reviewer and the verifier, data and migration work, and the first build of every larger change. To offset running the coordinator on a cheaper model, orc also leaves more decisions to its Opus agents: it doesn't edit code itself, and it defers to the design reviewer on a disputed design.
 
 Run Sonnet 5.5 at high effort (`/effort high`) for this mode; Claude Code's default is medium.
 
@@ -145,7 +145,7 @@ The quality bar lives in `skills/orc/references/`, and the builders write to the
 - **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
 - **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
 - **`standards/data.md`** — migrations, expand/contract changes, locks, backfills, indexes, and query safety.
-- **`builder-contract.md`** — the rules every builder shares: the dispatch, brief and build modes, scope, no commits, no suppressions, fix rounds, and the report.
+- **`builder-contract.md`** — the rules every builder shares: the dispatch, brief and build modes, scope, no commits, suppressions only as `code.md` allows, fix rounds, and the report.
 - **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when orc detects that stack, and tells the agents to trust the installed version's docs over the playbook.
 
 Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch come back in the report as cleanup cards, not rewritten on the side.
