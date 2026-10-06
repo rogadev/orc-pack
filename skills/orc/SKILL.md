@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.13.0
+pack: orc-pack@1.13.1
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -91,15 +91,18 @@ If the work outgrows the approved band mid-run, stop at the band the way you sto
 
 ## Progress bar
 
-When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. They are optional: without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
+When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. Without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip the bar when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
 
-The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If one fails, drop the bar and carry on.
+The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If a `progress_*` call fails, drop the bar and carry on.
 
-- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, one step per task in order, with the task number as `id`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review", "commit"]`, with `design` first on a structural task.
-- **Advance** with `progress_step`: the `stage` as a task enters it, then `status: done` once it commits.
-- **Fix rounds** go on the label, never a stage back, which would run the bar backwards: `progress_label` `fix 1/3`, then an empty label once its re-review is clean.
-- **New tasks** from **Discoveries** or a review: `progress_add_steps`, sized and staged the same way. Tasks the **Run budget** leaves undone: `skipped`.
-- **Ready**: label `ready check`. **Finish** before the report: `progress_finish done`; on `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
+The bar has one cell per task, in plan order, then one `ready` cell. Fix rounds are stages inside their task's cell, never cells of their own: paceline only appends steps, so a fix cell added mid-run would land after every later task.
+
+- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): exactly one `progress_start` per run, named `orc #42` (just `orc` with no issue), listing every task and then the ready step.
+  - A task: `id` `t2`; a `label` naming what it builds in a few words, such as `t2 upload limit`, which is what the status line shows while it runs; `weight` Trivial 1, Standard 3, Structural 8; `stages` `["build", "review", "fix 1", "fix 2", "fix 3"]`, with `design` first on a structural task.
+  - The ready step last: `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "land"]`.
+- **Advance** with `progress_step` as each task moves: its first stage when you dispatch its first builder, `review` when you dispatch the panel, `fix 1` to `fix 3` as each fix round starts (a round's re-review stays in its fix stage), and `status: done` when it commits. A clean review goes straight to done. Stages only move forward. Mark every task the **Run budget** leaves undone `skipped`, planned or added.
+- **New tasks** from **Discoveries** or a review: paceline appends them after the ready cell, so keep ready last by moving it. Mark the current ready step `skipped`, then `progress_add_steps` with the new tasks, labelled, weighted, and staged the same way, followed by a fresh ready step (`ready-2`, `ready-3`, and so on).
+- **Ready**: the last ready step to `check` when **Ready** starts and to `land` when **Land it** starts. **Finish** before the report with `progress_finish done`, or, on `NOT FINISHED`, instead mark the step in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents
 

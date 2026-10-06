@@ -16,6 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.13.1] - 2026-10-06
+
+**Summary.** Orc's paceline bar now has one cell per task plus a final ready cell, so a four-task run draws five cells and the active cell shows where the run is. Fix rounds are stages inside their task's cell (`fix 1` to `fix 3`) rather than extra cells, the step label names what each task builds, the run is named after its issue (`orc #42`), and the ready check and landing have a cell of their own instead of a bare label. When a task is added mid-run, orc skips the old ready step and appends the new tasks and a fresh ready step, so the ready cell stays last.
+
+**Changed areas.**
+
+- **`skills/orc/SKILL.md`, Progress bar section** — new plan shape and update rules: per task `stages` `["build", "review", "fix 1", "fix 2", "fix 3"]` (with `design` first on structural tasks), a descriptive `label` such as `t2 upload limit`, a final `ready` step with `stages` `["check", "land"]`, and the skip-and-re-add rule for new tasks. Refresh.
+- **`README.md`** — **Progress on your status line** describes the new bar. Kit docs only.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.13.1`.
+
+**Update steps.** Refresh `skills/orc/SKILL.md` and move every `pack:` marker to `orc-pack@1.13.1`. No new or removed files. An install coming from 1.12.x or earlier also applies `[1.13.0]` and every entry in between.
+
+**Breaking changes.** None. A run started by 1.13.0 that is still on the status line keeps its old shape until the next orc run replaces it.
+
+**Files to read.** `skills/orc/SKILL.md` (Progress bar).
+
+---
+
 ## [1.13.0] - 2026-10-06
 
 **Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), whose `paceline-mcp` server gives agents progress tools. After planning, orc starts a bar with one step per task, weighted by size and moved through each task's stages (design on structural tasks, then build, review, and commit), so the percentage tracks the real work. The integration is optional, and each update rides along with a call orc already makes, so it adds no turns.
