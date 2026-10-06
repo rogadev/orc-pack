@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.9.0:** start orc on Sonnet 5.5 for [efficiency mode](#pick-a-model-default-or-efficiency-mode), a lower token bill at slightly lower quality, and the test-coverage reviewer now runs on Sonnet 5.5. See the [changelog](CHANGELOG.md#190---2026-09-28) for what changed.
+> **New in v1.11.0:** every orc run now works to a written contract (exact scope, real-or-mocked integrations, and acceptance tests written failing-first), and a new scope reviewer rejects changes outside it. `/shipcheck` verifies a push all the way to the live build: CI, secrets, the deployed commit, and browser smoke checks at phone and desktop widths in both themes. Undirected `/orc` runs also stop picking issues that are already fixed. See the [changelog](CHANGELOG.md#1110---2026-10-06) for what changed.
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Sonnet 5.5, after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -98,6 +98,7 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 - `skills/orc/` — the orchestrator itself, plus `references/`: the shared standards its agents write and review against (see [The standards](#the-standards)).
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
+- `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` in Chrome at 390px and 1440px in light and dark mode. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test or an issue with screenshots. It drafts both files from your code the first time.
 
 **The agents** (`agents/`):
 
@@ -114,6 +115,7 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 | `test`                   | Runs the repo's test suite(s)                                                                                             |
 | `impact`                 | Diff stats for a change                                                                                                   |
 | `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
+| `scope-reviewer`         | Holds each diff to the run's work contract: out-of-scope changes, unproven criteria, unwanted mocks                       |
 | `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |
 | `design-reviewer`        | Approves a design brief before code is written, for structural tasks                                                      |
 | `architecture-reviewer`  | Separation of concerns, module boundaries, file and folder structure, framework conventions                               |
@@ -146,7 +148,7 @@ The quality bar lives in `skills/orc/references/`, and the builders write to the
 - **`builder-contract.md`** — the rules every builder shares: the dispatch, brief and build modes, scope, no commits, no suppressions, fix rounds, and the report.
 - **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when orc detects that stack, and tells the agents to trust the installed version's docs over the playbook.
 
-Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch are listed in the report as cleanup targets, not rewritten on the side.
+Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch come back in the report as cleanup cards, not rewritten on the side.
 
 ---
 
@@ -239,12 +241,12 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 
 1. **Orient & guard.** Orc reads your repo conventions and refuses to start on a dirty working tree or a protected branch (`main`/`master`) — those are yours to clear first.
 2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
-3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague.
-4. **Plan as tasks.** It decomposes the work into a task list and works it in order.
+3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague. Then it writes a **work contract**: one sentence naming the exact files it believes you mean, what's in and out of scope, every integration marked real or mocked, its assumptions, and three to six acceptance criteria that each name a test. It states that sentence in chat as it starts and posts the contract on the issue. Start with `/orc contract first …` to approve the contract before anything is built.
+4. **Plan as tasks.** It decomposes the contract's criteria into a task list and works it in order. Builders write each acceptance test first and show it failing before they write the change, and a scope reviewer holds every diff to the contract.
 5. **Design → build → review → fix, looping.** Per task: orc assigns the builder for the task's surface (UI, API, data, or general); for structural work, that builder writes a short design brief and the design reviewer approves it first; then the builder writes code and tests to the shared standards; the reviewers that apply check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives and matters of taste; real defects and warnings go back for a fix. Bounded at three rounds so it can't loop forever.
-6. **Discoveries get done, not deferred.** Anything it finds along the way — in scope or not — gets built this run, through the same review loop as the rest. The one exception is quality debt in files the run doesn't touch: those are listed in the report as cleanup targets for a later `/orc clean up …` run, so a small issue never turns into a sweep of the codebase. Because the work is dispatched to subagents, orc's own context stays lean as the run grows, so it doesn't need to punt findings onto the board. Filing a new issue is the rare exception, reserved for genuine human-only calls (a policy or security decision, an external contract, spending money) — never just mentioned and forgotten.
+6. **Small discoveries get done; bigger ones come back sized.** Orc sizes everything it finds along the way as Small (one task), Medium (one run), Large (several runs), or Huge (an epic). Small work gets built this run, through the same review loop as the rest. Medium and larger work comes back as a card with its size, impact, recommendation, and issue status, so the run never grows silently and approving a card means agreeing to a known amount of work. Quality debt in files the run doesn't touch also comes back as a card, with the `/orc clean up …` command to run, so a small issue never turns into a sweep of the codebase. Orc files an issue on its own only for genuine human-only calls (a policy or security decision, an external contract, spending money); for everything else, the card names any matching issue or recommends filing one, and you decide.
 7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
-8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, and anything that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
+8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, heads-ups you don't need to act on, and a sized card for each thing that needs your call — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
 
 ## Good to know
 

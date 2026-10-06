@@ -6,7 +6,7 @@ name: Pack integrity
 #
 #   1. Every per-file `pack: orc-pack@x.y.z` marker equals plugin.json's version
 #      (a drift here means a future install cannot recognize the pack's files).
-#   2. Every agent the orc skill names exists as a file under agents/ (a renamed
+#   2. Every agent a dispatching skill names exists as a file under agents/ (a renamed
 #      or deleted agent makes orc dispatch a name that does not resolve).
 #   3. Every skill and agent has parseable frontmatter with `name` and
 #      `description` (a malformed block makes Claude Code skip the file in
@@ -82,14 +82,14 @@ jobs:
 
           # 2. Every agent a skill names resolves to a file. Agent-looking
           # backticked tokens end in a known role suffix or are a known role word.
-          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/update-orc/SKILL.md | tr -d '`' | sort -u)
+          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/update-orc/SKILL.md skills/shipcheck/SKILL.md | tr -d '`' | sort -u)
           for name in $refs; do
             case "$name" in
               *-reviewer | *-finder | *-vetter | *-writer | *-updater | *-implementer | implementer | verifier | fallow | lint | typecheck | test | impact) ;;
               *) continue ;;
             esac
             if [ ! -f "agents/$name.md" ]; then
-              echo "::error file=skills/orc/SKILL.md::names agent '$name' but agents/$name.md does not exist"
+              echo "::error::a skill names agent '$name' but agents/$name.md does not exist"
               fail=1
             fi
           done
@@ -97,7 +97,7 @@ jobs:
           # 4. Every reference file the orc skill names exists. Orc hands these
           # paths to its agents; a missing one silently drops a standard.
           REF_ROOT=skills/orc/references
-          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`|`(design-brief|builder-contract)\.md`' skills/orc/SKILL.md | tr -d '`' | sort -u)
+          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`|`(design-brief|builder-contract|work-contract)\.md`' skills/orc/SKILL.md | tr -d '`' | sort -u)
           for ref in $prefs; do
             if [ ! -f "$REF_ROOT/$ref" ]; then
               echo "::error file=skills/orc/SKILL.md::names reference '$ref' but $REF_ROOT/$ref does not exist"

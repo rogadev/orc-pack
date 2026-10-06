@@ -22,10 +22,13 @@ orc-pack/
 │   │   └── references/     ← standards and playbooks orc passes to its agents
 │   │       ├── builder-contract.md
 │   │       ├── design-brief.md
+│   │       ├── work-contract.md
 │   │       ├── standards/  (code, comments, structure, ui, data)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
 │   ├── newissue/
+│   │   └── SKILL.md
+│   ├── shipcheck/
 │   │   └── SKILL.md
 │   └── update-orc/
 │       └── SKILL.md
@@ -44,6 +47,7 @@ orc-pack/
     ├── next-issue-finder.md
     ├── orc-updater.md
     ├── quality-reviewer.md
+    ├── scope-reviewer.md
     ├── security-reviewer.md
     ├── skill-vetter.md
     ├── test-coverage-reviewer.md
@@ -96,6 +100,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/orc/SKILL.md`              | `<root>/.claude/skills/orc/SKILL.md`              |
 | `skills/orc/references/` (all)     | `<root>/.claude/skills/orc/references/` (all)     |
 | `skills/newissue/SKILL.md`         | `<root>/.claude/skills/newissue/SKILL.md`         |
+| `skills/shipcheck/SKILL.md`        | `<root>/.claude/skills/shipcheck/SKILL.md`        |
 | `skills/update-orc/SKILL.md`       | `<root>/.claude/skills/update-orc/SKILL.md`       |
 | `agents/api-implementer.md`        | `<root>/.claude/agents/api-implementer.md`        |
 | `agents/architecture-reviewer.md`  | `<root>/.claude/agents/architecture-reviewer.md`  |
@@ -111,6 +116,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `agents/next-issue-finder.md`      | `<root>/.claude/agents/next-issue-finder.md`      |
 | `agents/orc-updater.md`            | `<root>/.claude/agents/orc-updater.md`            |
 | `agents/quality-reviewer.md`       | `<root>/.claude/agents/quality-reviewer.md`       |
+| `agents/scope-reviewer.md`         | `<root>/.claude/agents/scope-reviewer.md`         |
 | `agents/security-reviewer.md`      | `<root>/.claude/agents/security-reviewer.md`      |
 | `agents/skill-vetter.md`           | `<root>/.claude/agents/skill-vetter.md`           |
 | `agents/test-coverage-reviewer.md` | `<root>/.claude/agents/test-coverage-reviewer.md` |
@@ -154,7 +160,7 @@ The `skill-vetter` agent in this pack is exactly the tool for a cautious install
 The kit's agents and skill are written to be **project-agnostic**: they discover the repo's stack, commands, and conventions at runtime by reading `CLAUDE.md`/`AGENTS.md`, the manifest, and neighbouring code. So a bare copy already works. But a few quick adaptations make them sharper — do these when the information is readily available:
 
 1. **Confirm the ready command and working branch.** The orc skill runs "the repo's aggregate check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them — no edit needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every agent benefits. Ask the user before creating or editing repo docs.
-2. **Prune what the repo can't use.** `impact` is optional metrics; keep or drop per the user's preference. `fallow` only applies to JavaScript/TypeScript repos, but it self-skips on other stacks, so keep `agents/fallow.md` in place — dropping it gains nothing and desyncs the kit. It is installed by default in Phase 4.5. `skills/newissue/` is optional but recommended — it's how orc's Discoveries step files follow-up work well; drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3 as usual) or the repo doesn't track work as GitHub issues. It reads per-repo house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md` — mention that to the user rather than editing the skill.
+2. **Prune what the repo can't use.** `impact` is optional metrics; keep or drop per the user's preference. `fallow` only applies to JavaScript/TypeScript repos, but it self-skips on other stacks, so keep `agents/fallow.md` in place — dropping it gains nothing and desyncs the kit. It is installed by default in Phase 4.5. `skills/newissue/` is optional but recommended — it's how orc's Discoveries step files follow-up work well; drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3 as usual) or the repo doesn't track work as GitHub issues. It reads per-repo house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md` — mention that to the user rather than editing the skill. `skills/shipcheck/` is optional: it verifies a pushed commit through CI, secrets, the live deploy, and browser smoke checks. Keep it unless the user doesn't want it; it reads `.claude/required-secrets.md` and `.claude/smoke-checklist.md` and drafts them from the code on first use, so don't create them during the install.
 3. **Leave the reviewers and the standards generic unless asked.** They adapt per-repo at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when orc detects that stack, so keep them all even if the repo uses one. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version — that's a bigger, opt-in step, not part of a basic install.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
@@ -176,9 +182,9 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 22 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `newissue` and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
-3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
+3. **Agent names match references.** The orc skill dispatches agents by name (`next-issue-finder`, `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `scope-reviewer`, `security-reviewer`, `architecture-reviewer`, `quality-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `verifier`, and the tooling runners). If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
 5. **Provenance.** `<root>/.claude/orc-pack.provenance.md` exists and names the installed pack version (Phase 2).
 

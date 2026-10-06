@@ -11,8 +11,9 @@ Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (writte
 ## Layout
 
 - `skills/orc/SKILL.md` — the orchestrator prompt. The core deliverable.
-- `skills/orc/references/` — the standards orc hands its agents by path: `standards/` (code, comments, structure, ui, data), `frameworks/` (next, nuxt, sveltekit, astro), `platforms/` (cloudflare, vercel), the `design-brief.md` template, and `builder-contract.md` (the rules every builder shares). The builders write to these and the reviewers check against them. They carry no `pack:` marker; the release guard and the marker check cover only `SKILL.md` and agent files.
+- `skills/orc/references/` — the standards orc hands its agents by path: `standards/` (code, comments, structure, ui, data), `frameworks/` (next, nuxt, sveltekit, astro), `platforms/` (cloudflare, vercel), the `design-brief.md` and `work-contract.md` templates, and `builder-contract.md` (the rules every builder shares). The builders write to these and the reviewers check against them. They carry no `pack:` marker; the release guard and the marker check cover only `SKILL.md` and agent files.
 - `skills/newissue/SKILL.md` — turns a rough idea into a self-contained GitHub issue; orc uses it to file follow-up work.
+- `skills/shipcheck/SKILL.md` — verifies a push through CI, required secrets, the live deploy, and browser smoke checks; optional.
 - `skills/update-orc/SKILL.md` — updates an installed pack to the latest release from any older version, dispatching the `orc-updater` agent.
 - `agents/*.md` — one file per subagent (builders, reviewers, verifier, issue scout, tooling runners, orc-updater). Each has YAML frontmatter: `name`, `pack`, `description`, `model`, optional `tools` and `memory`.
 - `CHANGELOG.md` — one section per released version; the release guard publishes the matching section as the release body, and `/update-orc` reads it as the update map.
@@ -43,7 +44,7 @@ Each agent pins a `model:` and, where the model supports it, an `effort:` in fro
 - **Opus 5.5** (`claude-opus-5-5`) — every other agent that makes a judgement call, with `effort` as the cost control:
   - `high` — `security-reviewer`, `skill-vetter`, `dependency-vetter`, `orc-updater`: security work, plus jobs that run too rarely for effort to matter to cost. Also `data-implementer`, the one builder at high effort: a bad migration or backfill is the hardest mistake in the pack to reverse, so it gets the extra reasoning on every task.
   - `medium` (Opus 5.5's default) — the builders `implementer`, `ui-implementer`, and `api-implementer`, plus `verifier`, `design-reviewer`, `quality-reviewer`, `architecture-reviewer`, `ui-reviewer`: the per-task work whose judgement decides code quality and design, which is the pack's top priority. `quality-reviewer` and `architecture-reviewer` moved here from Sonnet 5 in 1.7.0 for that reason.
-  - `low` — `next-issue-finder`, `docs-writer`, `comment-reviewer`: triage, prose, and a narrow rubric.
+  - `low` — `next-issue-finder`, `docs-writer`, `comment-reviewer`, `scope-reviewer`: triage, prose, and a narrow rubric.
 - **Fable 5.1** (`claude-fable-5-1`) — never a frontmatter default. Orc uses it only for round three of a fix loop, on whichever builder the task uses, when a blocking finding survives two fix rounds.
 
 Security review and verification stay on Opus 5.5 regardless of cost; by default only the test-coverage reviewer runs on Sonnet. Sonnet is pinned to the explicit id `claude-sonnet-5-5` so that moving to a later Sonnet is a decision, not a silent change; Haiku stays on the `haiku` alias because its runners make no judgement calls. Revisit the tiers when Haiku 5.5 ships. The effort levels are informed defaults, not measured ones. The cheapest check is to compare verifier-confirmed findings per reviewer and fix rounds per task across real runs.

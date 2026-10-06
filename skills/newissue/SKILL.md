@@ -1,6 +1,6 @@
 ---
 name: newissue
-pack: orc-pack@1.9.1
+pack: orc-pack@1.11.0
 description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
 ---
 
@@ -89,7 +89,8 @@ Zero conversation context:
 - **Evidence** — `file:line`, real command output in fenced blocks, error IDs, Sentry links, commit SHAs. Show the thing; don't describe having seen it. For anything visual, a screenshot or mockup beats prose — reference one, or note where the developer should drop one in.
 - **Fix / approach** — the shape of the change, the files involved, the constraints. When the answer isn't code, say so plainly.
 - **Scope and non-goals** — what is explicitly _not_ part of this, tempting adjacent work named. This keeps a two-line fix from becoming a refactor.
-- **Done when** — an observable condition, not a feeling.
+- **Integrations** — every external system the work touches (an API, a queue, a payment or email provider, a third-party SDK) and whether the fix uses it **real** or **mocked**. Real is the default; write **MOCKED**, in capitals, with the reason, only when a mock is the intent. Drop this section when nothing external is involved.
+- **Done when** — three to six acceptance criteria (one or two for a small fix), each an observable behavior a test can assert, written so the executing agent can turn each one into a failing test before it writes the change: "a 4xx response from the upload API is not retried", not "retries work properly". Name the test file when the repo's layout makes it obvious.
 - **Supersedes / conflicts with** — from the board check, when there's anything to say.
 - **Open questions** — only the genuinely undecidable, each with the assumption you proceeded under. If this section is long, you should have stopped and asked.
 
@@ -124,7 +125,7 @@ Report the URL back.
 2. Every claim has evidence behind it?
 3. No pronoun or reference pointing at this conversation?
 4. No "TBD", empty section, or hedge a decision would resolve?
-5. "Scope and non-goals" actually bounded?
+5. "Scope and non-goals" actually bounded, every integration marked real or mocked, and every "Done when" line something a test can assert?
 6. Title: type-tagged, plain enough for the PM, still a specific claim?
 7. First paragraph: understandable with zero technical background?
 8. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
