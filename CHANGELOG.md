@@ -16,6 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.10.1] - 2026-10-06
+
+**Summary.** Undirected orc runs stop picking issues that are already fixed. Issues often stay open after their fix lands, for example when the fixing commit had no closing keyword. Before this release, the issue scout could pick one, and orc found out only in **Make it buildable**, after spending a cycle on it. The scout now checks each plausible candidate against the integration branch's history before it ranks it, never picks a stale one, and lists stale issues with evidence so orc can confirm and close them.
+
+**Changed areas.**
+
+- **`agents/next-issue-finder.md`** — new **Screen out stale candidates** section: two `git log` calls per candidate (by issue number, and by the paths the issue names) and a code read only on a hit. The output block gains an optional `STALE:` section, one line per stale issue with the commit and the code evidence. `PICK: NONE` now also covers a board where every candidate is stale. The agent stays read-only. Refresh.
+- **`skills/orc/SKILL.md`, 1. Survey** — orc confirms each `STALE` entry itself, comments the commit and what the code now does, and closes the issue; if the evidence doesn't hold, it leaves the issue alone. Refresh.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.10.1`.
+
+**Update steps.** Refresh `agents/next-issue-finder.md` and `skills/orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.10.1`. No new or removed files, and no CI, environment, or dependency changes. If the install has local edits to `next-issue-finder.md`, keep the `STALE:` section of its output block: orc reads it. An install coming from 1.9.x or earlier also applies `[1.10.0]` and every entry in between.
+
+**Breaking changes.** None. Anything that parses the scout's output must tolerate the new optional `STALE:` section between `SET_ASIDE:` and `GUARDS:`.
+
+**Files to read.** `agents/next-issue-finder.md` (Screen out stale candidates, Output) and `skills/orc/SKILL.md` (1. Survey).
+
+---
+
 ## [1.10.0] - 2026-10-02
 
 **Summary.** Orc's end-of-run report now separates what the user needs to decide from everything else, and every decision comes with a size. Before this release, **Your call** mixed small fixes orc could have made itself, plain heads-ups, and real decisions in one unsized list, and orc built any discovery larger than trivial in the same run, so a short job could grow into a very long one. Now orc sizes every follow-up as Small, Medium, Large, or Huge. It does Small work during the run and hands Medium and larger work back as a fixed-format card with a size, an impact, a recommendation, the scope of a yes, and the issue status. When the user approves a card, orc states the bound in one line and stops at the approved band. Builders and the verifier tag the out-of-scope items they report with a size, so orc can route them without sizing them again.

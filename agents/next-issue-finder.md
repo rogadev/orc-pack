@@ -32,6 +32,19 @@ Then `gh issue view <n>` on only the handful of plausible candidates — read th
 
 > If `gh` isn't available or the repo has no GitHub remote, say so in one line and return `PICK: NONE` with that reason — orc will handle it.
 
+## Screen out stale candidates
+
+Issues often stay open after the work lands: a commit that fixed one without a closing keyword, or a sibling issue whose fix covered it. Picking one costs orc a whole cycle before it finds out, so check each plausible candidate before you rank it. Run this against the integration branch (the current branch when it is the working branch, otherwise the one `CLAUDE.md`/`AGENTS.md` names, commonly `dev`):
+
+```bash
+git log <branch> --oneline -n 20 -E --grep "#<n>([^0-9]|$)"
+git log <branch> --oneline -n 10 -- <paths the issue names>
+```
+
+Use the second command only when the issue names files or symbols. A candidate is **stale** when a commit references it by number and its subject or body describes the issue's fix, or when a recent commit touching the named code plainly does what the issue asks. If you suspect a candidate is stale, open the code to confirm: read the lines the issue points at and check whether the reported behavior is still there. A commit that only mentions the issue in passing (`Related: #12`), or a partial fix, does not make it stale; rank it normally and note the partial fix in REASON.
+
+Never pick a stale issue. List it under STALE with the evidence so orc can comment and close it. Keep this cheap: two `git log` calls per candidate, and a code read only on a hit.
+
 ## Pick
 
 Choose ONE issue using judgement across four signals, weighted in this order:
@@ -61,9 +74,11 @@ BATCH: #<n>, #<n>             (omit this line unless suggesting a batch)
 SET_ASIDE:
 - #<n> <title> — <one line why not now>
 - #<n> <title> — <one line why not now>
+STALE:                        (omit this section if none)
+- #<n> <title> — <commit sha and subject, and what in the code shows it is fixed>
 GUARDS:
 - working_tree: clean         (or: dirty — <file>, <file>)
 - branch: <name> (<ok | PROTECTED>)
 ```
 
-If there are genuinely no open issues, set `PICK: NONE` and say so in REASON. If a guard is tripped, still report your best PICK — orc decides whether the guard blocks the run. Keep SET_ASIDE to the 2–4 next-best candidates, one line each; it's orc's fallback if the top pick turns out unbuildable.
+If there are genuinely no open issues, or every candidate is stale, set `PICK: NONE` and say so in REASON. If a guard is tripped, still report your best PICK — orc decides whether the guard blocks the run. Keep SET_ASIDE to the 2–4 next-best candidates, one line each; it's orc's fallback if the top pick turns out unbuildable.

@@ -123,7 +123,9 @@ Pass each agent only the files in its row that apply to the task. **The `verifie
 
 ### 1. Survey — _undirected runs only_
 
-Dispatch `next-issue-finder` (Opus 5.5 at low effort; Sonnet 5.5 in efficiency mode). It scans the board with the four-signal ruleset and returns a structured `PICK`, a `SET_ASIDE` fallback list, and a `GUARDS` report — a decision, not fifty issue bodies. Validate its pick in **Make it buildable** before trusting it. If it returns `PICK: NONE`, there are no open issues — report `FINISHED (no build)` and stop.
+Dispatch `next-issue-finder` (Opus 5.5 at low effort; Sonnet 5.5 in efficiency mode). It screens candidates against the integration branch for work that already landed, scans the board with the four-signal ruleset, and returns a structured `PICK`, a `SET_ASIDE` fallback list, a `STALE` list when it found any, and a `GUARDS` report — a decision, not fifty issue bodies. Validate its pick in **Make it buildable** before trusting it.
+
+For each `STALE` entry, confirm the evidence yourself (open the commit and the code it names), then comment the commit and what the code now does and close the issue. If the evidence doesn't hold, leave the issue open and say nothing on it. This is board work and it counts. If it returns `PICK: NONE`, there are no open issues, or every one was stale — report `FINISHED (no build)` and stop.
 
 Either way — every mode — orient before touching anything:
 
