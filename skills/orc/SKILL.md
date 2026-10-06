@@ -91,7 +91,7 @@ If the work outgrows the approved band mid-run, stop at the band the way you sto
 
 ## Progress bar
 
-When the [paceline](https://github.com/rogadev/paceline) progress tools (`progress_start`, `progress_step`, `progress_label`, `progress_add_steps`, `progress_finish`) are available, mirror the task list as a bar on the user's status line. They are optional: when they aren't available, skip this section silently, and never install, mention, or ask about them. When they are deferred, load all five in one tool search as you plan. Also skip it when the invocation says the caller draws its own progress bar, as a loop that drives orc can; starting a run would replace the caller's bar.
+When the [paceline](https://github.com/rogadev/paceline) progress tools (`progress_start`, `progress_step`, `progress_label`, `progress_add_steps`, `progress_finish`) are available, mirror the task list as a bar on the user's status line. They are optional: when they aren't available, skip this section silently, and never install, mention, or ask about them. When they are deferred, load all five in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through these tools, as a loop that drives orc can: paceline keeps one run per repository, so starting yours would replace the caller's.
 
 The bar is a convenience, never a step of the run. Send each call in the same message as a tool call you are already making, such as a dispatch or a commit, never in a turn of its own. If a call fails, drop the bar for the rest of the run and carry on.
 
