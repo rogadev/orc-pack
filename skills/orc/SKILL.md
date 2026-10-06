@@ -95,10 +95,9 @@ When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are 
 
 The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If one fails, drop the bar and carry on.
 
-- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, one step per task in order, with the task number as `id`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review", "commit"]`, with `design` first on a structural task.
-- **Advance** with `progress_step`: the `stage` as a task enters it, then `status: done` once it commits.
-- **Fix rounds** go on the label, never a stage back, which would run the bar backwards: `progress_label` `fix 1/3`, then an empty label once its re-review is clean.
-- **New tasks** from **Discoveries** or a review: `progress_add_steps`, sized and staged the same way. Tasks the **Run budget** leaves undone: `skipped`.
+- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, four steps per task in order, so every round the bar can show has a cell from the start. First the task itself: `id` `t2`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review"]`, with `design` first on a structural task. Then its three fix rounds: `id` `t2-fix1` to `t2-fix3`, `label` `#42 t2 fix 1` to `fix 3`, `weight` 1, `stages` `["fix", "review"]`.
+- **Advance** with `progress_step`: the `stage` as a step enters it, and `status: done` when its review returns. A review that leaves a Blocker or Warning starts the next fix step; one that leaves only Nits marks the task's remaining fix steps `skipped`. Never move a step back a stage, which would run the bar backwards, and never put a round count on the label: the cells show it.
+- **New tasks** from **Discoveries** or a review: `progress_add_steps`, the same four steps sized and staged the same way. Tasks the **Run budget** leaves undone: every step `skipped`.
 - **Ready**: label `ready check`. **Finish** before the report: `progress_finish done`; on `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents

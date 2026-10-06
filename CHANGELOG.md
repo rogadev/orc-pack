@@ -18,7 +18,7 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ## [1.13.0] - 2026-10-06
 
-**Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), whose `paceline-mcp` server gives agents progress tools. After planning, orc starts a bar with one step per task, weighted by size and moved through each task's stages (design on structural tasks, then build, review, and commit), so the percentage tracks the real work. The integration is optional, and each update rides along with a call orc already makes, so it adds no turns.
+**Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), whose `paceline-mcp` server gives agents progress tools. After planning, orc starts a bar with four steps per task: the task, weighted by size and moved through its stages (design on structural tasks, then build and review), then its three possible fix rounds. Each round fills a cell as it runs, and rounds a clean review makes unnecessary are skipped, so the cells and the percentage both track the real work. The integration is optional, and each update rides along with a call orc already makes, so it adds no turns.
 
 **Changed areas.**
 
