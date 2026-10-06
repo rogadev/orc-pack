@@ -91,14 +91,18 @@ If the work outgrows the approved band mid-run, stop at the band the way you sto
 
 ## Progress bar
 
-When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. They are optional: without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
+When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. Without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip the bar when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
 
-The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If one fails, drop the bar and carry on.
+The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If a `progress_*` call fails, drop the bar and carry on.
 
-- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, four steps per task in order, so every round the bar can show has a cell from the start. First the task itself: `id` `t2`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review"]`, with `design` first on a structural task. Then its three fix rounds: `id` `t2-fix1` to `t2-fix3`, `label` `#42 t2 fix 1` to `fix 3`, `weight` 1, `stages` `["fix", "review"]`.
-- **Advance** with `progress_step`: the `stage` as a step enters it, and `status: done` when its review returns. A review that leaves a Blocker or Warning starts the next fix step; one that leaves only Nits marks the task's remaining fix steps `skipped`. Never move a step back a stage, which would run the bar backwards, and never put a round count on the label: the cells show it.
-- **New tasks** from **Discoveries** or a review: `progress_add_steps`, the same four steps sized and staged the same way. Tasks the **Run budget** leaves undone: every step `skipped`.
-- **Ready**: label `ready check`. **Finish** before the report: `progress_finish done`; on `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
+The bar has one cell per task, in plan order, then one `ready` cell. Fix rounds are stages inside their task's cell, never cells of their own: paceline only appends steps, so a fix cell added mid-run would land after every later task.
+
+- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): exactly one `progress_start` per run, named `orc #42` (just `orc` with no issue), listing every task and then the ready step.
+  - A task: `id` `t2`; a `label` naming what it builds in a few words, such as `t2 upload limit`, which is what the status line shows while it runs; `weight` Trivial 1, Standard 3, Structural 8; `stages` `["build", "review", "fix 1", "fix 2", "fix 3"]`, with `design` first on a structural task.
+  - The ready step last: `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "land"]`.
+- **Advance** with `progress_step` as each task moves: its first stage when you dispatch its first builder, `review` when you dispatch the panel, `fix 1` to `fix 3` as each fix round starts (a round's re-review stays in its fix stage), and `status: done` when it commits. A clean review goes straight to done. Stages only move forward. Mark every task the **Run budget** leaves undone `skipped`, planned or added.
+- **New tasks** from **Discoveries** or a review: paceline appends them after the ready cell, so keep ready last by moving it. Mark the current ready step `skipped`, then `progress_add_steps` with the new tasks, labelled, weighted, and staged the same way, followed by a fresh ready step (`ready-2`, `ready-3`, and so on).
+- **Ready**: the last ready step to `check` when **Ready** starts and to `land` when **Land it** starts. **Finish** before the report with `progress_finish done`, or, on `NOT FINISHED`, instead mark the step in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents
 

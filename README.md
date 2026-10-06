@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.13.0:** with [paceline](https://github.com/rogadev/paceline) installed, orc shows a run's progress on your Claude Code status line, weighted by task size, with a cell for each task and each fix round it needs. See [Progress on your status line](#progress-on-your-status-line) and the [changelog](CHANGELOG.md#1130---2026-10-06).
+> **New in v1.13.0:** with [paceline](https://github.com/rogadev/paceline) installed, orc shows a run's progress on your Claude Code status line, weighted by task size and moving through each task's design, build, review, and commit stages. See [Progress on your status line](#progress-on-your-status-line) and the [changelog](CHANGELOG.md#1130---2026-10-06).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -163,10 +163,10 @@ Fallow is a static codebase-intelligence pass that finds dead code, code duplica
 Install [paceline](https://github.com/rogadev/paceline), a Claude Code status line, and register its `paceline-mcp` server to watch a run's progress without reading the transcript:
 
 ```
-orc ▰▰▱▱ #42 t2 review 55%
+orc #42 ▰▰▱▱▱ t2 upload limit review 32%
 ```
 
-Once orc plans its tasks, it reports each one to paceline with a weight by size and the stages it passes through (design, build, review), plus a cell for each of its three possible fix rounds. A round fills its cell as it runs, and rounds a clean review makes unnecessary are skipped, so the cells and the percentage track the real work rather than a task count. The ready check shows on the label. Without paceline, orc skips this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
+Once orc plans its tasks, it starts a bar with one cell per task and a final cell for the ready check and landing, so a four-task run shows five cells and the highlighted cell is the one in progress. The label names what that task builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a task count. A task added mid-run gets its own cell, and the ready cell moves to stay last. Without paceline, orc skips this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
 
 ---
 
