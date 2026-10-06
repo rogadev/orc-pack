@@ -1,6 +1,6 @@
 # Astro playbook
 
-Loaded when the repo has `astro` in its dependencies or an `astro.config.*` file. It adds Astro-specific rules on top of the standards files. The repo's own docs and patterns still win.
+Astro-specific rules on top of the standards files. The repo's own docs and patterns still win.
 
 ## Check the version first
 
@@ -22,7 +22,7 @@ Read the installed `astro` version and the config's `output` mode and adapter. R
 
 ## Data and mutations
 
-- **Fetch in frontmatter or endpoints, on the server.** Parallelize independent requests.
+- **Fetch in frontmatter or endpoints, on the server.**
 - **Actions (`astro:actions`)** for mutations, with an input schema, called from forms or islands. Expected failures throw an `ActionError` with a code in the handler; callers handle the returned `error` rather than assuming success.
 - **Static or on-demand rendering is a deliberate per-page choice** (`export const prerender`). Personalized or auth-dependent pages are never prerendered.
 

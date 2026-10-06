@@ -45,6 +45,7 @@ For structural tasks, the builder assigned to the task writes this brief before 
 - **Phases:** <the expand/contract steps, or why one step is safe>
 - **Backfill:** <how it batches, resumes, stays idempotent, and is verified>
 - **Locks and indexes:** <what each operation locks and for how long; the query each new index serves>
+- **Reversibility:** <how each migration rolls back, or why it cannot and what that means for a failed deploy>
 - **Deploy order:** <the numbered sequence of migrations, backfills, and code releases>
 
 ## Tests

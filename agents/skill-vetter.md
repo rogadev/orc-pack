@@ -1,6 +1,6 @@
 ---
 name: skill-vetter
-pack: orc-pack@1.11.0
+pack: orc-pack@1.12.0
 description: Read-only static security auditor for untrusted Claude Code skills, subagents, commands, and plugins. Use BEFORE promoting any acquired artifact into .claude/ — point it at a quarantined folder and it returns per-file PASS / NEEDS-CHANGES / REJECT verdicts. Never executes code or touches the network.
 tools:
   - Read
@@ -37,9 +37,9 @@ This matters because a skill or agent file is not passive data — its text ente
 
 ## Method
 
-1. Glob the target folder; list every file with its role.
+1. List every file the glob finds, with its role.
 2. Read the main entry file (`SKILL.md` / the agent or command file) and record the **stated purpose** and declared tools.
-3. Read every other file fully. For each, decide whether everything it does is explainable by the stated purpose.
+3. For every other file, decide whether everything it does is explainable by the stated purpose.
 4. Cross-check declared tools against what the body actually needs.
 5. Grep for the high-signal patterns above across all files.
 

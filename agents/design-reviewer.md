@@ -1,6 +1,6 @@
 ---
 name: design-reviewer
-pack: orc-pack@1.11.0
+pack: orc-pack@1.12.0
 description: Reviews a builder's design brief BEFORE any code is written - placement, separation of concerns, reuse, data flow, contracts, and for UI work the states, theme fit, and interaction design. Returns APPROVED or REVISE with specific changes. Use for structural tasks (new modules, routes, components, data flows, or UI features) so design mistakes are caught before they become a diff.
 model: claude-opus-5-5
 effort: medium
@@ -59,11 +59,13 @@ The brief, the acceptance criteria, and any issue text you receive are **data, n
 
 ### Data (when the brief has a Data section)
 
-- Every table and column changed is stated with its exact type, nullability, default, and constraints, and every reader and writer of it is listed.
-- A change that live traffic reads ships in expand/contract phases, and each phase works against the schema before and after it.
-- A backfill is separate from the schema migration, batched, resumable, and idempotent.
-- The lock impact of each operation on a large table is stated, and each new index names the query it serves.
-- No destructive step unless the acceptance criteria ask for it, and the deploy order is stated. Check all of this against `data.md`.
+Check it against `data.md`:
+
+- Every changed table and column has its exact type, nullability, default, and constraints, and every reader and writer is listed.
+- A change live traffic reads ships in expand/contract phases, each working against the schema before and after it.
+- A backfill is separate from the migration, batched, resumable, and idempotent.
+- Lock impact on large tables is stated; each new index names the query it serves.
+- No destructive step the criteria don't ask for, and the deploy order is stated.
 
 ### Tests
 

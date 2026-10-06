@@ -16,6 +16,35 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.12.0] - 2026-10-06
+
+**Summary.** Orc now uses Fable 5.1 where it still beats Opus 5.5: the `ui-implementer` runs on Fable for the design brief and first build of a structural UI task, such as a new screen or UI feature, because Fable's open-ended visual design is stronger. Everything else stays on Opus 5.5, which matches or beats Fable on coding at well under half the cost. Round three of a fix loop still runs on Fable, and a round-three fix that weakens a test is now a Blocker. This release also trims repeated text across the pack, so each agent loads fewer tokens with no rule removed, and fixes several bugs: `fallow` could report a crash as a pass, `dependency-vetter`'s audit failed without a lockfile, `impact` miscounted lines, and the suppression rules contradicted each other.
+
+**Changed areas.**
+
+- **`skills/orc/SKILL.md`, Model selection and 5. Run the task loop** — new Fable rule: `ui-implementer` gets `model: fable` for the brief and first build of a structural task; its fix rounds stay on Opus 5.5. Round three keeps Fable, and a round-three fix that weakens, skips, or deletes a test or assertion is a Blocker. In efficiency mode, structural UI stays on Opus 5.5. The per-agent tier list is replaced by one line naming the non-Opus agents, because each agent's frontmatter holds its model and effort. Refresh.
+- **`skills/orc/SKILL.md`, other sections** — shorter **Waiting on subagents**, **Discoveries**, and **What orc does NOT do** (rules stated elsewhere removed, no rule lost). **Ready** and the **Standards** table now allow a suppression only as `code.md` allows it. Refresh.
+- **`skills/orc/references/builder-contract.md`** — step 10 defers to `code.md`'s "Suppressions are a last resort" rule instead of banning every suppression; skipped tests, deleted assertions, and `--no-verify` stay banned. Shorter **Standards** list and step 8. Refresh; no `pack:` marker.
+- **`agents/fallow.md`** — captures the exit code and stderr instead of discarding them; a new `ERROR` status covers any exit other than 0 or 1 or output that isn't JSON, so a crash is never a PASS. Defines PASS, WARN (dead code, duplication, complexity), and FAIL (a circular dependency). Anything that parses its report must accept `ERROR` and the new `Exit code` line. Refresh.
+- **`agents/dependency-vetter.md`** — vets the exact version the caller names, resolving `latest`, another tag, or a range to a concrete version first. Creates the vet directory before entering it, and builds a lockfile (`npm install --package-lock-only --ignore-scripts`, then `npm ci --ignore-scripts`) so `npm audit` works. Refresh.
+- **`agents/impact.md`** — counts with `git diff -w --numstat` (one diff against `HEAD` for uncommitted work, plus untracked files), so whitespace-only changes and binary files drop out and per-file counts are exact. Refresh.
+- **`agents/security-reviewer.md`** — the output format gains the **Pre-existing** section its rules already asked for. Refresh.
+- **`agents/test-coverage-reviewer.md`** — description now covers every change to logic that can regress. Refresh.
+- **`skills/orc/references/standards/ui.md` and `agents/ui-reviewer.md`** — 768 px stays a design target; the reviewer renders 390 px and 1440 px and checks the tablet width by reading the code. Refresh.
+- **`skills/newissue/SKILL.md`** — writes the issue body to a file and files it with `--body-file`, never a heredoc; the self-check now comes before filing. Refresh.
+- **`skills/update-orc/SKILL.md`** — also finds a global install under `~/.claude/` when the project has none; fetches the kit before building the update map. Refresh.
+- **Token trims, no rule removed** — `agents/{implementer,ui-implementer,api-implementer,data-implementer,architecture-reviewer,design-reviewer,verifier,typecheck,next-issue-finder,docs-writer,skill-vetter,orc-updater}.md`, `skills/orc/references/{design-brief.md,standards/code.md,standards/comments.md,standards/data.md}`, and every framework and platform playbook. Builders now point to the standards they load instead of restating them. `design-brief.md` gains a **Reversibility** bullet in its Data section. Refresh all.
+- **`INSTALL.md`, `UPDATE.md`, `README.md`, `CLAUDE.md`, `docs/model-tiers.md` (new)** — install table uses one row for all agents and lists every kit file that isn't copied; stale statements fixed; the model-tier evidence moved from `CLAUDE.md` to `docs/model-tiers.md`. Kit docs only; don't copy `docs/`.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.12.0`.
+
+**Update steps.** Refresh every skill, agent, and reference file listed above and move every `pack:` marker to `orc-pack@1.12.0`. No new or removed files in the install. Fable 5.1 must be available on the account for the structural UI move; on an account without it, those dispatches may fail, so remove the structural UI rule from **Model selection** there. If the install has local edits to `fallow.md`, keep the new exit-code capture. An install coming from 1.10.x or earlier also applies `[1.11.0]` and every entry in between.
+
+**Breaking changes.** None removed. Structural UI tasks now cost more per build (Fable 5.1 is priced above Opus 5.5). The `fallow` report can now say `Status: ERROR`.
+
+**Files to read.** `skills/orc/SKILL.md` (Model selection, Efficiency mode, 5. Run the task loop, 7. Ready), `skills/orc/references/builder-contract.md` (Build mode step 10), `agents/fallow.md`, `agents/dependency-vetter.md`, `agents/impact.md`, and `docs/model-tiers.md` in the kit for the reasoning.
+
+---
+
 ## [1.11.0] - 2026-10-06
 
 **Summary.** Every orc run now works to a written **work contract**, and a new `scope-reviewer` holds each diff to it. Before it plans, orc writes one sentence naming the exact files and symbols it believes the request means, what's in and out of scope, every integration marked real or mocked, its user-facing assumptions, and three to six acceptance criteria that each name a test. Builders write those tests first and show them failing before they write the change, and the report maps each criterion to its passing test. This targets the two costliest failure modes of unattended runs: a wrong approach (for example, a mock where the real API was wanted) and a misread request. `/orc contract first …` adds an approval stop before building. A new optional skill, `/shipcheck`, verifies a pushed commit all the way to the live build: it waits for CI and fixes a red run, checks that the target environment has every required secret, waits until the deployment serves that exact commit, and runs browser smoke checks at phone and desktop widths in both themes. Separately, undirected orc runs stop picking issues that are already fixed: the issue scout checks each candidate against the integration branch's history first, and orc closes the stale ones with evidence.

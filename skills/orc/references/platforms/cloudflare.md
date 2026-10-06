@@ -1,6 +1,6 @@
 # Cloudflare playbook
 
-Loaded when the repo deploys to Cloudflare: a `wrangler.toml`, `wrangler.json`, or `wrangler.jsonc` file, a Cloudflare adapter (`@sveltejs/adapter-cloudflare`, `@astrojs/cloudflare`, `@opennextjs/cloudflare`, a Nitro `cloudflare` preset), or `wrangler` in the scripts. The repo's own docs and patterns still win.
+Rules for repos that deploy to Cloudflare, on top of the standards files. The repo's own docs and patterns still win.
 
 ## The runtime is not Node
 
@@ -12,7 +12,7 @@ Workers run on `workerd`, built on web-standard APIs.
 
 ## Bindings and configuration
 
-- **Resources arrive as bindings** on the `env` object (D1, KV, R2, Durable Objects, Queues, Hyperdrive, service bindings, secrets). Read them through the framework's access path: `event.platform.env` in SvelteKit, `event.context.cloudflare.env` in Nuxt, the OpenNext context helper in Next, the adapter's runtime in Astro, or the `env` import from `cloudflare:workers` where the repo uses it.
+- **Resources arrive as bindings** on the `env` object (D1, KV, R2, Durable Objects, Queues, Hyperdrive, service bindings, secrets). Read them through the framework's access path (see the framework playbook), or the `env` import from `cloudflare:workers` where the repo uses it.
 - **Type the bindings.** Generate types with `wrangler types` (or the repo's equivalent) and keep them in sync when a binding changes.
 - **The wrangler config is the source of truth** for bindings, compatibility date and flags, routes, and environments. A new binding in code without the matching config entry is a finding.
 - **Secrets** come from `wrangler secret` in production and `.dev.vars` (never committed) locally. Never put a secret in `vars` in the committed config.

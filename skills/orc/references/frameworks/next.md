@@ -1,6 +1,6 @@
 # Next.js playbook
 
-Loaded when the repo has `next` in its dependencies or a `next.config.*` file. It adds Next-specific rules on top of the standards files. The repo's own docs and patterns still win.
+Next-specific rules on top of the standards files. The repo's own docs and patterns still win.
 
 ## Check the version first
 
@@ -17,7 +17,7 @@ Read the installed `next` version from the lockfile or `node_modules/next/packag
 ## Data loading
 
 - **Fetch in server components** or in the data layer they call, not in client `useEffect`.
-- **Parallelize independent fetches** with `Promise.all`, and use `Suspense` boundaries with `loading.tsx` to stream slow parts instead of blocking the page.
+- **Stream slow parts** with `Suspense` boundaries and `loading.tsx` instead of blocking the page.
 - **Deduplicate per-request reads** with React `cache()` when several components need the same data.
 - **Caching is explicit.** Know the installed version's defaults. Mark dynamic and cached data deliberately (`revalidate`, `cache` options, `'use cache'` where the version supports it), and never cache per-user data in a shared cache.
 

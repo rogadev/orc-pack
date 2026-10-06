@@ -1,8 +1,8 @@
 # The orc pack
 
-> **New in v1.11.0:** every orc run now works to a written contract (exact scope, real-or-mocked integrations, and acceptance tests written failing-first), and a new scope reviewer rejects changes outside it. `/shipcheck` verifies a push all the way to the live build: CI, secrets, the deployed commit, and browser smoke checks at phone and desktop widths in both themes. Undirected `/orc` runs also stop picking issues that are already fixed. See the [changelog](CHANGELOG.md#1110---2026-10-06) for what changed.
+> **New in v1.12.0:** orc builds new screens and UI features on Fable 5.1, which designs them with stronger visual taste, and keeps all other work on Opus 5.5, which matches or beats it for less. Every agent also loads fewer tokens, and the `fallow`, `impact`, and `dependency-vetter` agents report more accurately. See the [changelog](CHANGELOG.md#1120---2026-10-06) for what changed.
 
-`/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Sonnet 5.5, after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
+`/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
 Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, specialist builders that write the code (UI, API, data, and a general builder for everything else), a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
 
@@ -193,7 +193,7 @@ Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every
 ## Updating the pack
 
 - **Plugin install** — nothing to do by hand. `/plugin update orc-pack@orc-pack` (or an automatic update) picks up a new version once `plugin.json`'s version changes.
-- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes and commit or `/ship` them.
+- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes, then commit and push them yourself.
 
 Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 

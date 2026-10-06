@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.11.0
+pack: orc-pack@1.12.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -87,13 +87,11 @@ As soon as you know what the work decomposes into (after **Make it buildable**),
 - **Medium** — a budget of 4 tasks.
 - **Large** or **Huge** — the normal budget. The echo says this run lands the first slice and that the rest comes back as a card.
 
-If the work outgrows the approved band mid-run, stop at the band: finish the task in flight, run **Ready**, land what is green, and report the remainder as a new card. The user agreed to a size, not to whatever the work turns into.
+If the work outgrows the approved band mid-run, stop at the band the way you stop at the budget, and report the remainder as a new card. The user agreed to a size, not to whatever the work turns into.
 
 ## Waiting on subagents
 
-Your context is cached between turns, and the cache lasts about an hour. While a subagent runs you make no requests, so a wait longer than that lets the cache expire, and when the subagent returns your next turn re-caches your whole context at about twice the normal input price instead of reading it at about a tenth.
-
-**Keep a heartbeat while anything runs in the background.** Before you end a turn to wait on a subagent, start a background timer shorter than the cache: a background shell command such as `sleep 3000` (50 minutes). Its completion wakes you, and that turn reads your context from the still-warm cache, which resets its expiry. A heartbeat turn only re-arms the timer if anything is still running, then ends; it carries no status summary. When the last agent finishes, stop the timer so it doesn't wake you mid-task. Don't shorten the interval to stay extra warm: one read per hour is the whole cost, and more frequent wakes only add turns.
+Your context cache expires after about an hour without a request, and re-caching it costs about twenty times a cached read. **Keep a heartbeat while anything runs in the background.** Before you end a turn to wait on a subagent, start a background shell command such as `sleep 3000` (50 minutes). Its completion wakes you and refreshes the cache. A heartbeat turn only re-arms the timer if anything is still running, then ends, with no status summary. Stop the timer when the last agent finishes, and don't shorten the interval: more frequent wakes only add turns.
 
 ## Untrusted input
 
@@ -105,18 +103,18 @@ The quality bar lives in reference files beside this skill, so every builder wri
 
 **Find them.** When Claude Code loads this skill, it names the skill's base directory; the references are in `<base>/references/`. If no base directory was given, glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Resolve absolute paths once in step 1. If none are found, run anyway and say so under the report's **Heads-up**; the reviewers fall back to their own rubrics, and each builder falls back to the hard rules in its own agent file.
 
-| File                     | What it holds                                                                                                  | Goes to                                                                                                                                                                                                          |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `builder-contract.md`    | The rules every builder shares: dispatch, modes, scope, no commits, no suppressions, fix rounds, report format | every builder                                                                                                                                                                                                    |
-| `standards/code.md`      | Readability, types, errors, async, state, reuse, the AI slop signatures, the touched-file rules                | every builder, `design-reviewer`, `quality-reviewer`, `test-coverage-reviewer`                                                                                                                                   |
-| `standards/comments.md`  | The cold-read test, JSDoc rules, slop comments                                                                 | every builder, `comment-reviewer`, and `quality-reviewer` when a trivial task assigns it comments                                                                                                                |
-| `standards/structure.md` | Layers, separation of concerns, file and folder placement                                                      | every builder, `design-reviewer`, `architecture-reviewer`                                                                                                                                                        |
-| `standards/ui.md`        | Theme and design system, states, interaction, responsive, accessibility, copy                                  | `ui-implementer`, any other builder on a task that touches UI, `design-reviewer` on UI briefs, `ui-reviewer`                                                                                                     |
-| `standards/data.md`      | Migrations, backfills, indexes, query safety                                                                   | `data-implementer`, any other builder on a task that touches schema, migrations, or queries, `design-reviewer` on data briefs, `architecture-reviewer` when the diff touches schema, migrations, or data queries |
-| `frameworks/<name>.md`   | The detected framework's conventions and slop                                                                  | every builder, `design-reviewer`, `architecture-reviewer`, `quality-reviewer`, `ui-reviewer`, `security-reviewer`                                                                                                |
-| `platforms/<name>.md`    | The detected deploy target's runtime rules                                                                     | every builder, `design-reviewer`, `architecture-reviewer`, `quality-reviewer`, `security-reviewer`                                                                                                               |
-| `work-contract.md`       | The contract template orc fills in during **Make it buildable**                                                | orc only; the filled contract (`<scratchpad>/contract.md`) goes to every builder, `design-reviewer`, `scope-reviewer`, and the `verifier`                                                                        |
-| `design-brief.md`        | The brief template for structural tasks                                                                        | the task's builder in brief mode, `design-reviewer`                                                                                                                                                              |
+| File                     | What it holds                                                                                                                        | Goes to                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `builder-contract.md`    | The rules every builder shares: dispatch, modes, scope, no commits, suppressions only as `code.md` allows, fix rounds, report format | every builder                                                                                                                                                                                                    |
+| `standards/code.md`      | Readability, types, errors, async, state, reuse, the AI slop signatures, the touched-file rules                                      | every builder, `design-reviewer`, `quality-reviewer`, `test-coverage-reviewer`                                                                                                                                   |
+| `standards/comments.md`  | The cold-read test, JSDoc rules, slop comments                                                                                       | every builder, `comment-reviewer`, and `quality-reviewer` when a trivial task assigns it comments                                                                                                                |
+| `standards/structure.md` | Layers, separation of concerns, file and folder placement                                                                            | every builder, `design-reviewer`, `architecture-reviewer`                                                                                                                                                        |
+| `standards/ui.md`        | Theme and design system, states, interaction, responsive, accessibility, copy                                                        | `ui-implementer`, any other builder on a task that touches UI, `design-reviewer` on UI briefs, `ui-reviewer`                                                                                                     |
+| `standards/data.md`      | Migrations, backfills, indexes, query safety                                                                                         | `data-implementer`, any other builder on a task that touches schema, migrations, or queries, `design-reviewer` on data briefs, `architecture-reviewer` when the diff touches schema, migrations, or data queries |
+| `frameworks/<name>.md`   | The detected framework's conventions and slop                                                                                        | every builder, `design-reviewer`, `architecture-reviewer`, `quality-reviewer`, `ui-reviewer`, `security-reviewer`                                                                                                |
+| `platforms/<name>.md`    | The detected deploy target's runtime rules                                                                                           | every builder, `design-reviewer`, `architecture-reviewer`, `quality-reviewer`, `security-reviewer`                                                                                                               |
+| `work-contract.md`       | The contract template orc fills in during **Make it buildable**                                                                      | orc only; the filled contract (`<scratchpad>/contract.md`) goes to every builder, `design-reviewer`, `scope-reviewer`, and the `verifier`                                                                        |
+| `design-brief.md`        | The brief template for structural tasks                                                                                              | the task's builder in brief mode, `design-reviewer`                                                                                                                                                              |
 
 Pass each agent only the files in its row that apply to the task. **The `verifier` gets the union of the files the reviewers who raised findings were given**, because it can only confirm "a documented rule was broken" against the rule itself. The repo's own docs and established patterns outrank every one of these files, and each file says so; a client repo's existing structure is followed, never reshaped.
 
@@ -214,9 +212,9 @@ Per task, in order. **Never dispatch builders in parallel** — concurrent write
 
 **Every dispatch carries the standards set.** Pass each agent the absolute paths of the standards files and playbooks from its row in **Standards**, and tell it to read them before starting. That one habit is what makes the builders and the reviewers hold the same bar. Every builder dispatch also carries the path to `builder-contract.md`, which the builder reads first.
 
-**Design first — structural tasks only.** Dispatch the task's builder in `brief` mode with the `design-brief.md` template, the contract's path and the criteria the task owns, and an output path outside the repo (`<scratchpad>/task-<n>-brief.md`). Then dispatch the `design-reviewer` with the brief's path, the contract's path, the criteria the task owns verbatim, and its standards. On `REVISE`, send the requested changes back to the same builder in `brief` mode and review once more. A second `REVISE` on the same blocker is a real design disagreement: decide it yourself — the reviewer's position unless the brief's evidence is stronger (always the reviewer's in efficiency mode) — and record the call. The build-mode builder then gets the brief **plus your decided changes, marked binding**, so it never builds the unrevised plan. The approved brief (with any binding changes) is the task's design spec from here on. Trivial and standard tasks skip this step.
+**Design first — structural tasks only.** Dispatch the task's builder in `brief` mode (`ui-implementer` on Fable 5.1, see **Model selection**) with the `design-brief.md` template, the contract's path and the criteria the task owns, and an output path outside the repo (`<scratchpad>/task-<n>-brief.md`). Then dispatch the `design-reviewer` with the brief's path, the contract's path, the criteria the task owns verbatim, and its standards. On `REVISE`, send the requested changes back to the same builder in `brief` mode and review once more. A second `REVISE` on the same blocker is a real design disagreement: decide it yourself — the reviewer's position unless the brief's evidence is stronger (always the reviewer's in efficiency mode) — and record the call. The build-mode builder then gets the brief **plus your decided changes, marked binding**, so it never builds the unrevised plan. The approved brief (with any binding changes) is the task's design spec from here on. Trivial and standard tasks skip this step.
 
-**Dispatch the task's builder** (in `build` mode, on the model **Model selection** names: its frontmatter model by default, Sonnet 5.5 for a trivial task in efficiency mode, never for `data-implementer`). Record `git rev-parse HEAD` first; the reviewers need the base. The dispatch carries:
+**Dispatch the task's builder** (in `build` mode, on the model **Model selection** names: its frontmatter model by default, Fable 5.1 for `ui-implementer` on a structural task, and Sonnet 5.5 for a trivial task in efficiency mode, never for `data-implementer`). Record `git rev-parse HEAD` first; the reviewers need the base. The dispatch carries:
 
 - One line on where this task sits in the larger work, and the task's size.
 - The acceptance criteria the task owns, **quoted from the contract, not paraphrased**, with the test each one names, and the contract's path. The builder writes those tests first and shows each one failing before it writes the change.
@@ -294,7 +292,7 @@ The **Run budget** applies. A large target is a good reason to stop at the cap a
 
 ### 6. Discoveries
 
-Everything you find that the work didn't mention gets sized, then handled: a Small follow-up is done in this run, and anything Medium or larger becomes a card under **Your call**. Never merely _mention_ a finding. A mention evaporates with your context, and a card carries the size, recommendation, and issue status the user needs to decide.
+Size everything you find that the work didn't mention, then handle it as below. Never merely _mention_ a finding. A mention evaporates with your context, and a card carries the size, recommendation, and issue status the user needs to decide.
 
 #### Follow-up sizes
 
@@ -322,7 +320,7 @@ Handle each finding:
 
 **Keep the contract current.** Before you dispatch any task added after the contract was written (a Small follow-up, a cleanup candidate, a trivial fix folded into another task), append an **In scope** line for it to `contract.md`, tagged `follow-up`, with its own criterion, and take it off **Out of scope** if it was listed there. Otherwise `scope-reviewer` rightly flags work the contract never mentions.
 
-Small follow-ups done in-flight appear in the report only under **Landed**, one line each. Add a task for each one, and note each card as you find it, so neither slips.
+Add a task for each Small follow-up, and note each card as you find it, so neither slips.
 
 **Code-quality debt is the one exception to "Do Small work now".** Slop and structural debt in the files a task touches is already that task's work (see the touched-file rules in `code.md`). A verified **Cleanup candidate** — a touched file that needs more than the task could fix proportionately — becomes its own cleanup task this run, within the budget; one the budget leaves undone becomes a card. But quality debt in files no task touches is not a discovery to chase, whatever its size: a run that sweeps every messy file it passes turns every issue into a rewrite. Report those files as cards under **Your call**, one card per area, with the command that would clean them in the **Recommend** line (for example `/orc clean up the slop in src/lib/billing`), and move on.
 
@@ -330,7 +328,7 @@ Small follow-ups done in-flight appear in the report only under **Landed**, one 
 
 Run the ready command you noted in step 1 (`pnpm ready`, `npm run check`, `make check`, `cargo test && cargo clippy`, …). If the repo has no aggregate, dispatch the `lint`, `typecheck`, and `test` agents in sequence and treat their reports as the gate.
 
-Fix failures at the root (in efficiency mode, through the relevant builder). **No suppressions** — no ignore comments, no deleting failing tests, no `--no-verify`; suppression hands the user a green tree that lies. Bounded retries: a few honest attempts, then stop — commits stay local, nothing pushed, nothing closed; report not-finished with the failing output. When green, amend fixes into the relevant task commit or add one `chore:` commit; don't leave the tree dirty.
+Fix failures at the root (in efficiency mode, through the relevant builder). **No suppressions** — no ignore comment beyond what `code.md` allows (a cause outside the repo, with the reason at the site), no deleting failing tests, no `--no-verify`; suppression hands the user a green tree that lies. Bounded retries: a few honest attempts, then stop — commits stay local, nothing pushed, nothing closed; report not-finished with the failing output. When green, amend fixes into the relevant task commit or add one `chore:` commit; don't leave the tree dirty.
 
 ### 8. Land it
 
@@ -407,25 +405,15 @@ Everything the user reads — the pick line, mid-run assumptions, the report, th
 
 ## Model selection
 
-Claude Code resolves a subagent's model in this order: the **`model` you pass on the dispatch**, then the agent file's `model:` frontmatter, then `CLAUDE_CODE_SUBAGENT_MODEL`, then the main conversation's model. Each agent's frontmatter pins an exact model id and is the calibrated default. The dispatch `model` is the override, and it takes only a family alias (`opus`, `sonnet`, `haiku`, or `fable`). An alias resolves to the session's own model when the session is in that family, and otherwise to that family's current model.
+Each agent's frontmatter pins its calibrated model and `effort`. Every agent runs on Opus 5.5 (`claude-opus-5-5`) except `test-coverage-reviewer` (Sonnet 5.5, `claude-sonnet-5-5`) and the tooling runners `lint`, `typecheck`, `test`, `impact`, and `fallow` (Haiku). A dispatch's `model` overrides the frontmatter, takes only a family alias (`opus`, `sonnet`, `haiku`, or `fable`), and resolves to the session's own model when the session is in that family. A dispatch can't change `effort`.
 
-- **Leave `model` off every dispatch whose agent's frontmatter already names the right model**, which is almost every dispatch. Pass an alias only to move an agent: `sonnet` for an efficiency-mode move (the session is Sonnet 5.5, so it resolves to Sonnet 5.5) and `fable` for a round-three fix (Fable 5.1). Never pass `opus`; every Opus agent's frontmatter already pins Opus 5.5. State the model each dispatch runs on, so the run is legible.
+- **Leave `model` off every dispatch whose frontmatter is already right**, which is almost every dispatch. Pass an alias only to move an agent: `sonnet` for an efficiency-mode move, and `fable` for a structural UI task or a round-three fix. Never pass `opus`. State the model each dispatch runs on, so the run is legible.
+- **Don't move an agent to Sonnet 5.5 outside Efficiency mode.** It keeps its Opus-calibrated effort, where Sonnet 5.5 scores well below Opus 5.5.
+- **Security review and verification always stay on Opus 5.5**, even when a builder ran on a stronger model, and in efficiency mode.
+- **Fable 5.1 (`claude-fable-5-1`) only where it beats Opus 5.5.** Opus 5.5 matches or beats Fable 5.1 on coding at a fraction of the cost, so Fable gets two jobs:
+  - **Structural UI tasks:** dispatch `ui-implementer` with `model: fable` for the brief and the first build of a structural task, the new screens and UI features where visual direction is decided. Fable's edge is open-ended visual design: hierarchy, typography, spacing, and a look that isn't templated. Standard and trivial UI tasks extend an existing design and stay on Opus 5.5, and so do the fix rounds.
+  - **Round three of a fix loop:** if a Blocker survives two fix rounds, run round three on the task's same builder with `model: fable`, for a second model's look at work Opus keeps getting wrong. Fable tends to cut corners to get tests passing, so a round-three fix that weakens, skips, or deletes a test or assertion is itself a Blocker.
 - **A forced subagent model overrides all of this.** See the forced-model check in **Preflight**.
-
-Each agent's frontmatter also sets an `effort` level, which a dispatch can't override, so an agent you move to another model runs at its own frontmatter effort. Don't move a medium- or low-effort agent to Sonnet 5.5 outside **Efficiency mode**: at the same effort level, Sonnet 5.5 scores well below Opus 5.5.
-
-The tiers:
-
-- **Opus 5.5 (`claude-opus-5-5`)** for every agent whose judgement decides code quality:
-  - `security-reviewer` at high effort.
-  - `data-implementer` at high effort: its mistakes are the hardest to reverse.
-  - `implementer`, `ui-implementer`, and `api-implementer` at medium effort.
-  - `verifier`, `design-reviewer`, `quality-reviewer`, `architecture-reviewer`, and `ui-reviewer` at medium effort. Quality and structure are the pack's top priority, so the reviewers who judge them run on the strongest routine model rather than a cheaper one tuned for recall.
-  - `comment-reviewer`, `scope-reviewer`, and `next-issue-finder` at low effort: narrow rubrics and fast triage.
-- **Sonnet 5.5 (`claude-sonnet-5-5`)** at high effort for `test-coverage-reviewer`. Its job is recall over a mechanical question — is this logic tested, and does the test prove anything — and the verifier filters its false positives.
-- **Security review and verification always stay on Opus 5.5**, even when a builder ran on a stronger model, and in efficiency mode. Don't move either down to save cost.
-- **Tooling runners** (`lint`, `typecheck`, `test`, `impact`, `fallow`): Haiku (`haiku`). They run a command and relay its output; the alias follows Haiku releases.
-- **Fix rounds:** if a Blocker survives two fix rounds, run round three on Fable 5.1 (`claude-fable-5-1`), the one model above Opus 5.5 for work it keeps getting wrong. It is the task's same builder, whichever one, dispatched with `model: fable`.
 
 ### Efficiency mode
 
@@ -437,7 +425,7 @@ Efficiency mode runs only on a Sonnet 5.5 session whose user confirmed it in **P
 - The build of a **trivial** task, unless `data-implementer` builds it. Its review lane still checks it. If the real diff turns out not to be trivial, keep the build and give it the standard review panel.
 - A builder's **first fix round**, when the verified findings hold no Blocker and nothing from `security-reviewer`, and the builder isn't `data-implementer`. The scoped re-review after it always includes `quality-reviewer` when the fix changed source code, so an Opus 5.5 lane confirms the fix.
 
-Everything else keeps its frontmatter model: every reviewer, the `verifier`, `data-implementer`, the first build of every standard or structural task and its brief, and every later fix round, with round three following the Fable rule above.
+Everything else keeps its frontmatter model: every reviewer, the `verifier`, `data-implementer`, the first build of every standard or structural task and its brief, and every later fix round, with round three following the Fable rule above. A structural UI task also stays on Opus 5.5 in this mode, without the Fable move.
 
 **Leave more decisions to Opus agents:**
 
@@ -470,11 +458,8 @@ In every `NOT FINISHED` case: commits stay local, nothing is pushed, nothing is 
 
 ## What orc does NOT do
 
-- **No questions mid-run.** The only questions are the two in **Preflight** and **Contract first**, both before anything is built. Judgement calls are yours; note the assumption under **Heads-up** in the report.
 - **No PRs.** Orc lands on the working branch; promoting to the release branch is the user's call.
 - **No closing issues it didn't resolve.** Commenting on an investigated issue is expected.
 - **No board hygiene beyond this run.** Issues you never touched aren't yours to triage.
 - **No force-push, rebase, history rewriting, or hook-skipping.**
-- **No make-work.** Every dispatch has a reason in the task's size and the diff's surfaces. No reviewer runs for a surface the diff does not touch, no fix round runs for Nits alone, no design brief is written for a trivial change, and a cleanup audit that finds nothing ends the run instead of inventing changes.
-- **No procrastinating Small work onto the board.** A Small discovery orc could execute is work for this run, not an issue for a future one — filing it just makes a later agent pay a full cycle to rebuild the context orc already has. Do it in-flight (see **Discoveries**).
-- **No silent scope growth.** A Medium or larger discovery is a card for the user, not a task for this run and not an issue filed without consent. An approved card runs inside its band (see **Approved cards**). File or requeue only the genuine human-only calls in **Outcomes**.
+- **No make-work.** Every dispatch, reviewer lane, fix round, and design brief needs a reason in the task's size and the diff's surfaces.

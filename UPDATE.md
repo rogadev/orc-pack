@@ -13,7 +13,7 @@ Work the phases in order.
 ## Phase 1 — Locate the current install and the new kit
 
 1. Find the installed pack: `.claude/skills/orc/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers, plus the `.claude/skills/orc/references/` directory beside the skill. Read the recorded version from `.claude/orc-pack.provenance.md`.
-2. Have the new kit checked out somewhere outside the repo (the user points you at it).
+2. Have the new kit checked out somewhere outside the repo. `/update-orc` fetches it into the session scratchpad at the target tag; by hand, clone it there yourself or use the checkout the user names.
 3. Compare versions. If the kit is not newer, there's nothing to do — say so and stop.
 
 ---

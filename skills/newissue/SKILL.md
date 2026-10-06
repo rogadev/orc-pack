@@ -1,6 +1,6 @@
 ---
 name: newissue
-pack: orc-pack@1.11.0
+pack: orc-pack@1.12.0
 description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
 ---
 
@@ -96,28 +96,16 @@ Zero conversation context:
 
 Match the repo's prevailing tone; read a recent well-written issue if one exists.
 
-### 6. File it
-
-```bash
-gh issue create \
-  --title "<title>" \
-  --body-file - \
-  --assignee @me \
-  --label "<label>" <<'EOF'
-<body>
-EOF
-```
+### 6. Title, labels, and links
 
 - **Title** — type-tagged, plain-language, and a specific claim, all three at once:
   - Lead with a bracketed type tag — `[BUG]`, `[FEATURE]`, `[CHORE]`, `[EPIC]` — matching the repo's convention if it has one.
-  - Words a non-technical stakeholder understands: name what's affected and what's happening, not the symbol, file, status code, or mechanism — those belong in the body, never the title.
+  - Plain words: what's affected and what's happening, never the symbol, file, status code, or mechanism.
   - Still a specific claim, not a topic. `[BUG] Several tools break on the deployed site` works for both readers; `[BUG] PR deploy: health dots red + multiple tools 500 (likely env/egress in pr-7f3a1c)` loses the board reader; `[BUG] Deploy issue` is a topic and helps no one.
 - **Labels** — only from `gh label list` (or the house-rules set); never invent one. The type label must agree with the title tag; add the area label when one fits; priority only when genuinely obvious — a guessed priority is worse than none. Nothing fits → file unlabelled.
 - **Milestone & project** — apply what the house rules name (`--milestone`, `gh project item-add`); if the repo uses neither, skip.
 - **Assignee** — `@me`.
 - **Links** — related issues (`#12`), the PR or commit that introduced the code, inline where relevant.
-
-Report the URL back.
 
 ### 7. Self-check before filing
 
@@ -126,14 +114,26 @@ Report the URL back.
 3. No pronoun or reference pointing at this conversation?
 4. No "TBD", empty section, or hedge a decision would resolve?
 5. "Scope and non-goals" actually bounded, every integration marked real or mocked, and every "Done when" line something a test can assert?
-6. Title: type-tagged, plain enough for the PM, still a specific claim?
-7. First paragraph: understandable with zero technical background?
-8. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
-9. Type label agrees with the title tag; priority obvious or absent?
-10. Board check covered recently-closed issues too?
-11. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked?
+6. Title type-tagged and a specific claim, and title and first paragraph plain enough for a PM with zero technical background?
+7. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
+8. Type label agrees with the title tag; priority obvious or absent?
+9. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked?
 
 Fix inline. Then file.
+
+### 8. File it
+
+Write the body to a file in the session scratchpad (or a temp directory), never in the repo, and pass it with `--body-file`. Never pass the body through a heredoc or an inline string; quoting breaks on backticks, `$`, and apostrophes.
+
+```bash
+gh issue create \
+  --title "<title>" \
+  --body-file "<scratchpad>/issue-body.md" \
+  --assignee @me \
+  --label "<label>"
+```
+
+Report the URL back.
 
 ## The one stop condition
 
