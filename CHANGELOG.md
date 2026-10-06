@@ -16,6 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.13.0] - 2026-10-06
+
+**Summary.** Orc can now show a run's progress on the Claude Code status line through [paceline](https://github.com/rogadev/paceline), a status line whose `paceline-mcp` server gives agents five progress tools. Once orc has planned its tasks, it starts a bar with one step per task, weighted by size (Trivial 1, Standard 3, Structural 8), and moves each task through its stages (design on structural tasks, then build, review, and commit), so the percentage tracks the real work rather than a task count. Fix rounds and the ready check show on the bar's label. The integration is optional: without the paceline tools, orc skips it silently. Each update goes in the same message as a call orc is already making, so it adds no turns.
+
+**Changed areas.**
+
+- **`skills/orc/SKILL.md`, new Progress bar section** (after **The task list is your spine**) — when the `progress_*` tools are available, orc calls `progress_start` once the tasks exist, `progress_step` as each task changes stage and when it commits, `progress_label` for fix rounds (`fix 1/3`) and the ready check, `progress_add_steps` for tasks added mid-run, and `progress_finish` (`done`, or `halted` with the task in flight marked `blocked`) before the report. Tasks the run budget leaves undone are marked `skipped`. Orc skips the bar when the tools are missing, when a call fails, and when the invocation says the caller draws its own bar, so a loop that drives orc keeps its own. Refresh.
+- **`README.md`** — new **Progress on your status line** section linking to paceline. Kit docs only.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.13.0`.
+
+**Update steps.** Refresh `skills/orc/SKILL.md` and move every `pack:` marker to `orc-pack@1.13.0`. No new or removed files in the install. Installing paceline is optional and outside the pack: put the `paceline` and `paceline-mcp` binaries on the machine, run `paceline install`, and register the server with `claude mcp add --scope user paceline -- /path/to/paceline-mcp`. A skill or loop that invokes `/orc` and draws its own progress bar should say so in the invocation, or orc's bar replaces it. An install coming from 1.11.x or earlier also applies `[1.12.0]` and every entry in between.
+
+**Breaking changes.** None. With paceline registered, orc runs now write `<git-dir>/paceline/progress.json` through its MCP server in the repo they work in.
+
+**Files to read.** `skills/orc/SKILL.md` (Progress bar), and paceline's README, section "Progress bar", for the tool and file format.
+
+---
+
 ## [1.12.0] - 2026-10-06
 
 **Summary.** Orc now uses Fable 5.1 where it still beats Opus 5.5: the `ui-implementer` runs on Fable for the design brief and first build of a structural UI task, such as a new screen or UI feature, because Fable's open-ended visual design is stronger. Everything else stays on Opus 5.5, which matches or beats Fable on coding at well under half the cost. Round three of a fix loop still runs on Fable, and a round-three fix that weakens a test is now a Blocker. Orc also records what every dispatch costs in a token ledger and reports the run's total, and it skips the verifier in every mode when a review returns only Nits. This release also trims repeated text across the pack, so each agent loads fewer tokens with no rule removed, and fixes several bugs: `fallow` could report a crash as a pass, `dependency-vetter`'s audit failed without a lockfile, `impact` miscounted lines, and the suppression rules contradicted each other.
