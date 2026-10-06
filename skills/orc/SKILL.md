@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.12.0
+pack: orc-pack@1.13.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -88,6 +88,18 @@ As soon as you know what the work decomposes into (after **Make it buildable**),
 - **Large** or **Huge** — the normal budget. The echo says this run lands the first slice and that the rest comes back as a card.
 
 If the work outgrows the approved band mid-run, stop at the band the way you stop at the budget, and report the remainder as a new card. The user agreed to a size, not to whatever the work turns into.
+
+## Progress bar
+
+When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. They are optional: without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip it when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
+
+The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If one fails, drop the bar and carry on.
+
+- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): `progress_start` named `orc`, one step per task in order, with the task number as `id`, a short `label` such as `#42 t2`, `weight` Trivial 1, Standard 3, Structural 8, and `stages` `["build", "review", "commit"]`, with `design` first on a structural task.
+- **Advance** with `progress_step`: the `stage` as a task enters it, then `status: done` once it commits.
+- **Fix rounds** go on the label, never a stage back, which would run the bar backwards: `progress_label` `fix 1/3`, then an empty label once its re-review is clean.
+- **New tasks** from **Discoveries** or a review: `progress_add_steps`, sized and staged the same way. Tasks the **Run budget** leaves undone: `skipped`.
+- **Ready**: label `ready check`. **Finish** before the report: `progress_finish done`; on `NOT FINISHED`, mark the task in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents
 

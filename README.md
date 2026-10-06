@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.12.0:** orc builds new screens and UI features on Fable 5.1, which designs them with stronger visual taste, and keeps all other work on Opus 5.5, which matches or beats it for less. Each run now logs what every agent cost to a token ledger and reports the total, every agent loads fewer tokens, and the `fallow`, `impact`, and `dependency-vetter` agents report more accurately. See the [changelog](CHANGELOG.md#1120---2026-10-06) for what changed.
+> **New in v1.13.0:** with [paceline](https://github.com/rogadev/paceline) installed, orc shows a run's progress on your Claude Code status line, weighted by task size and moving through each task's design, build, review, and commit stages. See [Progress on your status line](#progress-on-your-status-line) and the [changelog](CHANGELOG.md#1130---2026-10-06).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -155,6 +155,18 @@ Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and you
 ## Fallow
 
 Fallow is a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. It runs as a standard part of orc's review loop on JS/TS repos — the `fallow` agent scopes `fallow audit` to the task diff and reports the findings, and it self-skips on a non-JS/TS project. It is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
+
+---
+
+## Progress on your status line
+
+Install [paceline](https://github.com/rogadev/paceline), a Claude Code status line, and register its `paceline-mcp` server to watch a run's progress without reading the transcript:
+
+```
+orc ▰▰▱▱ #42 t2 review 55%
+```
+
+Once orc plans its tasks, it reports each one to paceline with a weight by size and the stages it passes through (design, build, review, commit), so the percentage tracks the real work rather than a task count. Fix rounds and the ready check show on the label. Without paceline, orc skips this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
 
 ---
 

@@ -22,6 +22,7 @@ Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (writte
 - `.github/workflows/release-guard.yml` and `pack-integrity.yml` — the CI that enforces versioning, formatting, and pack consistency (see below).
 - `INSTALL.md` and `UPDATE.md` — written for an AI agent installing or updating the pack in a target repo.
 - `docs/` — maintainer notes that never ship, including `model-tiers.md`, the evidence behind the model tiers.
+- `.claude/skills/condense/SKILL.md` — `/condense`, a maintainer skill that never ships. Run it after adding or changing skills, agents, or references: it cuts the shipped prompts to the fewest tokens that keep every instruction, and an independent verifier checks that nothing was lost.
 
 ## No build, lint, or test toolchain
 
