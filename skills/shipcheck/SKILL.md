@@ -1,6 +1,6 @@
 ---
 name: shipcheck
-pack: orc-pack@1.13.1
+pack: orc-pack@1.14.0
 description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md in Chrome at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
 ---
 
