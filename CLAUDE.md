@@ -14,6 +14,7 @@ Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (writte
 - `skills/orc/references/` — the standards orc hands its agents by path: `standards/` (code, comments, structure, ui, data), `frameworks/` (next, nuxt, sveltekit, astro), `platforms/` (cloudflare, vercel), the `design-brief.md` and `work-contract.md` templates, and `builder-contract.md` (the rules every builder shares). The builders write to these and the reviewers check against them. They carry no `pack:` marker; the release guard and the marker check cover only `SKILL.md` and agent files.
 - `skills/newissue/SKILL.md` — turns a rough idea into a self-contained GitHub issue; orc uses it to file follow-up work.
 - `skills/shipcheck/SKILL.md` — verifies a push through CI, required secrets, the live deploy, and browser smoke checks; optional.
+- `skills/orc-loop/SKILL.md` — runs `/orc` over a batch of issues under `/loop`, then reviews the batch as a whole; user-invoked only.
 - `skills/update-orc/SKILL.md` — updates an installed pack to the latest release from any older version, dispatching the `orc-updater` agent.
 - `agents/*.md` — one file per subagent (builders, reviewers, verifier, issue scout, tooling runners, orc-updater). Each has YAML frontmatter: `name`, `pack`, `description`, `model`, and optional `tools`, `effort`, and `memory`.
 - `CHANGELOG.md` — one section per released version; the release guard publishes the matching section as the release body, and `/update-orc` reads it as the update map.

@@ -62,6 +62,16 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 - **`FINISHED (no build)`** — there was genuinely nothing to build (empty board, or every issue was blocked), so it did board work instead — filed evidence, labels, new issues.
 - **`NOT FINISHED`** — a real human-only blocker (dirty tree, missing credential, a decision only you can make). It tells you exactly what to do to unblock it.
 
+### Run a batch unattended: `/orc-loop`
+
+```
+/orc-loop          # about 5 issues from the board
+/orc-loop 3        # a smaller batch
+/orc-loop #41      # an epic's open sub-issues
+```
+
+`/orc-loop` plans a batch of issues, lands each one with `/orc` (pushed, CI green, issue closed), then reviews the batch as a whole for what a per-issue review can't see: changes that contradict each other, logic written twice, and drift in how the issues solved similar problems. It fixes what that review finds and rechecks the fix, up to three rounds, and files whatever survives as issues. It runs under `/loop`, keeps its state in `.git/orc-loop/`, and picks up where it left off if you stop and restart it. The first time it runs in a repo it asks one question, whether the agents' notes in `.claude/agent-memory/` go in `.gitignore`, then runs without asking anything else. It ends with `LOOP FINISHED`, `LOOP FINISHED (no build)`, `LOOP NOT FINISHED`, or `LOOP NOT STARTED` when something stopped it before it planned anything.
+
 ---
 
 ## Pick a model: default or efficiency mode
@@ -96,6 +106,7 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 **The skills:**
 
 - `skills/orc/` — the orchestrator itself, plus `references/`: the shared standards its agents write and review against (see [The standards](#the-standards)).
+- `skills/orc-loop/` — runs `/orc` over a batch of issues unattended, then reviews the batch as a whole. See [Run a batch unattended](#run-a-batch-unattended-orc-loop).
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
 - `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` in Chrome at 390px and 1440px in light and dark mode. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test or an issue with screenshots. It drafts both files from your code the first time.
@@ -166,7 +177,7 @@ Install [paceline](https://github.com/rogadev/paceline), a Claude Code status li
 orc #42 ▰▰▱▱▱ t2 upload limit review 32%
 ```
 
-Once orc plans its tasks, it starts a bar with one cell per task and a final cell for the ready check and landing, so a four-task run shows five cells and the highlighted cell is the one in progress. The label names what that task builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a task count. A task added mid-run gets its own cell, and the ready cell moves to stay last. Without paceline, orc skips this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
+Once orc plans its tasks, it starts a bar with one cell per task and a final cell for the ready check and landing, so a four-task run shows five cells and the highlighted cell is the one in progress. The label names what that task builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a task count. A task added mid-run gets its own cell, and the ready cell moves to stay last. `/orc-loop` draws its own bar, with one cell per issue and a final cell for the batch review (`loop ▰▰▱▱ #41 upload limit ci`), and the `/orc` runs it starts leave the bar to it. Without paceline, both skip this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.13.1
+pack: orc-pack@1.14.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -167,7 +167,7 @@ Write the resolved absolute paths down once; every dispatch below reuses them.
 
 **Two guards, both hard stops — you enforce these yourself, in every mode.** The finder only reports them; directed runs must check them by hand.
 
-- **Dirty working tree.** Uncommitted changes would get swept into your task commits. Stop, report not-finished, name the dirty files, tell the user to commit or stash first.
+- **Dirty working tree.** Uncommitted changes would get swept into your task commits. Stop, report not-finished, name the dirty files, tell the user to commit or stash first. Changes under `.claude/agent-memory/` don't count: the pack's agents write their notes there, and you never stage them.
 - **Wrong branch.** Never work directly on `main`, `master`, or `production`. Use the repo's integration branch — commonly `dev`, but check `CLAUDE.md`/`AGENTS.md`. If you're on a protected branch, check out the working branch; if none exists and no convention is documented, stop rather than inventing one.
 
 ### 2. Pick — _undirected runs only_

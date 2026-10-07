@@ -16,6 +16,27 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.14.0] - 2026-10-07
+
+**Summary.** The pack now ships `/orc-loop`, an unattended batch loop. It plans about five issues (or an epic's sub-issues), lands each with `/orc` (pushed, CI green, closed), then reviews the batch as a whole for what per-issue reviews miss, fixing and rechecking for up to three rounds and filing what survives. It runs under `/loop`, keeps its state in `<git-dir>/orc-loop/`, and draws its progress on paceline's bar when paceline is installed. On its first run in a repo it asks once whether the agents' notes in `.claude/agent-memory/` go in `.gitignore` or get committed, and applies the answer, instead of stopping on them as a dirty tree. A stop before anything was planned now ends with `LOOP NOT STARTED` and a short explanation rather than an empty report. Orc's own dirty-tree guard also ignores `.claude/agent-memory/`, so notes its agents wrote in an earlier run no longer stop the next one.
+
+**Changed areas.**
+
+- **`skills/orc-loop/SKILL.md`** — new skill, user-invoked only (`disable-model-invocation: true`). It dispatches agents the pack already ships (`architecture-reviewer`, `quality-reviewer`, `security-reviewer`, `comment-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `fallow`, `lint`, `typecheck`, `test`, `verifier`) plus Claude Code's built-in `general-purpose` agent as its planner, and finds orc's references the way orc does. It needs Claude Code's `/loop` skill and `ScheduleWakeup`. Copy it.
+- **`skills/orc/SKILL.md`, step 1 guards** — the dirty-tree guard ignores changes under `.claude/agent-memory/`. Refresh.
+- **`README.md`** — new **Run a batch unattended: `/orc-loop`** section; **What's in the box** and **Progress on your status line** mention it. Kit docs only.
+- **`INSTALL.md`** — the tree, the file mapping, the prune list, and the verify and report counts include `skills/orc-loop/`. Kit docs only.
+- **`.github/workflows/pack-integrity.yml`** — the agent-name check also scans `skills/orc-loop/SKILL.md`. Kit CI only.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.14.0`.
+
+**Update steps.** Copy `skills/orc-loop/SKILL.md` to `.claude/skills/orc-loop/SKILL.md`, refresh `skills/orc/SKILL.md`, and move every `pack:` marker to `orc-pack@1.14.0`. If the repo, or the user's `~/.claude/skills/`, already has an `orc-loop` skill that does not carry a `pack:` marker, treat it as repo-owned and route it through conflict handling: never overwrite it silently. A personal copy that drew its bar from `<git-dir>/orc-loop/state.json` through a custom status line now duplicates paceline's bar; tell the user to remove that status-line segment. Don't create or edit `.gitignore` for agent memory during the update; the loop asks on its first run. An install coming from 1.13.0 or earlier also applies `[1.13.1]` and every entry in between.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/orc-loop/SKILL.md`, and `skills/orc/SKILL.md` (step 1, the dirty-tree guard).
+
+---
+
 ## [1.13.1] - 2026-10-06
 
 **Summary.** Orc's paceline bar now has one cell per task plus a final ready cell, so a four-task run draws five cells and the active cell shows where the run is. Fix rounds are stages inside their task's cell (`fix 1` to `fix 3`) rather than extra cells, the step label names what each task builds, the run is named after its issue (`orc #42`), and the ready check and landing have a cell of their own instead of a bare label. When a task is added mid-run, orc skips the old ready step and appends the new tasks and a fresh ready step, so the ready cell stays last.
