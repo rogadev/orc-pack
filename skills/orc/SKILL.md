@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.14.0
+pack: orc-pack@1.15.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -21,7 +21,7 @@ Before you do anything else, check the model you are running on. Orc is calibrat
 - **Opus 5** (`claude-opus-5`) — refused (below).
 - **Any other capable model** — the default mode. Continue straight to the workflow.
 
-**Strip the opt-in words.** Two opt-ins can lead the invocation, in either order: `efficiency mode` and `contract first` (for example, `/orc efficiency mode 42` or `/orc contract first add vote withdrawal`). Remove them before you read the rest of it. On Sonnet 5.5, `efficiency mode` answers the question below in advance; on any other model it does nothing, and you say so on the report's **Picked** line. `contract first` makes orc stop for the user's approval of the contract before it builds (see **Make it buildable**). When it is present, check now that you can ask a question (`AskUserQuestion` is available, loading it with ToolSearch if it is deferred). If you can't, stop here, before touching the repo or the board, and say so: re-run interactively, or without `contract first`. The words count only at the start: `/orc fix the efficiency mode toggle` is an ordinary free-text task.
+**Strip the opt-in words.** Three opt-ins can lead the invocation, in any order: `efficiency mode`, `contract first`, and `in a worktree` (for example, `/orc efficiency mode 42` or `/orc contract first add vote withdrawal`). Remove them before you read the rest of it. `in a worktree` makes the run work in its own worktree (see **Sharing a checkout**). On Sonnet 5.5, `efficiency mode` answers the question below in advance; on any other model it does nothing, and you say so on the report's **Picked** line. `contract first` makes orc stop for the user's approval of the contract before it builds (see **Make it buildable**). When it is present, check now that you can ask a question (`AskUserQuestion` is available, loading it with ToolSearch if it is deferred). If you can't, stop here, before touching the repo or the board, and say so: re-run interactively, or without `contract first`. The words count only at the start: `/orc fix the efficiency mode toggle` is an ordinary free-text task.
 
 **Check for a forced subagent model.** Run `echo "$CLAUDE_CODE_SUBAGENT_MODEL_FORCE"`. When it prints `1`, Claude Code runs every subagent on one model (`CLAUDE_CODE_SUBAGENT_MODEL` if that is set, otherwise the session's) and ignores every model choice in this skill. Say so under the report's **Heads-up** rather than implying you tiered when you could not.
 
@@ -91,18 +91,25 @@ If the work outgrows the approved band mid-run, stop at the band the way you sto
 
 ## Progress bar
 
-When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the task list as a status-line bar. Without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search as you plan. Also skip the bar when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
+When the [paceline](https://github.com/rogadev/paceline) `progress_*` tools are available, mirror the run's steps as a status-line bar. Without them, skip this section silently and never install, mention, or ask about them. If they are deferred, load them all in one tool search during **Preflight** or orientation, in the same search as any other tool orc loads up front (for example `AskUserQuestion`), so they are ready when the bar starts after orientation. Also skip the bar when the invocation says the caller reports its own progress through them, as a loop driving orc can; paceline keeps one run per repository, so yours would replace the caller's.
 
-The bar is a convenience, never a step. Send each call in the same message as a tool call you are already making, never in a turn of its own. If a `progress_*` call fails, drop the bar and carry on.
+When the tools are available, the bar is required, not optional: never skip it to save a turn. Send each `progress_*` call in the same message as a tool call you are already making; the tool search that loads them is the only bar call that may stand alone. If a `progress_*` call fails, drop the bar and carry on.
 
-The bar has one cell per task, in plan order, then one `ready` cell. Fix rounds are stages inside their task's cell, never cells of their own: paceline only appends steps, so a fix cell added mid-run would land after every later task.
+The bar starts with the two phases every run has, and grows once the plan exists. Paceline only appends steps and never reshapes one, so start with what you know and add the rest when you know it, rather than guessing a fixed shape up front.
 
-- **Start** once **Plan the tasks** creates tasks (no tasks, no bar): exactly one `progress_start` per run, named `orc #42` (just `orc` with no issue), listing every task and then the ready step.
-  - A task: `id` `t2`; a `label` naming what it builds in a few words, such as `t2 upload limit`, which is what the status line shows while it runs; `weight` Trivial 1, Standard 3, Structural 8; `stages` `["build", "review", "fix 1", "fix 2", "fix 3"]`, with `design` first on a structural task.
-  - The ready step last: `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "land"]`.
-- **Advance** with `progress_step` as each task moves: its first stage when you dispatch its first builder, `review` when you dispatch the panel, `fix 1` to `fix 3` as each fix round starts (a round's re-review stays in its fix stage), and `status: done` when it commits. A clean review goes straight to done. Stages only move forward. Mark every task the **Run budget** leaves undone `skipped`, planned or added.
-- **New tasks** from **Discoveries** or a review: paceline appends them after the ready cell, so keep ready last by moving it. Mark the current ready step `skipped`, then `progress_add_steps` with the new tasks, labelled, weighted, and staged the same way, followed by a fresh ready step (`ready-2`, `ready-3`, and so on).
-- **Ready**: the last ready step to `check` when **Ready** starts and to `land` when **Land it** starts. **Finish** before the report with `progress_finish done`, or, on `NOT FINISHED`, instead mark the step in flight `blocked`, then `progress_finish halted`.
+- **Start** right after orientation, once both guards pass, in every mode. Call `progress_start` exactly once per run, named `orc #42` (just `orc` with no issue), with two cells:
+  - `id` `investigate`, `label` `investigate`, `weight` 1, `stages` `["buildable"]` in every mode. It covers **Pick** and **Make it buildable**, including any requeue and re-pick.
+  - `id` `plan`, `label` `plan`, `weight` 1. It covers the contract and **Plan the tasks**.
+  - A run that stops in **Preflight** or at a guard gets no bar. A finished bar from an earlier run may still show; the new `progress_start` replaces it.
+- **Investigate and plan**: paceline creates every step pending, so right after `progress_start`, make `investigate` active with `progress_step` at stage `buildable`. When you start writing the contract, mark `investigate` done and make `plan` active. A run that ends inside **Make it buildable** marks `investigate` done and `plan` skipped.
+- **After planning**, mark `plan` done and append the rest with `progress_add_steps`: one cell per task, in plan order, then a `ready` cell and a `land` cell.
+  - A task: `id` `t2`; a `label` naming what it builds in a few words, such as `t2 upload limit`, which is what the status line shows while it runs; `weight` Trivial 1, Standard 3, Structural 8; `stages` `["build", "review", "fix 1", "fix 2", "fix 3"]`, with `design` first on a structural task. Fix rounds stay stages inside their task's cell, never cells of their own, because orc reviews and fixes each task before the next one starts; a fix cell appended mid-run would land after every later task.
+  - `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "fix"]`; `fix` covers repairing a failing ready check.
+  - `id` `land`, `label` `push`, `weight` 1, `stages` `["push", "close"]`; `close` covers the issue comments and closes.
+- **A run with nothing to build** that still has real steps (a verification or smoke test, closing stale issues, an issue comment) appends one cell per step after `plan`, weighted by size, instead of tasks, `ready`, and `land`.
+- **Advance** with `progress_step` as each step moves: a task's first stage when you dispatch its first builder, `review` when you dispatch the panel, `fix 1` to `fix 3` as each fix round starts (a round's re-review stays in its fix stage), and `status: done` when it commits. A clean review goes straight to done. Stages only move forward. Mark every task the **Run budget** leaves undone `skipped`, planned or added.
+- **New tasks** from **Discoveries** or a review: paceline appends them after `land`, so keep `ready` and `land` last by moving them. Mark the current `ready` and `land` steps `skipped`, then `progress_add_steps` with the new tasks, labelled, weighted, and staged the same way, followed by fresh ones (`ready-2` and `land-2`, and so on).
+- **Ready and land**: move `ready` to `check` when **Ready** starts, to `fix` if a failure needs repair, and to done when it is green. Move `land` to `push` when **Land it** starts and to `close` for the issue work; a catch-up's ready re-run, including any repair it needs, stays in `push`. **Finish** before the report with `progress_finish done`, or, on `NOT FINISHED`, instead mark the step in flight `blocked`, then `progress_finish halted`.
 
 ## Waiting on subagents
 
@@ -110,9 +117,27 @@ Your context cache expires after about an hour without a request, and re-caching
 
 ## Token ledger
 
-Record what every dispatch costs, so the user can see where a run's tokens go and which review lanes earn them. Each subagent's completion notice reports the tokens it used. Append one line per dispatch to the ledger at the path `git rev-parse --git-path orc/token-ledger.tsv` prints: it sits inside `.git`, so it persists across runs and is never committed. Create the directory and a header line on first use. Batch the writes: append a task's lines once it commits or the run stops, and the other dispatches (survey, audit, ready check) when they finish.
+Record what every dispatch costs, so the user can see where a run's tokens go and which review lanes earn them. Each subagent's completion notice reports the tokens it used. Append one line per dispatch to the ledger at `$(git rev-parse --git-common-dir)/orc/token-ledger.tsv`: it sits inside `.git`, shared by every worktree, so it persists across runs and is never committed. Create the directory and a header line on first use. Batch the writes: append a task's lines once it commits or the run stops, and the other dispatches (survey, audit, ready check) when they finish.
 
 The columns, tab-separated: date, run (the issue number or a short task slug), task number (`-` outside a task), task size, agent, model, role (`brief`, `design-review`, `build`, `fix-1` to `fix-3`, `review`, `verify`, `survey`, `audit`, or `runner`), tokens (`?` when the notice gives none), findings raised, and findings the verifier confirmed (`-` for a dispatch that isn't a reviewer, or when the verifier was skipped). The ledger is a record, never a reason to skip a dispatch this skill calls for.
+
+## Sharing a checkout
+
+Two orc sessions can share one checkout. The first runs in place and holds a lock; a later one works in its own git worktree, so neither sweeps the other's changes into its commits or pushes over them. A run that needs a branch of its own, in either mode, names it `orc/<slug>`, where `<slug>` is the issue number or a short task slug that no branch or worktree uses yet; pick another slug if it is taken.
+
+**The lock** is the file at `$(git rev-parse --git-path orc/checkout.lock)`: inside `.git`, one per checkout, never committed. It holds a random token for this run, the run name (`orc #42`, or the task slug), and the start time.
+
+- **Check it at orientation, before the guards.** When the invocation says `(the caller holds the checkout lock)`, skip the check and never write or remove the lock: a loop driving orc holds it for the whole batch. Everything else under **Running in place** still applies.
+- **A live lock, or the `in a worktree` opt-in, isolates the run** (below). A lock untouched for 3 hours is stale: remove it, note it under **Heads-up**, and run in place.
+- **Running in place**, write the lock once both guards pass (unless the caller holds it), and record whether the branch started with no unpushed commits (`git rev-list @{u}..HEAD` prints nothing; a branch with no upstream counts as having unpushed commits); **Land it** needs that. Touch the lock, yours or the caller's (never changing its token), at each task commit, at **Ready**, and at **Land it**.
+
+**Isolate**, with the integration branch read from `CLAUDE.md`/`AGENTS.md`:
+
+1. Add `.claude/worktrees/` to `$(git rev-parse --git-common-dir)/info/exclude` if it isn't there, so neither checkout sees the worktree as dirt.
+2. `git fetch`, then `git worktree add .claude/worktrees/orc-<slug> -b orc/<slug> origin/<integration>`.
+3. Call `EnterWorktree` with `path` set to the worktree's absolute path, loading it with ToolSearch if it is deferred. You and every subagent now work there; check the guards and run the whole workflow inside it. If `EnterWorktree` is unavailable, run `git worktree remove <path>` and `git branch -D orc/<slug>`, then stop `NOT FINISHED` and say so; never run in the shared checkout.
+
+**Release the checkout** at the end of every outcome, `NOT FINISHED` included, before the report. In place: delete the lock if it still holds your token. Isolated: copy the worktree's `.claude/agent-memory/` into the original checkout's, file by file with the newer copy winning, so the agents' notes survive. Call `ExitWorktree` with `action: "keep"` (it never removes a worktree entered by path). From the original checkout, run `git -C <path> status --porcelain -- . ':!.claude/agent-memory'`: when it prints nothing, run `git worktree remove --force <path>`; otherwise keep the worktree and name it in the report. Delete the branch with `git branch -d orc/<slug>` once its commits landed; if git refuses because this checkout's branch lacks them, confirm with `git merge-base --is-ancestor orc/<slug> origin/<integration>` and use `-D`. A branch whose commits did not land is kept and named in the report.
 
 ## Untrusted input
 
@@ -165,10 +190,12 @@ Read the repo's `CLAUDE.md` / `AGENTS.md` and the task-runner manifest (`package
 
 Write the resolved absolute paths down once; every dispatch below reuses them.
 
+**Decide where the run works** before the guards: check the checkout lock and isolate when **Sharing a checkout** says to. An isolated run checks the guards inside its worktree.
+
 **Two guards, both hard stops — you enforce these yourself, in every mode.** The finder only reports them; directed runs must check them by hand.
 
-- **Dirty working tree.** Uncommitted changes would get swept into your task commits. Stop, report not-finished, name the dirty files, tell the user to commit or stash first. Changes under `.claude/agent-memory/` don't count: the pack's agents write their notes there, and you never stage them.
-- **Wrong branch.** Never work directly on `main`, `master`, or `production`. Use the repo's integration branch — commonly `dev`, but check `CLAUDE.md`/`AGENTS.md`. If you're on a protected branch, check out the working branch; if none exists and no convention is documented, stop rather than inventing one.
+- **Dirty working tree.** Uncommitted changes would get swept into your task commits. Stop, report not-finished, name the dirty files, tell the user to commit or stash first. Changes under `.claude/agent-memory/` and `.claude/worktrees/` don't count: the pack's agents write their notes in the first, other orc runs work in the second, and you never stage either.
+- **Wrong branch.** Never work directly on `main`, `master`, or `production`. Use the repo's integration branch — commonly `dev`, but check `CLAUDE.md`/`AGENTS.md`. If you're on a protected branch, check out the working branch; if none exists and no convention is documented, stop rather than inventing one. In a worktree, the run's `orc/<slug>` branch is the working branch.
 
 ### 2. Pick — _undirected runs only_
 
@@ -353,31 +380,38 @@ Fix failures at the root (in efficiency mode, through the relevant builder). **N
 
 ### 8. Land it
 
-Only once ready is green:
+Only once ready is green, in this order. Never force.
+
+1. `git fetch`.
+2. If `origin/<integration>` is not an ancestor of `HEAD`, catch up (below).
+3. Push: `git push` in place, `git push origin HEAD:<integration>` from a worktree. If it is rejected because the remote moved again, catch up and push once more. A run catches up at most twice; if the push after the second catch-up is rejected, stop `NOT FINISHED`.
+
+**Catch up** only when every unpushed commit is this run's own: always in a worktree, and in place only when the run started with no unpushed commits. Otherwise a needed catch-up is a stop: do not merge, rebase, or force; report `NOT FINISHED` with the rejection. To catch up:
 
 ```bash
-git push
+git fetch   # fresh after a rejected push; the remote moved since step 1
+git rebase origin/<integration>
 ```
 
-If `gh` is available, report the pushed commit's CI instead of implying the local ready check is the last word — `gh run list --branch "<branch>" --limit 1 --json status,conclusion,url`, or `gh run list --commit <sha>` when the branch has other runs. This is informational: do not block on CI, and do not turn a queued or in-progress run into `NOT FINISHED`. Name a run that is already failing so the user is not surprised.
+Then re-run the ready command (a failure is repaired as in **Ready**) and return to step 3. On a rebase conflict, run `git rebase --abort`; in place, run `git branch orc/<slug>` first. Push the run's branch with `git push origin orc/<slug>` and stop `NOT FINISHED` with a card naming the branch and the conflicting files. Never resolve a conflict yourself.
+
+If `gh` is available, report the pushed commit's CI instead of implying the local ready check is the last word — `gh run list --branch "<integration>" --limit 1 --json status,conclusion,url`, or `gh run list --commit <sha>` when the branch has other runs. This is informational: do not block on CI, and do not turn a queued or in-progress run into `NOT FINISHED`. Name a run that is already failing so the user is not surprised.
 
 Then for each issue **fully** resolved, comment and close:
 
 ```bash
 gh issue comment <n> --body-file - <<'EOF'
-Done in <sha>..<sha> on `<branch>`.
+Done in <sha>..<sha> on `<integration>`.
 
 <two or three lines on what changed and where>
 
-This is on `<branch>`, not yet deployed — it goes out with the next promotion to the release branch.
+This is on `<integration>`, not yet deployed — it goes out with the next promotion to the release branch.
 EOF
 
 gh issue close <n>
 ```
 
 The deployment note keeps the close honest where a release branch is what ships. Pushing never applies a migration, backfill, or environment change: orc, like its builders, never runs one against a shared database or environment, so a builder's **Deploy notes** go to the user as a `Deploy:` line under the matching **Landed** entry, as well as in the commit body. Issues only _partly_ resolved get the comment without the close, stating what landed and what remains. A free-text run with no issue simply reports what landed.
-
-If the push is rejected because the remote moved ahead, **stop** — do not merge, rebase, or force. Report not-finished with the rejection.
 
 ### 9. Report
 
@@ -456,7 +490,7 @@ Everything else keeps its frontmatter model: every reviewer, the `verifier`, `da
 
 ## Outcomes
 
-Three, and only three.
+Three, and only three. Every outcome releases the checkout before the report (see **Sharing a checkout**).
 
 **FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget** with work landed is `FINISHED`; report the remainder as cards under **Your call**.
 
@@ -465,21 +499,23 @@ Three, and only three.
 **NOT FINISHED.** Reserved for this closed list:
 
 - The working tree was dirty at the start.
+- Another run holds the checkout and this session can't enter a worktree.
 - Stuck on a protected branch with no working branch to move to.
 - Missing credential, secret, or access the work requires.
 - A blocking review finding still open after three fix rounds.
 - The ready check won't go green after honest attempts.
-- The push was rejected.
+- The push was rejected and **Land it** could not catch up.
+- Catching up hit a rebase conflict.
 - A decision with no defensible default and real consequences if wrong: a legal or policy statement, a security boundary, an external API contract, spending money, or anything the user has said is theirs to call.
 
 Nothing else qualifies. "Blocked on data", "the issue was vague", "out of scope", and "the threshold needs measuring" are **Make it buildable** or **Discoveries** problems — reporting them as `NOT FINISHED` is the specific failure this skill exists to prevent.
 
-In every `NOT FINISHED` case: commits stay local, nothing is pushed, nothing is closed, and the report names both the blocker and the action that clears it. Never force a finish: no suppressed checks, no parked defects, no closing issues you didn't resolve.
+In every `NOT FINISHED` case: commits stay local (only a rebase conflict pushes the run's own branch), nothing reaches the integration branch, nothing is closed, and the report names both the blocker and the action that clears it. Never force a finish: no suppressed checks, no parked defects, no closing issues you didn't resolve.
 
 ## What orc does NOT do
 
 - **No PRs.** Orc lands on the working branch; promoting to the release branch is the user's call.
 - **No closing issues it didn't resolve.** Commenting on an investigated issue is expected.
 - **No board hygiene beyond this run.** Issues you never touched aren't yours to triage.
-- **No force-push, rebase, history rewriting, or hook-skipping.**
+- **No force-push, rebase, history rewriting, or hook-skipping.** The one rebase allowed is **Land it**'s catch-up, which rebases the run's own unpushed commits onto the integration branch.
 - **No make-work.** Every dispatch, reviewer lane, fix round, and design brief needs a reason in the task's size and the diff's surfaces.

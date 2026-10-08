@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.13.0:** with [paceline](https://github.com/rogadev/paceline) installed, orc shows a run's progress on your Claude Code status line, weighted by task size and moving through each task's design, build, review, and commit stages. See [Progress on your status line](#progress-on-your-status-line) and the [changelog](CHANGELOG.md#1130---2026-10-06).
+> **New in v1.15.0:** two orc sessions can share one project: a second session works in its own git worktree and catches up before it pushes, and `/orc-loop` (new in v1.14.0) holds the project for its whole batch. See [Run two sessions in one project](#run-two-sessions-in-one-project) and the [changelog](CHANGELOG.md#1150---2026-10-07).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -71,6 +71,12 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 ```
 
 `/orc-loop` plans a batch of issues, lands each one with `/orc` (pushed, CI green, issue closed), then reviews the batch as a whole for what a per-issue review can't see: changes that contradict each other, logic written twice, and drift in how the issues solved similar problems. It fixes what that review finds and rechecks the fix, up to three rounds, and files whatever survives as issues. It runs under `/loop`, keeps its state in `.git/orc-loop/`, and picks up where it left off if you stop and restart it. The first time it runs in a repo it asks one question, whether the agents' notes in `.claude/agent-memory/` go in `.gitignore`, then runs without asking anything else. It ends with `LOOP FINISHED`, `LOOP FINISHED (no build)`, `LOOP NOT FINISHED`, or `LOOP NOT STARTED` when something stopped it before it planned anything.
+
+### Run two sessions in one project
+
+You can start a second `/orc` while another orc run, or an `/orc-loop` batch, is still working in the same checkout. The first run holds a lock inside `.git`; the second sees it and moves into its own git worktree under `.claude/worktrees/`, on an `orc/<slug>` branch, so neither run sweeps the other's changes into its commits. Start with `/orc in a worktree …` to isolate a run even when nothing else is running. Orc keeps the worktree out of `git status` and removes it when the run ends, unless it still holds uncommitted work.
+
+The dirty-tree rule still applies to your own edits: a dirty tree with no other orc run behind it stops the run, as before. When the other run pushed first, orc rebases its own unpushed commits onto the new integration branch, re-runs the ready check, and then pushes. A run that started with unpushed commits already on the branch doesn't rebase them; it stops `NOT FINISHED` instead. If that rebase conflicts, it never resolves the conflict itself: it pushes its work to the `orc/<slug>` branch and ends `NOT FINISHED`, naming the branch and the conflicting files for you to merge.
 
 ---
 
@@ -174,10 +180,10 @@ Fallow is a static codebase-intelligence pass that finds dead code, code duplica
 Install [paceline](https://github.com/rogadev/paceline), a Claude Code status line, and register its `paceline-mcp` server to watch a run's progress without reading the transcript:
 
 ```
-orc #42 ▰▰▱▱▱ t2 upload limit review 32%
+orc #42 ▰▰▰▰▱▱ t2 upload limit review 62%
 ```
 
-Once orc plans its tasks, it starts a bar with one cell per task and a final cell for the ready check and landing, so a four-task run shows five cells and the highlighted cell is the one in progress. The label names what that task builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a task count. A task added mid-run gets its own cell, and the ready cell moves to stay last. `/orc-loop` draws its own bar, with one cell per issue and a final cell for the batch review (`loop ▰▰▱▱ #41 upload limit ci`), and the `/orc` runs it starts leave the bar to it. Without paceline, both skip this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
+Orc starts the bar as soon as it has oriented, with an `investigate` cell for picking and sharpening the work and a `plan` cell for the contract and task list. Once the plan exists, it adds one cell per task, then a `ready check` cell and a `push` cell, so a two-task run shows six cells and the highlighted cell is the one in progress. A task's label names what it builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a step count. A task added mid-run gets its own cell, and the ready check and push cells move to stay last. A run with nothing to build shows its real steps, such as a verification or an issue comment, instead. `/orc-loop` draws its own bar, with one cell per issue and a final cell for the batch review (`loop ▰▰▱▱ #41 upload limit ci`), and the `/orc` runs it starts leave the bar to it. Without paceline, both skip this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
 
 ---
 
