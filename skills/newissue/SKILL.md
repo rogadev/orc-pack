@@ -14,6 +14,8 @@ You turn a rough idea into a GitHub issue that stands entirely on its own. The t
 
 **You file the issue. There is no approval gate.** By the time `/newissue` is invoked, the decision to file has been made. Do the work, file it, hand back the URL.
 
+**Fire and forget.** The user often walks away the moment they invoke this, so the issue must be complete as filed. Never leave a placeholder, a "screenshot here" note, a TODO, or any step for the user to finish afterward. `gh` can't attach images and you can't upload them, so never ask for one or expect one to be added later.
+
 ## Input
 
 - `/newissue <rough idea>` — the seed. A starting point, not a spec; it may be wrong.
@@ -86,7 +88,7 @@ Zero conversation context:
 - **Summary (plain language)** — the _first_ paragraph of the body, no heading above it, so the board reader always finds it in the same place. One short paragraph a PM with no engineering background grasps at a glance: what this is and why. No paths, symbols, or jargon — those begin in the next section. For a bug: the effect and the stakes in ordinary terms, not the mechanism.
 - **What** — the concrete situation in full technical detail. This is where the symbols and paths begin. No hedging.
 - **Why it matters** — the consequences, numbered by severity when there's more than one.
-- **Evidence** — `file:line`, real command output in fenced blocks, error IDs, Sentry links, commit SHAs. Show the thing; don't describe having seen it. For anything visual, a screenshot or mockup beats prose — reference one, or note where the developer should drop one in.
+- **Evidence** — `file:line`, real command output in fenced blocks, error IDs, Sentry links, commit SHAs. Show the thing; don't describe having seen it. For anything visual, describe it in text precise enough to stand in for a screenshot: the page or URL, viewport width and theme, the steps to reach the state, what appears (element, position, text, color), and what should appear instead. Quote on-screen text and error messages exactly.
 - **Fix / approach** — the shape of the change, the files involved, the constraints. When the answer isn't code, say so plainly.
 - **Scope and non-goals** — what is explicitly _not_ part of this, tempting adjacent work named. This keeps a two-line fix from becoming a refactor.
 - **Integrations** — every external system the work touches (an API, a queue, a payment or email provider, a third-party SDK) and whether the fix uses it **real** or **mocked**. Real is the default; write **MOCKED**, in capitals, with the reason, only when a mock is the intent. Drop this section when nothing external is involved.
@@ -112,7 +114,7 @@ Match the repo's prevailing tone; read a recent well-written issue if one exists
 1. Passes the stranger test at the top of this file?
 2. Every claim has evidence behind it?
 3. No pronoun or reference pointing at this conversation?
-4. No "TBD", empty section, or hedge a decision would resolve?
+4. No "TBD", empty section, hedge a decision would resolve, or placeholder ("screenshot here", "attach image") waiting on the user?
 5. "Scope and non-goals" actually bounded, every integration marked real or mocked, and every "Done when" line something a test can assert?
 6. Title type-tagged and a specific claim, and title and first paragraph plain enough for a PM with zero technical background?
 7. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
