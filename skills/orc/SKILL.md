@@ -127,9 +127,9 @@ Two orc sessions can share one checkout. The first runs in place and holds a loc
 
 **The lock** is the file at `$(git rev-parse --git-path orc/checkout.lock)`: inside `.git`, one per checkout, never committed. It holds a random token for this run, the run name (`orc #42`, or the task slug), and the start time.
 
-- **Check it at orientation, before the guards.** When the invocation says `(the caller holds the checkout lock)`, skip the check and write no lock: a loop driving orc holds it for the whole batch.
+- **Check it at orientation, before the guards.** When the invocation says `(the caller holds the checkout lock)`, skip the check and never write or remove the lock: a loop driving orc holds it for the whole batch. Everything else under **Running in place** still applies.
 - **A live lock, or the `in a worktree` opt-in, isolates the run** (below). A lock untouched for 3 hours is stale: remove it, note it under **Heads-up**, and run in place.
-- **Running in place**, write the lock once both guards pass, and record whether the branch started with no unpushed commits (`git rev-list @{u}..HEAD` prints nothing; a branch with no upstream counts as having unpushed commits); **Land it** needs that. Touch the lock at each task commit, at **Ready**, and at **Land it**.
+- **Running in place**, write the lock once both guards pass (unless the caller holds it), and record whether the branch started with no unpushed commits (`git rev-list @{u}..HEAD` prints nothing; a branch with no upstream counts as having unpushed commits); **Land it** needs that. Touch the lock, yours or the caller's (never changing its token), at each task commit, at **Ready**, and at **Land it**.
 
 **Isolate**, with the integration branch read from `CLAUDE.md`/`AGENTS.md`:
 
