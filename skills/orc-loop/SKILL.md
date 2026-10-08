@@ -1,6 +1,6 @@
 ---
 name: orc-loop
-pack: orc-pack@1.14.0
+pack: orc-pack@1.15.0
 description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), lands each with /orc (pushed, CI green, closed), then runs 1 to 3 review rounds (an integration review of the batch, then rechecks of each fix), fixing between rounds and filing what survives. Runs under /loop and resumes from state in .git. User-invoked only.
 argument-hint: "[N] [#epic | #a #b #c ...] [status | reset]"
 disable-model-invocation: true
@@ -184,8 +184,8 @@ runs**).
 ## Token ledger
 
 Record what the batch reviews cost. Append one line per subagent dispatched during **Step 3** to
-the ledger `/orc` already keeps, at the path `git rev-parse --git-path orc/token-ledger.tsv`
-prints. Use `/orc`'s columns, tab-separated: date, run (the `batchId`), task (`-`), size
+the ledger `/orc` already keeps, at `$(git rev-parse --git-common-dir)/orc/token-ledger.tsv`.
+Use `/orc`'s columns, tab-separated: date, run (the `batchId`), task (`-`), size
 (`loop`), agent, model, role, tokens (`?` when the notice gives none), findings raised, findings
 the verifier confirmed (`-` for a non-reviewer or a skipped verifier). Roles: `loop-integration`,
 `loop-carried`, `loop-recheck`, `loop-verify`, `loop-gate`. `/orc` keeps logging its own

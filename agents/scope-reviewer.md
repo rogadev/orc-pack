@@ -1,6 +1,6 @@
 ---
 name: scope-reviewer
-pack: orc-pack@1.14.0
+pack: orc-pack@1.15.0
 description: Contract specialist. Checks one task's diff against orc's work contract - flags changes the contract does not cover, acceptance criteria with no test that proves them, tests that pass without the change, and mocks or stubs in production code where the contract says the integration is real. Use during code review of every standard or structural orc task, or any diff that has a written scope to hold it to.
 model: claude-opus-5-5
 effort: low
