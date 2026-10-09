@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.15.0:** two orc sessions can share one project: a second session works in its own git worktree and catches up before it pushes, and `/orc-loop` (new in v1.14.0) holds the project for its whole batch. See [Run two sessions in one project](#run-two-sessions-in-one-project) and the [changelog](CHANGELOG.md#1150---2026-10-07).
+> **New in v1.16.0:** `/orc-loop` reviews each issue with a lighter panel, then runs one fallow pass for dead code and duplication and one comment cleanup over the whole batch, so a batch stops paying for the same review twice. See [Run a batch unattended](#run-a-batch-unattended-orc-loop) and the [changelog](CHANGELOG.md#1160---2026-10-09).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 

@@ -1,6 +1,6 @@
 ---
 name: orc-loop
-pack: orc-pack@1.15.0
+pack: orc-pack@1.16.0
 description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), lands each with a light-review /orc run (pushed, CI green, closed), then runs 1 to 3 review rounds (a batch review, then rechecks of each fix), fixing between rounds and filing what survives, and ends with one fallow pass and one comment cleanup over everything the batch changed. Runs under /loop and resumes from state in .git. User-invoked only.
 argument-hint: "[N] [#epic | #a #b #c ...] [status | reset]"
 disable-model-invocation: true

@@ -1,6 +1,6 @@
 ---
 name: orc-loop-iter
-pack: orc-pack@1.15.0
+pack: orc-pack@1.16.0
 description: One /orc run inside an /orc-loop batch, with a lighter per-task review whose skipped lanes the loop runs once over the whole batch. Invoked only by /orc-loop; standalone work uses /orc.
 user-invocable: false
 ---
