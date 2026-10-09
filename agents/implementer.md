@@ -1,6 +1,6 @@
 ---
 name: implementer
-pack: orc-pack@1.16.0
+pack: orc-pack@1.16.1
 description: General builder for one task from an orchestrator's plan - tooling, config, scripts, docs-adjacent code, cross-cutting changes, and cleanup runs, and the fallback for any task orc cannot route to a specialist. Writes a design brief first when asked, then the code and its tests together, runs the covering tests, and reports the exact command and output. Never commits; the orchestrator owns git history. Dispatched by orc.
 tools:
   - Read

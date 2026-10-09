@@ -16,6 +16,25 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.16.1] - 2026-10-09
+
+**Summary.** `/orc-loop`'s final report now says what the batch did and why, not only each issue's outcome. A loop builds several issues in subagent-driven runs the user never watches, and until now each run's report scrolled past mid-batch and the final report reduced every issue to one outcome line. Each `/orc` run in a batch now adds an **Approach** and a **Review** section to its report, the loop saves every run's report to `.git/orc-loop/runs/`, and **Finish** builds the final report from those files: a summary paragraph, then per issue what it asked, how orc built it and why, what the code showed, and its review findings; then each batch review round with every Blocker and Warning and its outcome; then totals across every review.
+
+**Changed areas.**
+
+- **`skills/orc-loop-iter/SKILL.md`** — a new **Report** section adds two sections to orc's step 9 report for every run in a batch: **Approach** (after **Picked**: what the work asked, what was built and where, each **Make it buildable** decision with its reason, and what the premise check found) and **Review** (after **Landed**: lanes, fix rounds, each confirmed Blocker and Warning with its lane and outcome, and the Nit count). Standalone `/orc` is unchanged. Refresh.
+- **`skills/orc-loop/SKILL.md`** — **Step 2** gains **Save the report**: each run's full report goes to `<git-dir>/orc-loop/runs/<name>.md` (`issue-<n>`, `issue-<n>-ci-<k>`, `round-<k>-fix`, `fallow-fix`, `comments-fix`), with its path appended to the owning record. The state file gains `issues[].reason` (the planner's reason for the pick, written in **Step 1**), `issues[].reports`, and `fixReports` on each review round, `fallow`, and `comments`. **Step 6: Finish** now builds the report from the state file and the reports it records, with new **Summary**, **Issues**, and **Totals** sections, a **Review** section that lists every Blocker and Warning with its outcome, and a **Batch** line that says why the issues were picked together. A run with no saved report falls back to the issue's `Work contract` comment and commit bodies. The description mentions the report. Refresh.
+- **`README.md`** — the `/orc-loop` section describes the final report. Kit docs only.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.16.1`.
+
+**Update steps.** Refresh `skills/orc-loop/SKILL.md` and `skills/orc-loop-iter/SKILL.md` (skip both when the install pruned `orc-loop`), and move every `pack:` marker to `orc-pack@1.16.1`. An install coming from 1.15.0 or earlier also applies `[1.16.0]` and every entry in between, which adds `orc-loop-iter`.
+
+**Breaking changes.** None. A batch already in flight resumes: its state file gains the new report fields as runs save to them, and **Finish** reads the issue's `Work contract` comment and commit bodies for any run that finished before the update.
+
+**Files to read.** `skills/orc-loop/SKILL.md`, `skills/orc-loop-iter/SKILL.md`.
+
+---
+
 ## [1.16.0] - 2026-10-09
 
 **Summary.** `/orc-loop` stops paying for the same review twice. Each `/orc` run in a batch now goes through a new internal skill, `orc-loop-iter`, which invokes the `orc` skill unchanged and lightens only its per-task review: it keeps every lane that stops a defect spreading to the next issue, checks comments only on the changed lines, skips `fallow`, and, in a batch of independent issues, leaves standard-task test coverage to one check over the whole batch. After its review rounds, the loop runs one fallow pass over everything the batch changed (dead code it left behind and code it duplicated, including duplicates of code that already existed), fixes what is confirmed, then runs one full comment pass. Standalone `/orc` keeps its review lanes. This release also converts the pack's prose tables to lists, which cuts the tokens every load pays for Prettier's column padding, condenses the two loop skills, and makes `/newissue` describe visuals in text instead of leaving screenshot placeholders.
