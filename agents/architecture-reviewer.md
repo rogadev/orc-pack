@@ -1,6 +1,6 @@
 ---
 name: architecture-reviewer
-pack: orc-pack@1.15.0
+pack: orc-pack@1.16.0
 description: Software architecture specialist. Use when reviewing separation of concerns, module boundaries and layering, file and folder placement, framework-convention correctness, the server/client boundary, and data flow. Use proactively during code reviews and in cleanup audits.
 model: claude-opus-5-5
 effort: medium

@@ -1,6 +1,6 @@
 ---
 name: shipcheck
-pack: orc-pack@1.15.0
+pack: orc-pack@1.16.0
 description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md in Chrome at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
 ---
 
@@ -38,13 +38,11 @@ Check **names only**. Never print, log, or read a secret's value, and never writ
 
 For each environment in `.claude/required-secrets.md`, list what exists with the platform's own CLI and compare names:
 
-| Target line                 | List command                                                              |
-| --------------------------- | ------------------------------------------------------------------------- |
-| `github-actions`            | `gh secret list` and `gh variable list`                                   |
-| `github-environment:<name>` | `gh secret list --env <name>` and `gh variable list --env <name>`         |
-| `vercel:<project>:<env>`    | `vercel env ls <env>` from the linked project (names only)                |
-| `cloudflare-worker:<name>`  | `wrangler secret list --name <name>`, plus `vars` in the wrangler config  |
-| anything else               | the platform's list command; if none exists, say so and mark it unchecked |
+- `github-actions`: `gh secret list` and `gh variable list`.
+- `github-environment:<name>`: `gh secret list --env <name>` and `gh variable list --env <name>`.
+- `vercel:<project>:<env>`: `vercel env ls <env>` from the linked project (names only).
+- `cloudflare-worker:<name>`: `wrangler secret list --name <name>`, plus `vars` in the wrangler config.
+- Anything else: the platform's list command; if none exists, say so and mark it unchecked.
 
 If a CLI isn't installed or isn't logged in, stop and tell the user the exact command to run (for example, `! gh auth login` or `! vercel login`). Don't guess.
 

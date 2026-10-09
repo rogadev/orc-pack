@@ -1,6 +1,6 @@
 ---
 name: verifier
-pack: orc-pack@1.15.0
+pack: orc-pack@1.16.0
 description: Skeptical validator that independently checks review findings against the actual code. Use after code-review subagents return findings to filter out false positives and confirm real issues before acting on them.
 model: claude-opus-5-5
 effort: medium
@@ -27,14 +27,12 @@ You receive a list of findings, each with a file, line, severity, claim, and whi
 
 ## Verdicts
 
-| Verdict                 | Meaning                                                                                                   | Action                                |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| ✅ **Confirmed**        | The issue is real at the referenced location.                                                             | Keep as-is                            |
-| ⚠️ **Overstated**       | A kernel of truth, but severity is inflated or impact exaggerated.                                        | Downgrade and correct the description |
-| ❌ **Not reproducible** | The issue doesn't exist there, or the code is actually correct (often a documented-convention non-issue). | Remove from the report                |
-| 🔄 **Needs context**    | Can't tell without runtime behavior or an external contract you can't see.                                | Flag for human review                 |
-| 🎨 **Preference**       | The code is correct and follows the repo and the standards; the finding asks for a different taste.       | Remove from the report                |
-| 🧭 **Out of scope**     | Real, but in a file the change does not touch (outside a cleanup audit).                                  | Move to the out-of-scope list, sized  |
+- ✅ **Confirmed**: the issue is real at the referenced location. Keep it as-is.
+- ⚠️ **Overstated**: a kernel of truth, but severity is inflated or impact exaggerated. Downgrade it and correct the description.
+- ❌ **Not reproducible**: the issue doesn't exist there, or the code is actually correct (often a documented-convention non-issue). Remove it from the report.
+- 🔄 **Needs context**: you can't tell without runtime behavior or an external contract you can't see. Flag it for human review.
+- 🎨 **Preference**: the code is correct and follows the repo and the standards; the finding asks for a different taste. Remove it from the report.
+- 🧭 **Out of scope**: real, but in a file the change does not touch (outside a cleanup audit). Move it to the out-of-scope list, sized.
 
 ## Rules
 

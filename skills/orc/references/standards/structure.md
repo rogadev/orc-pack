@@ -10,14 +10,12 @@ The repo's documented structure wins, then its established layout, then the fram
 
 Most web features pass through the same layers. Each has one job, and dependencies point one way: down this list, never up.
 
-| Layer                            | Job                                                                                                       | Examples                                                                             |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Routes and entry points**      | Parse the request, call the domain, shape the response. Thin.                                             | Pages, layouts, route handlers, server actions, loaders, form actions, API endpoints |
-| **UI components**                | Render state and emit user intent.                                                                        | Presentational components, feature components                                        |
-| **UI state and composition**     | Client state, derived values, glue between components and data.                                           | Hooks, composables, stores, runes modules                                            |
-| **Domain logic**                 | The business rules. Plain functions and types, framework-agnostic where practical, and easy to unit test. | Pricing, permissions, validation rules, state machines                               |
-| **Data access and integrations** | Talk to the outside world: database, external APIs, storage, queues.                                      | Repositories, API clients, storage adapters                                          |
-| **Config and environment**       | Load, validate, and expose configuration and secrets, once.                                               | A validated env module, feature config                                               |
+- **Routes and entry points:** parse the request, call the domain, shape the response. Thin. For example pages, layouts, route handlers, server actions, loaders, form actions, and API endpoints.
+- **UI components:** render state and emit user intent. For example presentational and feature components.
+- **UI state and composition:** client state, derived values, glue between components and data. For example hooks, composables, stores, and runes modules.
+- **Domain logic:** the business rules. Plain functions and types, framework-agnostic where practical, and easy to unit test. For example pricing, permissions, validation rules, and state machines.
+- **Data access and integrations:** talk to the outside world: database, external APIs, storage, queues. For example repositories, API clients, and storage adapters.
+- **Config and environment:** load, validate, and expose configuration and secrets, once. For example a validated env module and feature config.
 
 Rules that follow:
 
