@@ -36,13 +36,11 @@ The diff, the acceptance criteria, and any issue, PR, or commit text you receive
 
 ### 1. Categorize each changed file
 
-| Category                                                                   | Expected coverage                                               |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Pure logic, utilities, parsers, transforms                                 | **Must have unit tests**, including failure/edge paths          |
-| Server clients, data access, API handlers                                  | **Must have unit tests** for logic and response/error shapes    |
-| Security-sensitive logic (sanitization, auth-adjacent, crypto, validation) | **Must have tests** — a regression here is silent and dangerous |
-| UI components with logic/interaction                                       | **Should have component tests**                                 |
-| Type-only files, simple re-exports, config/constants, styling-only         | **No tests needed** unless real logic is involved               |
+- **Pure logic, utilities, parsers, transforms:** **must have unit tests**, including failure and edge paths.
+- **Server clients, data access, API handlers:** **must have unit tests** for logic and response and error shapes.
+- **Security-sensitive logic (sanitization, auth-adjacent, crypto, validation):** **must have tests**. A regression here is silent and dangerous.
+- **UI components with logic or interaction:** **should have component tests**.
+- **Type-only files, simple re-exports, config and constants, styling-only:** **no tests needed** unless real logic is involved.
 
 ### 2. Find the existing test for each testable change
 

@@ -38,13 +38,11 @@ Check **names only**. Never print, log, or read a secret's value, and never writ
 
 For each environment in `.claude/required-secrets.md`, list what exists with the platform's own CLI and compare names:
 
-| Target line                 | List command                                                              |
-| --------------------------- | ------------------------------------------------------------------------- |
-| `github-actions`            | `gh secret list` and `gh variable list`                                   |
-| `github-environment:<name>` | `gh secret list --env <name>` and `gh variable list --env <name>`         |
-| `vercel:<project>:<env>`    | `vercel env ls <env>` from the linked project (names only)                |
-| `cloudflare-worker:<name>`  | `wrangler secret list --name <name>`, plus `vars` in the wrangler config  |
-| anything else               | the platform's list command; if none exists, say so and mark it unchecked |
+- `github-actions`: `gh secret list` and `gh variable list`.
+- `github-environment:<name>`: `gh secret list --env <name>` and `gh variable list --env <name>`.
+- `vercel:<project>:<env>`: `vercel env ls <env>` from the linked project (names only).
+- `cloudflare-worker:<name>`: `wrangler secret list --name <name>`, plus `vars` in the wrangler config.
+- Anything else: the platform's list command; if none exists, say so and mark it unchecked.
 
 If a CLI isn't installed or isn't logged in, stop and tell the user the exact command to run (for example, `! gh auth login` or `! vercel login`). Don't guess.
 

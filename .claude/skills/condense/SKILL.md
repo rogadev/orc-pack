@@ -45,6 +45,7 @@ A token costs more each time its file is loaded, so work in this order and spend
 - **Padding.** "In order to", "it is important to note that", "make sure that you", "basically", stacked hedges, and introductions that announce what the next section says.
 - **Redundant examples.** An example that only repeats its rule. Keep examples that show an edge case or a format.
 - **Implied items.** List entries that the list's category already covers.
+- **Prose tables.** The agent reads Markdown source, not a rendered grid, and Prettier pads every cell to the width of the widest cell in its column, so one long row pads every row of the table. Convert a table whose cells are sentences to a bulleted list (`- key: rule`), keeping every row's key and its full content, and merge rows whose content is identical into one bullet that names each key. Keep a table only when its cells are short and the reader compares several columns at once. Wherever a table you convert is named elsewhere ("this table", "its row in the ... table"), update the wording in the same change; a table another file names stays a table unless you update every file that names it.
 
 **Keep exactly:**
 
@@ -82,7 +83,8 @@ The rewrite can break a link between files. For every changed file, confirm that
 - Every heading another file names (`grep` the pack for the heading text) still exists word for word.
 - Every path the file mentions still resolves.
 - Every agent name a skill dispatches still exists under `agents/`, and every reference file `skills/orc/SKILL.md` names still exists under `skills/orc/references/`. These are the checks `.github/workflows/pack-integrity.yml` runs in CI.
-- The **Standards** table in `skills/orc/SKILL.md` still matches which agent reads which standard.
+- The **Standards** list in `skills/orc/SKILL.md` still matches which agent reads which standard.
+- No text still calls a converted table a table: `grep` the pack for "table" near the converted section's name.
 - Every `pack:` marker is unchanged.
 
 ### 4. Format and record
