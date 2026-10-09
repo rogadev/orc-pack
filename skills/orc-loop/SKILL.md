@@ -1,7 +1,7 @@
 ---
 name: orc-loop
-pack: orc-pack@1.16.0
-description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), lands each with a light-review /orc run (pushed, CI green, closed), then runs 1 to 3 review rounds (a batch review, then rechecks of each fix), fixing between rounds and filing what survives, and ends with one fallow pass and one comment cleanup over everything the batch changed. Runs under /loop and resumes from state in .git. User-invoked only.
+pack: orc-pack@1.16.1
+description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), lands each with a light-review /orc run (pushed, CI green, closed), then runs 1 to 3 review rounds (a batch review, then rechecks of each fix), fixing between rounds and filing what survives, runs one fallow pass and one comment cleanup over everything the batch changed, and ends with a report of what each issue asked, how and why it was built, and every review finding. Runs under /loop and resumes from state in .git. User-invoked only.
 argument-hint: "[N] [#epic | #a #b #c ...] [status | reset]"
 disable-model-invocation: true
 ---
@@ -111,8 +111,10 @@ clone or worktree. Write it after every change of phase, issue status, or review
     {
       "n": 41,
       "title": "...",
+      "reason": "why the planner picked it",
       "status": "pending | done | skipped | blocked",
       "commits": [],
+      "reports": [],
       "note": ""
     }
   ],
@@ -128,6 +130,7 @@ clone or worktree. Write it after every change of phase, issue status, or review
       "range": "a..b",
       "head": "sha",
       "fixCommits": [],
+      "fixReports": [],
       "verdict": "...",
       "blockers": 0,
       "warnings": 0,
@@ -139,6 +142,7 @@ clone or worktree. Write it after every change of phase, issue status, or review
   "fallow": {
     "files": 0,
     "fixCommits": [],
+    "fixReports": [],
     "verdict": "...",
     "warnings": 0,
     "nits": 0,
@@ -148,6 +152,7 @@ clone or worktree. Write it after every change of phase, issue status, or review
   "comments": {
     "files": 0,
     "fixCommits": [],
+    "fixReports": [],
     "verdict": "...",
     "blockers": 0,
     "warnings": 0,
@@ -282,8 +287,8 @@ If `carried` already meets the target, skip to **Review** with an empty `issues`
 efficiency mode) with the **Planner brief** below, the target minus the carried count as
 `slots`, the carried issue numbers, the arguments, and the repo's `CLAUDE.md` path. Check its
 answer: every picked issue is open, and `git log origin/<integration> --grep "#<n>\b" -E` finds
-no fix for it. Write the batch to the state file, set `phase: "build"`, start the bar, and print
-one line per issue with the reason.
+no fix for it. Write the batch to the state file, with each issue's reason from the planner, set
+`phase: "build"`, start the bar, and print one line per issue with the reason.
 
 If the planner returns `BATCH_KIND: none`, go to **Review** when `carried` is not empty;
 otherwise go to **Finish**, end with `LOOP FINISHED (no build)`, and say what the planner found.
@@ -305,8 +310,9 @@ They come from the user and outrank `/orc`'s own rules for the length of this lo
   background shell, or dev server from this run still running.
 - **List your commits.** The report's **Landed** section names every commit this run landed on
   the integration branch, by full SHA, one per line.
-- **Do not end the turn on orc's report.** Write orc's report and status line, then continue
-  with the bookkeeping below in the same message as your next tool call.
+- **Do not end the turn on orc's report.** Write orc's report, with the **Approach** and
+  **Review** sections `orc-loop-iter` adds, and its status line, then continue with the
+  bookkeeping below in the same message as your next tool call.
 
 **CI.** After orc pushes, find the run for the pushed commit
 (`gh run list --branch <integration> --commit <sha> --json databaseId,status,conclusion,workflowName`).
@@ -329,6 +335,12 @@ instead and say so in the loop's report. Append them to the record that owns the
 issue's `commits` during **Build** (its build and CI-fix runs), the round's `fixCommits` during a
 review fix (its fix and CI-fix runs), `fallow.fixCommits` during the fallow fix, and
 `comments.fixCommits` during the comment fix.
+
+**Save the report.** Write each run's full report and status line, exactly as orc gave them, to
+`<git-dir>/orc-loop/runs/<name>.md`, where the name is `issue-<n>`, `issue-<n>-ci-<k>`,
+`round-<k>-fix`, `fallow-fix`, or `comments-fix` (with `-ci-<k>` for a fix's CI fix), and append
+its path to the same record's `reports` or `fixReports`. Do it before anything else, so the
+report outlives a summarized context: **Finish** builds the final report from these files.
 
 **Record the outcome** from orc's status line:
 
@@ -653,21 +665,51 @@ Stop anything from the run still going: background agents, shells, dev servers. 
 `agentMemory` is `committed` and `.claude/agent-memory/` has changes, commit them alone
 (`chore: update agent memory notes`) and push. Set `phase: "done"`, save, finish the bar if it
 started, release the checkout lock, call `ScheduleWakeup` with `stop: true`, then write the
-report in the voice from `CLAUDE.md`, with these headings (drop any that are empty):
+report.
 
-- **Batch:** the kind and size, whether it ran in efficiency mode, the carried issues, and one
-  line per issue with its outcome.
+**The report is the user's only view of the batch.** They walked away while the issues were
+picked, read, built, and reviewed, so it says what was done, how, and why, issue by issue. Build
+it from the files, never from memory: the state file and every report it records in `reports`,
+`fixReports`, and `report`. When a run's saved report is missing (a batch that began before runs
+were saved), read the issue's `Work contract` comment and its commit bodies instead, and say so
+on the **Batch** line.
+
+Write it in the voice from `CLAUDE.md`, with these headings (drop any that are empty):
+
+- **Summary:** one short paragraph: what the batch set out to do, what landed, what the reviews
+  caught and fixed, and what is left for the user.
+- **Batch:** the kind and size, why these issues were picked together (from each issue's
+  `reason`), whether it ran in efficiency mode, and the carried issues.
+- **Issues:** one block per issue in build order, each line one sentence:
+  - `#N <title>`, with its outcome (done, skipped, or blocked).
+  - **Asked:** what the issue was about, in plain language.
+  - **Approach:** what orc built and where, and why it read the issue that way, with each
+    decision it made and its reason. From the run's **Approach** section.
+  - **Found:** where the code disagreed with the issue, assumptions from the run's **Heads-up**,
+    and discoveries filed or commented, with numbers.
+  - **Review:** the run's lanes and fix rounds, then each Blocker and Warning with its outcome,
+    and the Nits as a count. From the run's **Review** section, plus any CI fix it needed.
+  - **Commits:** its commits and the CI result.
+  - A skipped or blocked issue keeps **Asked** and replaces the rest with why, and what unblocks
+    it.
+- **Review:** one block per round: its kind and range, the lanes that ran, the verdict, the
+  counts, and the round's tokens from the ledger; under it, each Blocker and Warning with its
+  plain-language title, the issues involved, and its outcome (fixed in `<sha>`, resolved in round
+  k+1, filed as #N, or still open). Then a block in the same shape for the fallow pass (also the
+  files audited and the inherited findings left out) and one for the comment cleanup (also the
+  files read).
+- **Totals:** one line: the reviews run (one panel per run, plus each batch round, the fallow
+  pass, and the comment cleanup), the Blockers and Warnings found across all of them, how many
+  were fixed, filed, and left open, the Nits, and the review tokens.
 - **Landed:** the commit range on the integration branch, pushed, and the CI result.
-- **Review:** one line per round: its kind and range, the lanes that ran, the verdict, the
-  counts, and the round's tokens from the ledger. Then one line for the fallow pass (the files
-  audited, inherited findings left out, the verdict, the counts, whether a fix landed, and its
-  tokens) and one for the comment cleanup: the
-  files read, the verdict, the counts, whether a fix landed, and its tokens. Then one line with
-  the review total.
 - **Board:** issues closed, discoveries filed or commented, round-3 issues filed, with numbers.
 - **Your call:** Nits from the last round, the fallow pass, and the comment cleanup, blocked issues
   and what unblocks them, deploy notes from orc's reports, anything that did not run as designed.
   Then the next action, normally "Open the PR from <integration> to <release>".
+
+Every Blocker and Warning found anywhere in the batch, in a run's own review or in the loop's,
+appears once with its outcome. Nits are counted, and listed only under **Your call**. Close the
+report with the folder that holds the full reports: `<git-dir>/orc-loop/`.
 
 The last line is exactly one of:
 

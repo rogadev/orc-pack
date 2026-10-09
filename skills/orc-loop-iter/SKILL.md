@@ -1,13 +1,13 @@
 ---
 name: orc-loop-iter
-pack: orc-pack@1.16.0
+pack: orc-pack@1.16.1
 description: One /orc run inside an /orc-loop batch, with a lighter per-task review whose skipped lanes the loop runs once over the whole batch. Invoked only by /orc-loop; standalone work uses /orc.
 user-invocable: false
 ---
 
 # Orc loop iteration
 
-You run one `/orc` run inside an `/orc-loop` batch: an issue build, a CI fix, a review fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes, mainly a lighter review, because the loop reviews the batch as a whole afterward.
+You run one `/orc` run inside an `/orc-loop` batch: an issue build, a CI fix, a review fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes: two more report sections, and a lighter review, because the loop reviews the batch as a whole afterward.
 
 **Only `/orc-loop` runs this.** Its invocations contain `(the caller holds the checkout lock)`. When your arguments don't, stop and tell the user to run `/orc` instead, which keeps its full review.
 
@@ -33,6 +33,13 @@ Everything else in step 5 is unchanged. A scoped re-review after a fix never add
 ### Light comment pass
 
 Give `quality-reviewer` `standards/comments.md` and tell it that the comments on the changed lines are in its scope for this dispatch, the same assignment orc gives it on a trivial code task, so the comment check costs no extra dispatch. Comments elsewhere in a touched file wait for the loop's comment cleanup.
+
+## Report
+
+The loop builds its final report from these runs' reports, so add two sections to orc's step 9 report. Write each line in plain language a user who never saw the run can follow.
+
+- **Approach**, right after **Picked**: what the work asked for, in one line; what you built and where, from the contract's restatement; each decision orc's **Make it buildable** step made (a split, a provisional value, or the reading you chose when the work meant two things), with its reason; and what the premise check found when the code disagreed with the issue.
+- **Review**, right after **Landed**: the lanes that ran and the number of fix rounds; then one line per confirmed Blocker and Warning, with a title, the lane that raised it, and its outcome (fixed in round N, or still open); then the Nits as a count only.
 
 ## Fixes from a loop report
 
