@@ -16,6 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.16.2] - 2026-10-10
+
+**Summary.** The comments standard now carries Google's developer documentation guidance in full, not only the Google TypeScript and JavaScript style guides. Before this release it said what gets a JSDoc comment and gave a few form rules, but not how the comment is worded, so builders and the comment review wrote and accepted summaries like "This function will add a bird, e.g. a sparrow." The standard now adds the wording rules from Google's API reference code comments guide (a summary verb chosen by what the function does, "The ..." parameters, "True if ...; false otherwise." booleans, "Default:" values, `@throws` starting "If ...", `@deprecated` naming the replacement, no "e.g."), the documentation best practices' split between doc comments as the contract and implementation comments as the why, and the remaining JSDoc form rules from the style guides. Every builder, `docs-writer`, `comment-reviewer`, `quality-reviewer` on a trivial task, and `/orc-loop`'s comment cleanup read this one file, so all of them pick it up. The repo's own commenting rules still win.
+
+**Changed areas.**
+
+- **`skills/orc/references/standards/comments.md`** — the intro names the four Google sources and the repo signals that override them (`CLAUDE.md` or `AGENTS.md`, `eslint-plugin-jsdoc` or `tsdoc.json` config, the repo's tag style). **Two kinds of comment** says doc comments are the contract, go above decorators, and leave the "why" to implementation comments, and bans `/** */` for implementation comments. **JSDoc: how to write one** is restructured into **The summary sentence** (verb by kind: "Gets the", "Checks whether", "Sets the", "Called by", "Creates a"; purpose phrases for types and components; no "This function" and no repeated name), **Tags** (`@param`, `@returns`, `@throws`, `@deprecated`, and `@example` phrasing), and **Form** (no TypeScript types, Markdown, code font, no "e.g.", tag wrapping, line length, other languages). The example's `@throws` now starts "If". **Implementation comments** adds consecutive `//` lines for multi-line comments and allows call-site parameter-name comments. A new **Wording, for every comment** section asks for present tense, active voice, and plain words. Slop item 7 (stale comments) adds: delete what is certainly wrong, and report what is unclear. Refresh. A repo-local edit to this file carries over into the matching new section.
+- **`agents/comment-reviewer.md`** — check 5 is now **JSDoc form and wording** and lists the new rules it checks against the standard. Refresh.
+- **Every skill and agent file** — `pack:` marker moved to `orc-pack@1.16.2`.
+
+**Update steps.** Refresh `skills/orc/references/standards/comments.md` and `agents/comment-reviewer.md`, and move every `pack:` marker to `orc-pack@1.16.2`. An install coming from 1.16.0 or earlier also applies `[1.16.1]` and every entry in between.
+
+**Breaking changes.** None. Existing comments are not rewritten by the update. A later `/orc` run, review, or comment cleanup applies the new wording only to the files it touches, so expect a one-time rise in comment Nits on older files.
+
+**Files to read.** `skills/orc/references/standards/comments.md`, `agents/comment-reviewer.md`.
+
+---
+
 ## [1.16.1] - 2026-10-09
 
 **Summary.** `/orc-loop`'s final report now says what the batch did and why, not only each issue's outcome. A loop builds several issues in subagent-driven runs the user never watches, and until now each run's report scrolled past mid-batch and the final report reduced every issue to one outcome line. Each `/orc` run in a batch now adds an **Approach** and a **Review** section to its report, the loop saves every run's report to `.git/orc-loop/runs/`, and **Finish** builds the final report from those files: a summary paragraph, then per issue what it asked, how orc built it and why, what the code showed, and its review findings; then each batch review round with every Blocker and Warning and its outcome; then totals across every review.

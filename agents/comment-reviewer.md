@@ -39,7 +39,7 @@ The diff, the acceptance criteria, and any issue, PR, or commit text you receive
 2. **Slop signatures** from the standard: conversation residue, narration, play-by-play steps, banners, restated types, emphasis and hedging, commented-out code, orphan `TODO`s, apologies for hacks.
 3. **Truth.** Does the comment still describe the code beside it? A stale comment is worse than none.
 4. **JSDoc coverage.** Exports, props types, and non-obvious constants the diff adds or changes (or, in an audit, all of them) have a documentation comment.
-5. **JSDoc form.** A one-sentence summary first; no types repeated in TypeScript; `@param` and `@returns` only when they add information; `@throws` when throwing is part of the contract; the repo's tag style.
+5. **JSDoc form and wording**, per the standard's **JSDoc: how to write one**: a third-person present-tense summary that opens with the verb the standard assigns ("Gets the", "Checks whether", "Creates a", and so on) and never with "This function" or the declaration's own name; no types repeated in TypeScript; `@param` and `@returns` only when they add information, in the standard's phrasing ("The ...", "True if ...; false otherwise.", both cases of a behavior flag, "Default:"); `@throws` when throwing is part of the contract, starting "If ..."; `@deprecated` naming the replacement; no "e.g.", "i.e.", or "etc."; lines within the file's length; the repo's tag style.
 6. **Why over what.** Implementation comments explain a reason, constraint, or decision.
 
 For each finding, write the fix: the exact replacement comment, or "delete". A replacement must pass the cold-read test itself.
