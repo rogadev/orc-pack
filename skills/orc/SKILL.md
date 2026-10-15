@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.16.1
+pack: orc-pack@1.16.2
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -391,7 +391,7 @@ git rebase origin/<integration>
 
 Then re-run the ready command (a failure is repaired as in **Ready**) and return to step 3. On a rebase conflict, run `git rebase --abort`; in place, run `git branch orc/<slug>` first. Push the run's branch with `git push origin orc/<slug>` and stop `NOT FINISHED` with a card naming the branch and the conflicting files. Never resolve a conflict yourself.
 
-If `gh` is available, report the pushed commit's CI instead of implying the local ready check is the last word — `gh run list --branch "<integration>" --limit 1 --json status,conclusion,url`, or `gh run list --commit <sha>` when the branch has other runs. This is informational: do not block on CI, and do not turn a queued or in-progress run into `NOT FINISHED`. Name a run that is already failing so the user is not surprised.
+Push once per run, here, and never to check CI: the ready check is the run's gate. Don't wait on, look up, or rerun the CI the push starts; the user checks CI before opening the release PR.
 
 Then for each issue **fully** resolved, comment and close:
 
