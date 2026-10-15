@@ -7,7 +7,7 @@ user-invocable: false
 
 # Orc loop iteration
 
-You run one `/orc` run inside an `/orc-loop` batch: an issue build, a CI fix, a review fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes: two more report sections, and a lighter review, because the loop reviews the batch as a whole afterward.
+You run one `/orc` run inside an `/orc-loop` batch: an issue build, a review fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes: a lighter review, because the loop reviews the batch as a whole afterward; no push or close, because the loop pushes the batch once at its end; and two more report sections.
 
 **Only `/orc-loop` runs this.** Its invocations contain `(the caller holds the checkout lock)`. When your arguments don't, stop and tell the user to run `/orc` instead, which keeps its full review.
 
@@ -33,6 +33,10 @@ Everything else in step 5 is unchanged. A scoped re-review after a fix never add
 ### Light comment pass
 
 Give `quality-reviewer` `standards/comments.md` and tell it that the comments on the changed lines are in its scope for this dispatch, the same assignment orc gives it on a trivial code task, so the comment check costs no extra dispatch. Comments elsewhere in a touched file wait for the loop's comment cleanup.
+
+## Commit, don't land
+
+Skip orc's **Land it** whole: no fetch or catch-up, no push, no CI lookup, and no issue comment or close. Your commits stay on the local integration branch, and the loop pushes them with the rest of the batch and closes the batch's issues once, at its **Finish**. Every push starts the repo's CI, so one push per batch runs it once instead of once per run. The `FINISHED` status means every task is committed and the ready check is green; the report's **Landed** section says the commits are local and not yet pushed. Release the checkout lock and write the report as orc does.
 
 ## Report
 
