@@ -18,8 +18,14 @@ name: Release guard
 #      release body is the update map `/update-orc` reads.
 #
 # Anything that can't be auto-fixed (for example a file Prettier can't parse)
-# fails the job: red check, no merge until it's fixed. Pushes made by the bot
-# use GITHUB_TOKEN and don't retrigger workflows, so there is no loop.
+# fails the job: red check, no merge until it's fixed.
+#
+# The fix commit is pushed with a GitHub App token when the repo has the
+# RELEASE_APP_CLIENT_ID variable and the RELEASE_APP_PRIVATE_KEY secret, and with
+# GITHUB_TOKEN otherwise. GitHub holds runs started by a GITHUB_TOKEN push until
+# someone clicks "Approve workflows to run"; an app's push starts them like any
+# other push. That re-run finds nothing to fix, passes, and stops, and the
+# "Refuse to push a second fix" check below ends any loop.
 
 on:
   pull_request:
@@ -47,10 +53,19 @@ jobs:
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
     steps:
+      - name: Mint the release app's token
+        id: app-token
+        if: vars.RELEASE_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || github.token }}
 
       - name: Bump version if pack content changed without one
         # Event context enters the script only through env, never inline
@@ -101,6 +116,13 @@ jobs:
           if git diff --quiet; then
             echo "Version $PACK_VERSION consistent and formatting clean; nothing to do."
             exit 0
+          fi
+          # Refuse to push a second fix: the commit under review is already
+          # this guard's own fix, so new changes here mean a formatter that
+          # doesn't settle, and pushing again would loop.
+          if git log -1 --format=%s | grep -q '^chore: version .* auto bump/sync and formatting$'; then
+            echo "::error::The guard's own fix commit still needs changes. Run 'npx prettier@3 --write .' locally and commit the result."
+            exit 1
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
