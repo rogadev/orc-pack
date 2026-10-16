@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.16.3
+pack: orc-pack@1.17.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -55,7 +55,7 @@ Then stop — do not begin the run.
 
 **Your output is landed work, not a report about why the work was hard.** Before writing your final report, ask: _what on disk or on the board is different because I ran?_ If the answer is "nothing", you stopped too early — go find the work you skipped.
 
-`NOT FINISHED` is for genuine human-only blockers only — the closed list in **Outcomes**. "Blocked on something missing", "the issue was vague", "there's nothing executable", "I should flag this and let the user decide" are all your job: build the part that isn't blocked, specify the vague thing yourself, do the board work, decide and report the assumption. A defensible provisional value beats nothing shipped. Out-of-scope findings get handled, never merely mentioned: a Small one is done in this run, and a Medium or larger one becomes a card the user can say yes to (see **Discoveries**).
+`NOT FINISHED` is for genuine human-only blockers only — the closed list in **Outcomes**. "Blocked on something missing", "the issue was vague", "there's nothing executable", "I should flag this and let the user decide" are all your job: build the part that isn't blocked, specify the vague thing yourself, do the board work, decide and report the assumption. A defensible provisional value beats nothing shipped. Out-of-scope findings get handled, never merely mentioned: a Small one is done in this run, and a Medium or larger one is filed as an issue (see **Discoveries**). Only real toss-ups go back to the user, as cards under **Your call**.
 
 ## Modes
 
@@ -79,15 +79,15 @@ As soon as you know what the work decomposes into (after **Make it buildable**),
 
 > If the task tools aren't available (switched off for this model or Claude Code version), keep an explicit inline checklist and work it the same way.
 
-**Run budget.** Cap the run at a set number of tasks — default **8**, overridable by a `## orc budget` note in `CLAUDE.md`/`AGENTS.md`, a count in the invocation, or an approved card's band (see **Approved cards**). The cap counts tasks you add during the run too, Small follow-ups included, because the budget is what keeps in-run work bounded. When you reach it: finish the task in flight, run **Ready**, land what is green, and report what is left as cards under **Your call** — do not start new work past the cap. Each Small follow-up the cap left undone becomes a card sized Small. A budgeted stop is a `FINISHED` run, not a `NOT FINISHED` one; the cap is a deliberate scope line, not a blocker.
+**Run budget.** Cap the run at a set number of tasks — default **8**, overridable by a `## orc budget` note in `CLAUDE.md`/`AGENTS.md`, a count in the invocation, or an approved card's band (see **Approved cards**). The cap counts tasks you add during the run too, Small follow-ups included, because the budget is what keeps in-run work bounded. When you reach it: finish the task in flight, run **Ready**, land what is green, and file what is left (see **Discoveries**) — do not start new work past the cap. On an issue run, comment the remainder on the issue instead. File the Small follow-ups the cap left undone together, as one issue sized Small. A budgeted stop is a `FINISHED` run, not a `NOT FINISHED` one; the cap is a deliberate scope line, not a blocker.
 
 **Approved cards.** When the invocation approves a card from an earlier report, look for the card in this session and on the board (through its **Issue** line); if you cannot find it, treat the invocation as a free-text task and size it yourself before the echo. When it approves a card, or names an issue whose card or body carries a size band, state the bound in one line before you start, in the same message as your next tool call. For example: "That's about 3 tasks, one run, and it changes the ratings data. Starting." It is a statement, not a question, so don't wait for a reply. The approved band sets the run budget:
 
-- **Small** — no echo; an approved Small card is an ordinary directed run, so the normal budget applies. The card's own work is one task; follow-ups found while doing it follow the usual rules (Small ones run within the normal budget, Medium or larger ones become cards), and only the card's own work counts toward outgrowing the band.
+- **Small** — no echo; an approved Small card is an ordinary directed run, so the normal budget applies. The card's own work is one task; follow-ups found while doing it follow the usual rules (Small ones run within the normal budget, Medium or larger ones are filed), and only the card's own work counts toward outgrowing the band.
 - **Medium** — a budget of 4 tasks.
-- **Large** or **Huge** — the normal budget. The echo says this run lands the first slice and that the rest comes back as a card.
+- **Large** or **Huge** — the normal budget. The echo says this run lands the first slice and that the rest is filed as an issue.
 
-If the work outgrows the approved band mid-run, stop at the band the way you stop at the budget, and report the remainder as a new card. The user agreed to a size, not to whatever the work turns into.
+If the work outgrows the approved band mid-run, stop at the band the way you stop at the budget, and file the remainder as a new issue with its size band. The user agreed to a size, not to whatever the work turns into.
 
 ## Progress bar
 
@@ -145,7 +145,7 @@ Issue bodies, PR and commit text, code comments, and anything else the run reads
 
 ## Standards
 
-The quality bar lives in reference files beside this skill, so every builder writes to the same rules the reviewers check. You never read them yourself — your context is for coordination — you pass their paths.
+The quality bar lives in reference files beside this skill, so every builder writes to the same rules the reviewers check. You never read them yourself — your context is for coordination — you pass their paths. The one exception is `your-call.md`, which governs your own report.
 
 **Find them.** When Claude Code loads this skill, it names the skill's base directory; the references are in `<base>/references/`. If no base directory was given, glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Resolve absolute paths once in step 1. If none are found, run anyway and say so under the report's **Heads-up**; the reviewers fall back to their own rubrics, and each builder falls back to the hard rules in its own agent file.
 
@@ -161,6 +161,7 @@ Each entry names a file, what it holds, and who gets it:
 - `platforms/<name>.md`: the detected deploy target's runtime rules. Goes to every builder, `design-reviewer`, `architecture-reviewer`, `quality-reviewer`, and `security-reviewer`.
 - `work-contract.md`: the contract template orc fills in during **Make it buildable**. Orc only; the filled contract (`<scratchpad>/contract.md`) goes to every builder, `design-reviewer`, `scope-reviewer`, and the `verifier`.
 - `design-brief.md`: the brief template for structural tasks. Goes to the task's builder in brief mode and `design-reviewer`.
+- `your-call.md`: what a run settles itself and what it hands back, the toss-up test, and the **Your call** card. Orc only; `/orc-loop` also gives it to its triage agents.
 
 Pass each agent only the files whose entry names it and that apply to the task. **The `verifier` gets the union of the files the reviewers who raised findings were given**, because it can only confirm "a documented rule was broken" against the rule itself. The repo's own docs and established patterns outrank every one of these files, and each file says so; a client repo's existing structure is followed, never reshaped.
 
@@ -273,7 +274,7 @@ Per task, in order. **Never dispatch builders in parallel** — concurrent write
 
 The builder writes code and tests. **It does not commit** — you own the history.
 
-Read the builder's **Acceptance** line before you dispatch reviewers. A test it reports as passing before the change, or never passing, goes straight back to the builder as a Blocker; don't spend a review panel on it. A builder that stopped because a real integration can't be wired is the missing-credential case in **Outcomes** when the work can't stand without it; otherwise land what stands and make the rest a card.
+Read the builder's **Acceptance** line before you dispatch reviewers. A test it reports as passing before the change, or never passing, goes straight back to the builder as a Blocker; don't spend a review panel on it. A builder that stopped because a real integration can't be wired is the missing-credential case in **Outcomes** when the work can't stand without it; otherwise land what stands and file the rest.
 
 **Dispatch the review panel.** Fresh subagents, every task, no exceptions. The builder leaves its work uncommitted, so diff the working tree against the recorded base. Write the diff and the changed-file list to files _outside_ the repo and give reviewers the paths:
 
@@ -306,9 +307,9 @@ git diff <base> --name-only > "<scratchpad>/task-<n>-files.txt"
 
 A docs-only or comments-only diff is trivial however many files it touches, and goes to `comment-reviewer` when it changes source comments. Give each reviewer the diff path, the changed-file list, the criteria this task owns, quoted from the contract, the contract's path, the repo constraints, its standards set, and for a structural task the approved brief's path (it is the agreed spec, not the builder's reasoning) — **nothing about the builder's reasoning**. Give `ui-reviewer` the builder's **UI surfaces** list, the repo's local run command, and a scratch directory for screenshots. Ask for a verdict plus findings, each with a severity: Blocker, Warning, or Nit. Never tell a reviewer what not to flag; adjudicate suspected false positives at the next step.
 
-**Filter the findings through the `verifier`.** Reviewers hallucinate — that's the known failure mode of LLM review — and a high bar tempts them toward taste. Hand the consolidated findings (title, file, line, severity, claim, source reviewer) to the `verifier` in a single dispatch, with the standards those reviewers used, the changed-file list (the audit file list, in a cleanup audit), and the contract's path when `scope-reviewer` raised findings. Discard what it rules not reproducible or preference, downgrade what it overstates, and route what is out of scope by its size tag: a Small finding is a follow-up you do this run, and a Medium or larger one becomes a card, except that quality debt in files no task touches becomes a card whatever its size (see **Discoveries**). Size any untagged finding yourself. For 🔄 Needs context, re-read the code yourself and decide; if it still turns on runtime behavior or an external contract you cannot see, report it as a card under **Your call**. **Skip the verifier when the panel returns no findings, or only Nits with none tagged Cleanup candidate.** Nits never start a fix round, so verifying them buys nothing: record them in the task's commit body on the `Nits left:` line, marked unverified. A cleanup audit's findings are the work of the run, so always verify them.
+**Filter the findings through the `verifier`.** Reviewers hallucinate — that's the known failure mode of LLM review — and a high bar tempts them toward taste. Hand the consolidated findings (title, file, line, severity, claim, source reviewer) to the `verifier` in a single dispatch, with the standards those reviewers used, the changed-file list (the audit file list, in a cleanup audit), and the contract's path when `scope-reviewer` raised findings. Discard what it rules not reproducible or preference, downgrade what it overstates, and route what is out of scope by its size tag: a Small finding is a follow-up you do this run, and a Medium or larger one is filed, except that quality debt in files no task touches is filed whatever its size (see **Discoveries**). Size any untagged finding yourself. For 🔄 Needs context, re-read the code yourself and decide; if it still turns on runtime behavior or an external contract you cannot see, put the check that would settle it under **Needs you** and file the finding with your evidence. **Skip the verifier when the panel returns no findings, or only Nits with none tagged Cleanup candidate.** Nits never start a fix round, so verifying them buys nothing: record them in the task's commit body on the `Nits left:` line, marked unverified. A cleanup audit's findings are the work of the run, so always verify them.
 
-**The review↔fix loop, bounded at three rounds.** When the verified findings include any Blocker or Warning, send all of them back to the task's builder verbatim — the same agent type that built it, on the model **Model selection** names for that round — Blockers, Warnings, and Nits together, because a builder already in the code clears the small stuff cheaply. Hold back **Cleanup candidates**; they are separate tasks, not fixes. It fixes and re-runs the covering tests. Then regenerate the diff and file list (with `git add --intent-to-add .` again, for files the fix created), and a scoped re-review confirms: only the lanes that raised findings, plus any lane whose surface the fix newly touches. A `scope-reviewer` finding is fixed by reverting the out-of-contract change; when the change is worth having, the builder still reverts it and you add it as its own task through **Discoveries**. Amend the contract only when a criterion genuinely needs the change, and record the amendment and its reason in the task's commit body. When a round leaves only Nits, that's good enough: record them in the task's commit body and move on — never spend a round on Nits alone. A verified **Cleanup candidate** does not block the task; add it as its own task (see **Discoveries**). If round three still leaves a Blocker open, stop the run — don't adjudicate past a real defect to reach the end. A Warning still open after round three becomes a card under **Your call**; it does not stop the run.
+**The review↔fix loop, bounded at three rounds.** When the verified findings include any Blocker or Warning, send all of them back to the task's builder verbatim — the same agent type that built it, on the model **Model selection** names for that round — Blockers, Warnings, and Nits together, because a builder already in the code clears the small stuff cheaply. Hold back **Cleanup candidates**; they are separate tasks, not fixes. It fixes and re-runs the covering tests. Then regenerate the diff and file list (with `git add --intent-to-add .` again, for files the fix created), and a scoped re-review confirms: only the lanes that raised findings, plus any lane whose surface the fix newly touches. A `scope-reviewer` finding is fixed by reverting the out-of-contract change; when the change is worth having, the builder still reverts it and you add it as its own task through **Discoveries**. Amend the contract only when a criterion genuinely needs the change, and record the amendment and its reason in the task's commit body. When a round leaves only Nits, that's good enough: record them in the task's commit body and move on — never spend a round on Nits alone. A verified **Cleanup candidate** does not block the task; add it as its own task (see **Discoveries**). If round three still leaves a Blocker open, stop the run — don't adjudicate past a real defect to reach the end. A Warning still open after round three is filed as an issue; it does not stop the run.
 
 **Commit.** Once the review is clean, commit that task onto the working branch — conventional-commit style matching the repo's history, with the issue reference when there is one. **The subject names the change, never the process**: `fix: reject expired invite tokens`, not `fix: address review findings`, and never a round, a pass, or a reviewer's name. When the commit also carries touched-file cleanup, the subject names the task's change and the body lists the cleanup, one line per change. When the builder's report has **Deploy notes** other than "none", they go in the commit body. Nits left when the review loop ends, including a first review that returned only Nits, go in the body too, on one line starting `Nits left:`, so they persist without cluttering the chat report. Stage exactly the task's files — the changed-file list, checked for strays such as test output, screenshots, or logs that are not gitignored — with `git add -- <files>`, never `git add -A`.
 
@@ -332,11 +333,13 @@ A cleanup run improves existing code to the standards without changing what it d
 2. **Pin behavior first.** Dispatch `test-coverage-reviewer` in cleanup mode over the target. Where it finds behavior no test pins down, the first task writes characterization tests for today's behavior, quirks included, and commits them (`test:`) before any refactor. Every later task keeps those tests passing unchanged: before committing each task, confirm `git diff <base> --stat -- <characterization test files>` is empty. A task that had to edit one is not behavior-preserving; stop and treat the change as a `fix:`.
 3. **Behavior-preserving only.** A bug found during cleanup is fixed in its own `fix:` task, never folded into a `refactor:` commit. Commit types are `refactor:` for code and `docs:` for comment-only tasks.
 
-The **Run budget** applies. A large target is a good reason to stop at the cap and report the remainder as cards.
+The **Run budget** applies. A large target is a good reason to stop at the cap and file the remainder.
 
 ### 6. Discoveries
 
-Size everything you find that the work didn't mention, then handle it as below. Never merely _mention_ a finding. A mention evaporates with your context, and a card carries the size, recommendation, and issue status the user needs to decide.
+Size everything you find that the work didn't mention, then handle it as below. Never merely _mention_ a finding. A mention evaporates with your context, and an issue carries the size, evidence, and recommended fix past the end of the run.
+
+Running `/orc` is the user's approval to file the issues this skill says to file. People run orc to get work finished, not handed back, so `your-call.md` (see **Standards**) decides what you settle yourself and what goes to the user. Read it before you handle discoveries, and again before **9. Report**.
 
 #### Follow-up sizes
 
@@ -351,7 +354,7 @@ When in doubt between two bands, take the larger one.
 
 **Do Small work now, don't file it.** Filing a Small discovery, or handing it back, makes a future agent pay a whole cycle — survey, make-buildable, plan, implement, review, verify, ready, commit, close — to rebuild the context you already have right now. So "unrelated to the issue I picked" is not a reason to defer it. You dispatch the work and hand artifacts over as file paths, so your own context stays lean while these tasks land.
 
-**Hand Medium and larger work back, don't build it.** A Medium discovery is a run of its own. Building it unasked turns a short job into a long one the user never agreed to; a card lets them say yes to a known size.
+**File Medium and larger work, don't build it.** A Medium discovery is a run of its own. Building it unasked turns a short job into a long one the user never agreed to; an issue with its size band lets the user, or a later run, take it on at a known size.
 
 Handle each finding:
 
@@ -359,14 +362,14 @@ Handle each finding:
 - **Trivial and provably correct** (a typo, an obvious guard, dead code) → fold it into the nearest related task's commit, or a quick `fix:`/`chore:` — no ceremony. In efficiency mode, route it as **Efficiency mode** says instead of editing it yourself.
 - **A verification question you can answer** from the repo or a local reference copy (for example "does anything read this column?") → answer it and act on the answer. Never hand it back as a question.
 - **Any other Small follow-up** (a check, a guard, a doc line, an edge-case fix, a dead export, a lint warning) → add it as its own task and run it through the normal loop: build, review panel, verify, commit. It counts toward the **Run budget**.
-- **Medium or larger** → a card under **Your call** (see **9. Report**). Don't build it, and don't file an issue for it without the user's consent.
-- **A genuine human-only call** → _only_ the closed list in **Outcomes** (a legal or policy statement, a security boundary, an external API contract, spending money, or something the user reserved), or work blocked on missing access. Comment the evidence, file it (`/newissue`, or `gh`) or apply `blocked`, and report it as a card whose **Issue** line reads `filed #N`. Before filing, check the board — open and recently closed — for a match; comment there instead of filing a near-duplicate, and the card reads `exists #N`. This is the rare exception, not the common path.
+- **Medium or larger** → file an issue as `your-call.md` describes, and list it under **Board**. Don't build it. When the work hinges on a decision that passes the toss-up test in `your-call.md`, it is also a card under **Your call**.
+- **A genuine human-only call** → _only_ the closed list in **Outcomes** (a legal or policy statement, a security boundary, an external API contract, spending money, or something the user reserved), or work blocked on missing access. Comment the evidence, file it (`/newissue`, or `gh`) or apply `blocked`. Before filing, check the board — open and recently closed — for a match; comment there instead of filing a near-duplicate. A reserved call becomes a card whose **Issue** line reads `filed #N` or `exists #N`; work blocked on access goes under **Needs you**, with the access that unblocks it. This is the rare exception, not the common path.
 
 **Keep the contract current.** Before you dispatch any task added after the contract was written (a Small follow-up, a cleanup candidate, a trivial fix folded into another task), append an **In scope** line for it to `contract.md`, tagged `follow-up`, with its own criterion, and take it off **Out of scope** if it was listed there. Otherwise `scope-reviewer` rightly flags work the contract never mentions.
 
-Add a task for each Small follow-up, and note each card as you find it, so neither slips.
+Add a task for each Small follow-up, and file each larger one as you find it, so neither slips.
 
-**Code-quality debt is the one exception to "Do Small work now".** Slop and structural debt in the files a task touches is already that task's work (see the touched-file rules in `code.md`). A verified **Cleanup candidate** — a touched file that needs more than the task could fix proportionately — becomes its own cleanup task this run, within the budget; one the budget leaves undone becomes a card. But quality debt in files no task touches is not a discovery to chase, whatever its size: a run that sweeps every messy file it passes turns every issue into a rewrite. Report those files as cards under **Your call**, one card per area, with the command that would clean them in the **Recommend** line (for example `/orc clean up the slop in src/lib/billing`), and move on.
+**Code-quality debt is the one exception to "Do Small work now".** Slop and structural debt in the files a task touches is already that task's work (see the touched-file rules in `code.md`). A verified **Cleanup candidate** — a touched file that needs more than the task could fix proportionately — becomes its own cleanup task this run, within the budget; one the budget leaves undone is filed. But quality debt in files no task touches is not a discovery to chase, whatever its size: a run that sweeps every messy file it passes turns every issue into a rewrite. File one issue per area, with the command that would clean it in the body (for example `/orc clean up the slop in src/lib/billing`), and move on.
 
 ### 7. Ready
 
@@ -389,7 +392,7 @@ git fetch   # fresh after a rejected push; the remote moved since step 1
 git rebase origin/<integration>
 ```
 
-Then re-run the ready command (a failure is repaired as in **Ready**) and return to step 3. On a rebase conflict, run `git rebase --abort`; in place, run `git branch orc/<slug>` first. Push the run's branch with `git push origin orc/<slug>` and stop `NOT FINISHED` with a card naming the branch and the conflicting files. Never resolve a conflict yourself.
+Then re-run the ready command (a failure is repaired as in **Ready**) and return to step 3. On a rebase conflict, run `git rebase --abort`; in place, run `git branch orc/<slug>` first. Push the run's branch with `git push origin orc/<slug>` and stop `NOT FINISHED` with a **Needs you** line naming the branch and the conflicting files. Never resolve a conflict yourself.
 
 Push once per run, here, and never to check CI: the ready check is the run's gate. Don't wait on, look up, or rerun the CI the push starts; the user checks CI before opening the release PR.
 
@@ -417,23 +420,11 @@ Use these headings, in this order. Drop any section that's empty, and drop every
 
 - **Picked** — `#N title` (or the task, for a free-text run), one line on why. Rung-e set-asides, one line each. Say on this line if the run used efficiency mode, or if the invocation asked for it on a model other than Sonnet 5.5.
 - **Landed** — what changed and where, commit range, pushed or not. Then each acceptance criterion from the contract with the test that proves it, one line each (`1. Retries a failed upload → storage.test.ts "retries a failed upload with backoff"`); a criterion with no passing test is not landed, so say what happened to it. Include each Small follow-up done in-flight, one line each: the check you ran and its answer, the guard you added, the doc line you fixed. When a builder reported real **Deploy notes**, put them on one indented line under the entry they belong to, as `Deploy: <the migration, backfill, environment, and code order to ship>`.
-- **Board** — every board change: issues closed, commented and narrowed, labels applied, issues filed with their numbers.
+- **Board** — every board change: issues closed, commented and narrowed, labels applied, issues filed with their numbers, size bands, and one line on each.
 - **Heads-up** — things the user might notice but doesn't need to act on, one line each. Lead with any integration the contract marks **MOCKED**, in capitals, because a mock where the user expected the real thing is the surprise that costs most. Then behavior changes visible in production, the contract's assumptions as question and answer, other reversible assumptions, provisional values with the signal that should revise them, and any step that could not run as designed (standards not found, a skipped visual UI pass).
 - **Cost** — one line: this run's subagent tokens and dispatch count, the three costliest agents with their share, and the ledger path. Sum it from the ledger lines this run wrote.
-- **Your call** — cards only, one per item that needs the user's decision: Medium and larger discoveries, human-only calls you filed, Warnings still open after three fix rounds, findings that turn on what you cannot see, cleanup targets outside this run's files (one card per area), and whatever the **Run budget** left undone. Nothing else goes here. Nits left after the last fix round live in the commit body, not in this report.
-
-Every card uses this shape:
-
-```
-**<Title>** · <Size> · <surface, for example "cross-repo (billing service)" or "data change">
-Impact: <what breaks or degrades, for whom, if nothing is done>
-Recommend: <the specific action, or "leave it" with the reason>
-Scope if you say yes: <tasks / runs, repos touched, data or deploy steps>
-Issue: exists #N | exists #N, needs updating with <finding> | filed #N | none, recommend filing
-```
-
-- **Size** is one band from **Follow-up sizes**, never an hour estimate.
-- **Issue** is mandatory and takes exactly one of its four forms. Before writing it, check the board — open and recently closed — for a match, and check whether a matching issue's facts are now out of date. `filed #N` is only for the human-only calls you filed under **Discoveries**. Never file an issue for a Medium or larger card without the user's consent, so `none, recommend filing` is the default when nothing matches.
+- **Needs you** — steps only a person can take, one line each, with the exact action: checks that turn on what you cannot see, and the access that unblocks blocked work. Deploy steps stay on their `Deploy:` lines under **Landed**.
+- **Your call** — cards only, in the shape `your-call.md` gives, one per decision that passes its toss-up test or is reserved for the user. Never filed work, a Nit, a step for **Needs you**, a choice you made yourself (that goes under **Heads-up**, with how to reverse it), or the pull request from the integration branch to the release branch. Nits left after the last fix round live in the commit body, not in this report.
 
 Then the last line of your message, on its own, is exactly one of:
 
@@ -488,9 +479,9 @@ Everything else keeps its frontmatter model: every reviewer, the `verifier`, `da
 
 Three, and only three. Every outcome releases the checkout before the report (see **Sharing a checkout**).
 
-**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget** with work landed is `FINISHED`; report the remainder as cards under **Your call**.
+**FINISHED.** Work landed on the working branch, green, pushed, issues closed or narrowed. A run that reached its **Run budget** with work landed is `FINISHED`; file the remainder.
 
-**FINISHED (no build).** Nothing to build — no open issues, every one reached rung e, or a cleanup audit found the target already meets the standards — _and_ the run shows it: evidence comments, labels, filed human-only calls, cards under **Your call**, or the audit's scope and verdict in the report. A `FINISHED (no build)` that changed nothing is a failed run wearing a success label.
+**FINISHED (no build).** Nothing to build — no open issues, every one reached rung e, or a cleanup audit found the target already meets the standards — _and_ the run shows it: evidence comments, labels, filed issues, cards under **Your call**, or the audit's scope and verdict in the report. A `FINISHED (no build)` that changed nothing is a failed run wearing a success label.
 
 **NOT FINISHED.** Reserved for this closed list:
 
