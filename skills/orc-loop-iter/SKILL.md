@@ -1,13 +1,13 @@
 ---
 name: orc-loop-iter
-pack: orc-pack@1.16.2
+pack: orc-pack@1.16.3
 description: One /orc run inside an /orc-loop batch, with a lighter per-task review whose skipped lanes the loop runs once over the whole batch. Invoked only by /orc-loop; standalone work uses /orc.
 user-invocable: false
 ---
 
 # Orc loop iteration
 
-You run one `/orc` run inside an `/orc-loop` batch: an issue build, a review fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes: a lighter review, because the loop reviews the batch as a whole afterward; no push or close, because the loop pushes the batch once at its end; and two more report sections.
+You run one `/orc` run inside an `/orc-loop` batch: an issue build, a review fix, the triage fix, the fallow fix, or the comment fix at the end of the batch. Everything is orc's except what this file changes: a lighter review, because the loop reviews the batch as a whole afterward; no push or close, because the loop pushes the batch once at its end; and two more report sections.
 
 **Only `/orc-loop` runs this.** Its invocations contain `(the caller holds the checkout lock)`. When your arguments don't, stop and tell the user to run `/orc` instead, which keeps its full review.
 
@@ -47,4 +47,4 @@ The loop builds its final report from these runs' reports, so add two sections t
 
 ## Fixes from a loop report
 
-When the task is to fix findings in an `/orc-loop` report under `<git-dir>/orc-loop/reviews/`, the loop's `verifier` has already confirmed them. Run it as an ordinary directed free-text task, even when every finding is about comments, and never as a **Cleanup run**: skip its audit, its characterization tests, and its contract shape. Plan the tasks straight from the report. A fix that changes only comments commits as `docs:`.
+When the task is to fix findings in an `/orc-loop` report under `<git-dir>/orc-loop/reviews/`, or the items in its triage report under `<git-dir>/orc-loop/triage/`, the loop's `verifier` or triage agent has already confirmed them. Run it as an ordinary directed free-text task, even when every finding is about comments, and never as a **Cleanup run**: skip its audit, its characterization tests, and its contract shape. Plan the tasks straight from the report. A fix that changes only comments commits as `docs:`.
