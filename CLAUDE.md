@@ -11,7 +11,7 @@ Read `README.md` for the user-facing behavior of `/orc` and `INSTALL.md` (writte
 ## Layout
 
 - `skills/orc/SKILL.md` — the orchestrator prompt. The core deliverable.
-- `skills/orc/references/` — the standards orc hands its agents by path: `standards/` (code, comments, structure, ui, data), `frameworks/` (next, nuxt, sveltekit, astro), `platforms/` (cloudflare, vercel), the `design-brief.md` and `work-contract.md` templates, and `builder-contract.md` (the rules every builder shares). The builders write to these and the reviewers check against them. They carry no `pack:` marker; the release guard and the marker check cover only `SKILL.md` and agent files.
+- `skills/orc/references/` — the standards orc hands its agents by path: `standards/` (code, comments, structure, ui, data), `frameworks/` (next, nuxt, sveltekit, astro), `platforms/` (cloudflare, vercel), the `design-brief.md` and `work-contract.md` templates, `builder-contract.md` (the rules every builder shares), and `your-call.md` (what orc settles itself and what it hands back to the user, which orc reads itself). The builders write to these and the reviewers check against them. They carry no `pack:` marker; the release guard and the marker check cover only `SKILL.md` and agent files.
 - `skills/newissue/SKILL.md` — turns a rough idea into a self-contained GitHub issue; orc uses it to file follow-up work.
 - `skills/shipcheck/SKILL.md` — verifies a push through CI, required secrets, the live deploy, and browser smoke checks; optional.
 - `skills/orc-loop/SKILL.md` — runs `/orc` over a batch of issues under `/loop`, then reviews the batch as a whole, triages what the runs left open so only real toss-ups reach the user, and cleans up its comments once; user-invoked only.

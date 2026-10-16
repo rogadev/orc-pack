@@ -24,6 +24,7 @@ orc-pack/
 │   │       ├── builder-contract.md
 │   │       ├── design-brief.md
 │   │       ├── work-contract.md
+│   │       ├── your-call.md
 │   │       ├── standards/  (code, comments, structure, ui, data)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
@@ -172,7 +173,7 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `newissue`, and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `newissue`, and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
