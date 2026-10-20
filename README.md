@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.17.0:** `/orc` and `/orc-loop` hand back only real decisions. Medium and larger discoveries are filed as issues instead of coming back as cards, clear calls are made and reported with how to reverse them, and **Your call** holds only real toss-ups, each with options and a recommendation. See the [changelog](CHANGELOG.md#1170---2026-10-16).
+> **New in v1.18.0:** `/orc` borrows `opusplan`'s "think hard where the plan is made, execute cheaply where the spec is precise" through per-dispatch effort. Design briefs, the design review, and the second fix round run at high effort, trivial builds at low, and efficiency mode now runs Sonnet 5.5 at high effort with an optional Opus advisor. See the [changelog](CHANGELOG.md#1180---2026-10-20).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 

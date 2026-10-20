@@ -1,6 +1,6 @@
 ---
 name: orc-loop
-pack: orc-pack@1.17.0
+pack: orc-pack@1.18.0
 description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), commits each locally with a light-review /orc run, then runs 1 to 3 review rounds (a batch review, then rechecks of each fix), fixing between rounds and filing what survives, triages what the runs and reviews left (fixing the obvious, filing real issues, and keeping for the user only real toss-ups, each with a recommendation), runs one fallow pass and one comment cleanup over everything the batch changed, pushes the batch once and closes its issues, and ends with a report of what each issue asked, how and why it was built, and every review finding. Runs under /loop and resumes from state in .git. User-invoked only.
 argument-hint: "[N] [#epic | #a #b #c ...] [status | reset]"
 disable-model-invocation: true
@@ -468,7 +468,7 @@ failure is a fact, not a finding to verify. Each lane's brief gives the goal ("f
 work on <integration> that may never have been reviewed"), `$D/diff.patch`, `$D/files.txt`, the
 repo's `CLAUDE.md` / `AGENTS.md` paths, and its standards. `ui-reviewer` also gets the repo's
 local run command and `$D/renders` for screenshots. In efficiency mode, `quality-reviewer` runs
-on `sonnet`.
+on `sonnet` at `high` effort.
 
 **The batch map.** The integration review and the batch lanes each also get `$D/batch.md`: one
 section per landed issue and per carried issue, with its number, title, its commits
@@ -481,8 +481,8 @@ include.
 **The integration review.** Dispatch these lanes:
 
 - `architecture-reviewer`: always, on its own model.
-- `quality-reviewer`: always, as the cross-issue lane, on its own model (`sonnet` in efficiency
-  mode).
+- `quality-reviewer`: always, as the cross-issue lane, on its own model (`sonnet` at `high`
+  effort in efficiency mode).
 - `security-reviewer`: when the range touches any surface the carried review's list gives that
   lane, on its own model.
 

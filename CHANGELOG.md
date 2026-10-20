@@ -16,6 +16,25 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.18.0] - 2026-10-20
+
+**Summary.** `/orc` now sets `effort` on individual dispatches, applying the idea behind Anthropic's `opusplan` (Opus plans, Sonnet executes) through effort instead of a model switch. The pack's own evidence says Opus 5.5 at low effort outscores Sonnet 5.5 at medium for about the same cost, so the builders stay on Opus 5.5 and orc spends reasoning where the plan is made: design briefs, the design review, and fix round two run at `high`, and the build of a trivial task runs at `low`. Claude Code v2.1.292 added a per-dispatch `effort` parameter, which the pack previously documented as impossible. Efficiency mode also gets stronger: every move to Sonnet 5.5 now runs at `high` effort (Sonnet 5.5 is weak at the Opus-calibrated `medium` and `low` its frontmatter would give it), and an optional Opus advisor (`/advisor opus`) checks orc's own calls, which closes the mode's documented gap. Haiku 5.5 was reviewed and earns no new lanes. This is a minor release because it changes how every `/orc` run spends tokens.
+
+**Changed areas.**
+
+- **`skills/orc/SKILL.md`** — **Model selection** drops "a dispatch can't change `effort`" and gains an **Effort by role** subsection (`high` for a builder in `brief` mode, the `design-reviewer`, and fix round two; `low` for a trivial build; frontmatter for everything else; never below frontmatter for `security-reviewer`, `verifier`, or `data-implementer`; no `effort` on Fable dispatches). **Efficiency mode** passes `effort: high` with every `model: sonnet` move except the scout, and tells orc to consult an Opus advisor, when one is on, before the contract, before deciding a second design `REVISE`, and before the final report. **Preflight** treats an `opusplan` session as a Sonnet 5.5 session and recommends `/advisor opus` in the efficiency-mode question. Step 5 and the fix loop point at the new rule, and the **Token ledger** records the model column as `<model>@<effort>`. Refresh.
+- **`skills/orc-loop/SKILL.md`** — the integration review's `quality-reviewer` runs on `sonnet` at `high` effort in efficiency mode. Refresh.
+- **`CLAUDE.md`**, **`README.md`**, and **`docs/model-tiers.md`** — document the effort rule, the Haiku 5.5 decision, and the evidence. Kit docs only; nothing to copy.
+- **`.claude-plugin/plugin.json`** and **every skill and agent file** — version and `pack:` marker moved to `orc-pack@1.18.0`. Agent frontmatter is otherwise unchanged.
+
+**Update steps.** Refresh `skills/orc/SKILL.md` and `skills/orc-loop/SKILL.md` (skip the loop when the install pruned `orc-loop`), and move every `pack:` marker to `orc-pack@1.18.0`. Nothing else to migrate. The effort rule needs Claude Code v2.1.292 or later; on an older version the parameter is ignored and each agent's frontmatter effort applies, so the release still works but without the effort split. An existing token ledger keeps its old lines; new lines carry `<model>@<effort>` in the model column.
+
+**Breaking changes.** None. A forced subagent model (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`) still overrides every model choice, and effort set by `CLAUDE_CODE_EFFORT_LEVEL` still takes precedence over a dispatch.
+
+**Files to read.** `skills/orc/SKILL.md` (**Model selection**, **Effort by role**, **Efficiency mode**, **Preflight**), `skills/orc-loop/SKILL.md` (**Integration review** lanes).
+
+---
+
 ## [1.17.0] - 2026-10-16
 
 **Summary.** Standalone `/orc` now hands back only real decisions, as `/orc-loop` began doing in 1.16.3, and the two share one rulebook. Until now `/orc` turned every Medium or larger discovery, every Warning left after three fix rounds, every finding it could not verify, every messy area outside the run, and every leftover past the run budget into a card under **Your call**, most reading "Issue: none, recommend filing", and it never filed one without the user's consent. It now files that work as issues itself, with the size band in the body and after a duplicate check, and lists them under **Board**. Choices with a clearly better answer, or a cheap way back, it makes and reports under **Heads-up** with how to reverse them. Steps only a person can take go under a new **Needs you** heading. **Your call** holds only cards that pass the toss-up test, or calls reserved for the user (legal, policy, a security boundary, an external API contract, spending money), each with options, a recommendation, the trade-off, and what would flip it. The rules live in a new reference file, `skills/orc/references/your-call.md`, which `/orc` reads itself and `/orc-loop` gives to its triage agents. This is a minor release because it changes what every `/orc` run does to the issue board.
