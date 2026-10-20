@@ -97,7 +97,7 @@ Lead with the version transition and the size of the jump. Headings, dropping em
 
 - **Updated** — `x.y.z -> a.b.c` (n releases), the files refreshed, added, renamed, or removed, and anything left uncommitted.
 - **Map** — whether the update used the changelog sections, the diff fallback, or both, and which versions were in range.
-- **Your call** — only work the update cannot finish without a person (missing access or a credential), with the exact step, and calls reserved for the user (the list in orc's `your-call.md`), with your recommendation. Decide anything else yourself, and say under **Updated** what you chose and how to reverse it.
+- **Your call** — this report's only handback section, so it holds what `/orc` splits between **Needs you** and **Your call**: work the update cannot finish without a person (missing access or a credential), with the exact step, and calls reserved for the user (the list in orc's `your-call.md`), with your recommendation. Decide anything else yourself, and say under **Updated** what you chose and how to reverse it.
 
 Then the status line, exactly one of:
 
