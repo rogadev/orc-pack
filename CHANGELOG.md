@@ -18,19 +18,21 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ## [1.18.1] - 2026-10-20
 
-**Summary.** `/orc` now sends independent subagents out together so they run at the same time, which shortens a run without changing its token cost. Until now the skill never said to batch them, so a task's review lanes and the ready check's runners could run one after another. Builders still run one at a time.
+**Summary.** `/orc` now sends independent subagents out together so they run at the same time, which shortens a run without changing its token cost. Until now the skill never said to batch them, so a task's review lanes and the ready check's runners could run one after another. Builders still run one at a time. `/orc` and `/orc-loop` also stop keeping the token ledger and drop the report's **Cost** line: nobody read the ledger, it added bookkeeping to every dispatch, and its figures could mislead, because it overstated reviewers' share of plan-limit usage and could miscount an agent resumed for a fix round. A docs-only or comments-only change now counts as trivial, however many files it touches, and gets one `comment-reviewer` lane.
 
 **Changed areas.**
 
 - **`skills/orc/SKILL.md`** — a new **Parallel dispatch** section: independent read-only dispatches go out in one message, nothing reads the working tree while a builder writes it, a whole set finishes before orc acts on it, and an agent that reports an infrastructure failure (a port in use, a locked file, a suite that didn't start) after running alongside others is retried once on its own. Step 1 orients while `next-issue-finder` runs. Step 5 sends the review panel and each scoped re-review in one message. **Cleanup runs** dispatch `test-coverage-reviewer`'s cleanup pass with the audit reviewers. Step 7 runs `lint`, `typecheck`, and `test` together instead of in sequence. Refresh.
 - **`skills/orc-loop/SKILL.md`** — round 1 retries an agent's infrastructure failure on its own, as orc's new section says. Refresh.
-- **`README.md`** and **`CLAUDE.md`** — describe which agents run side by side and where the rule lives. Kit docs only; nothing to copy.
+- **Token ledger removed** — `skills/orc/SKILL.md` loses its **Token ledger** section, and its **9. Report** loses the **Cost** line; the other report headings keep their order and wording. `skills/orc-loop/SKILL.md` loses its own **Token ledger** section, the "write its ledger lines" step after each review round, triage, the fallow pass, and the comment cleanup, and the round's tokens in the final report's **Review** blocks and the review tokens in **Totals**. The state file drops the `tokens` field from `reviews[]`, `fallow`, `triage`, and `comments`; a state file written by an older version may still carry `tokens`; the loop ignores it. Neither skill writes or reads `$(git rev-parse --git-common-dir)/orc/token-ledger.tsv` any more. An existing ledger file stays where it is, inside `.git` and never committed; delete it if you don't want it. Refresh both skills.
+- **`skills/orc/SKILL.md`, docs-only sizing (#34)** — step 4's **Trivial** size now also covers a docs-only or comments-only change, however many files it touches. Step 5's trivial lanes gain "Markdown (documentation) only → `comment-reviewer`", and step 5 drops its own sentence that sized a docs-only or comments-only diff as trivial, so the size comes from step 4 alone. Refresh.
+- **`README.md`** and **`CLAUDE.md`** — describe which agents run side by side and where the rule lives, and `CLAUDE.md` no longer points maintainers at the token ledger to check the model tiers. Kit docs only; nothing to copy.
 
-**Update steps.** Refresh `skills/orc/SKILL.md` and `skills/orc-loop/SKILL.md` (skip the loop when the install pruned `orc-loop`), and move every `pack:` marker to `orc-pack@1.18.1`. Nothing to migrate.
+**Update steps.** Refresh `skills/orc/SKILL.md` and `skills/orc-loop/SKILL.md` (skip the loop when the install pruned `orc-loop`), and move every `pack:` marker to `orc-pack@1.18.1`. Nothing to migrate. Optionally delete `.git/orc/token-ledger.tsv` in each repo where orc ran; nothing writes or reads it now.
 
-**Breaking changes.** None. Which agents run, their models, their efforts, and their inputs are unchanged; only their timing is.
+**Breaking changes.** The run report no longer has a **Cost** line, the `/orc-loop` report no longer shows review tokens, and the token ledger is no longer written; anything that read `token-ledger.tsv` stops getting new lines. A docs-only or comments-only change to several files now runs as a trivial task: one `comment-reviewer` lane and a `low`-effort build. Otherwise, which agents run, their models, their efforts, and their inputs are unchanged.
 
-**Files to read.** `skills/orc/SKILL.md` (**Parallel dispatch**, step 1, step 5, **Cleanup runs**, step 7), `skills/orc-loop/SKILL.md` (Round 1).
+**Files to read.** `skills/orc/SKILL.md` (**Parallel dispatch**, step 1, step 4, step 5, **Cleanup runs**, step 7, 9. Report), `skills/orc-loop/SKILL.md` (State file, Step 3: Review rounds and its Round 1, Step 4: Triage, Step 5: Fallow pass, Step 6: Comment cleanup, Step 7: Finish).
 
 ---
 

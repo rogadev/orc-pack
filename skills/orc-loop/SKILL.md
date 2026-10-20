@@ -144,7 +144,6 @@ clone or worktree. Write it after every change of phase, issue status, or review
       "blockers": 0,
       "warnings": 0,
       "nits": 0,
-      "tokens": 0,
       "report": "path"
     }
   ],
@@ -155,7 +154,6 @@ clone or worktree. Write it after every change of phase, issue status, or review
     "verdict": "...",
     "warnings": 0,
     "nits": 0,
-    "tokens": 0,
     "report": "path"
   },
   "triage": {
@@ -165,7 +163,6 @@ clone or worktree. Write it after every change of phase, issue status, or review
     "decided": 0,
     "dropped": 0,
     "tossUps": 0,
-    "tokens": 0,
     "report": "path"
   },
   "comments": {
@@ -176,7 +173,6 @@ clone or worktree. Write it after every change of phase, issue status, or review
     "blockers": 0,
     "warnings": 0,
     "nits": 0,
-    "tokens": 0,
     "report": "path"
   },
   "progress": {
@@ -238,17 +234,6 @@ fails, set `progress.on` to `false` and carry on without the bar.
   in `progress.review`, `progress.triage`, `progress.fallow`, and `progress.comments`.
 - **Finish** before the report with `progress_finish done`. On a halt, mark the step in flight
   `blocked`, then `progress_finish halted`.
-
-## Token ledger
-
-Append one line per subagent dispatched during **Step 3** through **Step 6** to the ledger
-`/orc` already keeps, at `$(git rev-parse --git-common-dir)/orc/token-ledger.tsv`, in the columns of
-`/orc`'s **Token ledger** section, with the `batchId` as the run, `-` as the task, and `loop` as the
-size. Roles: `loop-integration`, `loop-carried`, `loop-batch`, `loop-recheck`, `loop-triage`,
-`loop-second-opinion`, `loop-fallow`, `loop-comments`, `loop-verify`, `loop-gate`. `/orc` keeps
-logging its own dispatches during **Build** and every fix; do not log those twice. Write a round's
-lines when the round ends, and sum its tokens into `reviews[].tokens`; triage, the fallow pass,
-and the comment pass sum into `triage.tokens`, `fallow.tokens`, and `comments.tokens`.
 
 ## Step 1: Plan
 
@@ -378,8 +363,8 @@ rounds 2 and 3 check only what the previous round's fix changed.
 
 Set `inFlight: "review-<k>"`, increment `reviewRound`, and run the round. Before it starts,
 record `head` as `git rev-parse HEAD`: the batch's commits are local until **Finish**. Copy the round's full
-report to `<git-dir>/orc-loop/reviews/round-<k>.md`, so it outlives the session scratchpad, record
-its kind, range, verdict, and counts, and write its ledger lines (see **Token ledger**).
+report to `<git-dir>/orc-loop/reviews/round-<k>.md`, so it outlives the session scratchpad, and
+record its kind, range, verdict, and counts.
 
 **Standards.** Find orc's references as `/orc`'s **Standards** section does, except that the
 `orc` skill's directory sits beside this skill's own, so look first in that directory's
@@ -665,8 +650,7 @@ triage report:
   item the run did not finish within its run budget. If orc ends `NOT FINISHED`, halt on
   leftover work as a build does.
 
-Record the counts in `triage`, write its ledger lines, clear `inFlight`, save, and schedule
-**Fallow pass**.
+Record the counts in `triage`, clear `inFlight`, save, and schedule **Fallow pass**.
 
 ## Step 5: Fallow pass
 
@@ -693,7 +677,7 @@ mark the bar's fallow step `skipped`, and go to **Comment cleanup**.
 there are none. A confirmed dead code, duplication, or circular-dependency finding is a Warning;
 a complexity hotspot is a Nit.
 Save the report in the round shape, headed `# Fallow pass: <n> files`, to
-`<git-dir>/orc-loop/reviews/fallow.md`, record it in `fallow`, and write its ledger lines.
+`<git-dir>/orc-loop/reviews/fallow.md`, and record it in `fallow`.
 
 **Fix.** When a Warning is confirmed, run `orc-loop-iter` as a free-text task,
 `fix the fallow findings in <git-dir>/orc-loop/reviews/fallow.md; leave the Nits`, with every
@@ -736,7 +720,7 @@ Read each file in full and apply the cold-read test to every comment in it.
 
 Verify its findings as **Step 3**'s **Verify** does, and map the verdict the same way. Save the
 report in the round shape, headed `# Comment cleanup: <n> files`, to
-`<git-dir>/orc-loop/reviews/comments.md`, record it in `comments`, and write its ledger lines.
+`<git-dir>/orc-loop/reviews/comments.md`, and record it in `comments`.
 
 **Fix.** When the confirmed findings include a Blocker or Warning, run `orc-loop-iter` as a
 free-text task,
@@ -810,15 +794,14 @@ Write it in the voice from `CLAUDE.md`, with these headings (drop any that are e
   - **Commits:** its commits.
   - A skipped or blocked issue keeps **Asked** and replaces the rest with why, and what unblocks
     it.
-- **Review:** one block per round: its kind and range, the lanes that ran, the verdict, the
-  counts, and the round's tokens from the ledger; under it, each Blocker and Warning with its
-  plain-language title, the issues involved, and its outcome (fixed in `<sha>`, resolved in round
-  k+1, filed as #N, or still open). Then a block in the same shape for the fallow pass (also the
-  files audited and the inherited findings left out) and one for the comment cleanup (also the
-  files read).
+- **Review:** one block per round: its kind and range, the lanes that ran, the verdict, and the
+  counts; under it, each Blocker and Warning with its plain-language title, the issues involved,
+  and its outcome (fixed in `<sha>`, resolved in round k+1, filed as #N, or still open). Then a
+  block in the same shape for the fallow pass (also the files audited and the inherited findings
+  left out) and one for the comment cleanup (also the files read).
 - **Totals:** one line: the reviews run (one panel per run, plus each batch round, the fallow
   pass, and the comment cleanup), the Blockers and Warnings found across all of them, how many
-  were fixed, filed, and left open, the Nits, and the review tokens.
+  were fixed, filed, and left open, and the Nits.
 - **Handled:** what triage settled without the user, one line each: each issue it filed (`#N`
   and what it covers), each fix it made (what changed, with the commit), and each decision it
   made (the choice, the reason, and how to reverse it). Then the number of items it dropped, with
