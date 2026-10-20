@@ -1,6 +1,6 @@
 ---
 name: update-orc
-pack: orc-pack@1.17.0
+pack: orc-pack@1.18.0
 description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 5.5) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 
@@ -97,7 +97,7 @@ Lead with the version transition and the size of the jump. Headings, dropping em
 
 - **Updated** — `x.y.z -> a.b.c` (n releases), the files refreshed, added, renamed, or removed, and anything left uncommitted.
 - **Map** — whether the update used the changelog sections, the diff fallback, or both, and which versions were in range.
-- **Your call** — anything needing the user, or "Nothing."
+- **Your call** — this report's only handback section, so it holds what `/orc` splits between **Needs you** and **Your call**: work the update cannot finish without a person (missing access or a credential), with the exact step, and calls reserved for the user (the list in orc's `your-call.md`), with your recommendation. Decide anything else yourself, and say under **Updated** what you chose and how to reverse it.
 
 Then the status line, exactly one of:
 
