@@ -938,9 +938,10 @@ For each item:
      step that spends money (a paid API run, a purchase) is a reserved call, so a TOSS_UP.
    - TOSS_UP: it passes all three parts of the handback rules' toss-up test, or it is one of
      their reserved calls (then say the answer is clear, if it is).
-3. A reserved call is always TOSS_UP. For anything else, before you answer TOSS_UP or NEEDS_YOU,
-   ask what an expert in the room would do and what you would do if the user answered "you
-   decide"; if either gives an answer, answer DECIDED with it.
+3. A reserved call is always TOSS_UP. Anything else that passes the toss-up test is TOSS_UP too,
+   with RESERVED: no: the loop gets it a second opinion and then decides it. Before you answer
+   NEEDS_YOU, or treat a choice as reserved, apply the handback rules' last check; if it gives an
+   answer, answer DECIDED with it.
 4. For a TOSS_UP: name the options, make the strongest case for each, say what an expert would
    weigh and why, recommend one, rate it lean or close, and name the fact or preference that
    would flip it. Say how to reverse the choice, or, for a reserved call, what stays in place
