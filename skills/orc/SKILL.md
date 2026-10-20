@@ -250,7 +250,7 @@ Decompose from the contract's acceptance criteria. Every criterion belongs to ex
 
 **Size every task** and write the size into its description. The size decides how much process the task gets, so small work stays cheap and big work gets designed before it is built:
 
-- **Trivial** — one file, roughly 20 changed lines or fewer, no new behavior to test: a typo, a copy change, a constant, a config value, a docs edit.
+- **Trivial** — one file, roughly 20 changed lines or fewer, no new behavior to test: a typo, a copy change, a constant, a config value, a docs edit. A docs-only or comments-only change is also trivial, however many files it touches.
 - **Structural** — creates a module, route, page, endpoint, component, or data model; moves code across layers; builds a UI feature or a new screen; or touches four or more files.
 - **Standard** — everything else.
 
@@ -302,6 +302,7 @@ git diff <base> --name-only > "<scratchpad>/task-<n>-files.txt"
 - **Trivial** → one lane, matched to what changed:
   - code → `quality-reviewer`, given `code.md` and `comments.md` and told that the comments on the changed lines are in its scope for this dispatch;
   - comments or JSDoc only → `comment-reviewer`;
+  - Markdown (documentation) only → `comment-reviewer`;
   - UI copy or styling only → `ui-reviewer`, static review only.
 
   Add `security-reviewer` only when the change sits on a trust boundary. Check scope yourself: when the changed-file list names a file the contract doesn't, add `scope-reviewer`.
@@ -317,7 +318,7 @@ git diff <base> --name-only > "<scratchpad>/task-<n>-files.txt"
   - `test-coverage-reviewer`: when the diff changes logic that can regress. Skip only for pure docs, comments, styling, or no-behavior config.
   - `fallow`: when the diff is on a JavaScript or TypeScript repo. It self-skips elsewhere.
 
-A docs-only or comments-only diff is trivial however many files it touches, and goes to `comment-reviewer` when it changes source comments. Give each reviewer the diff path, the changed-file list, the criteria this task owns, quoted from the contract, the contract's path, the repo constraints, its standards set, and for a structural task the approved brief's path (it is the agreed spec, not the builder's reasoning) — **nothing about the builder's reasoning**. Give `ui-reviewer` the builder's **UI surfaces** list, the repo's local run command, and a scratch directory for screenshots. Ask for a verdict plus findings, each with a severity: Blocker, Warning, or Nit. Never tell a reviewer what not to flag; adjudicate suspected false positives at the next step.
+Give each reviewer the diff path, the changed-file list, the criteria this task owns, quoted from the contract, the contract's path, the repo constraints, its standards set, and for a structural task the approved brief's path (it is the agreed spec, not the builder's reasoning) — **nothing about the builder's reasoning**. Give `ui-reviewer` the builder's **UI surfaces** list, the repo's local run command, and a scratch directory for screenshots. Ask for a verdict plus findings, each with a severity: Blocker, Warning, or Nit. Never tell a reviewer what not to flag; adjudicate suspected false positives at the next step.
 
 **Filter the findings through the `verifier`.** Reviewers hallucinate — that's the known failure mode of LLM review — and a high bar tempts them toward taste. Hand the consolidated findings (title, file, line, severity, claim, source reviewer) to the `verifier` in a single dispatch, with the standards those reviewers used, the changed-file list (the audit file list, in a cleanup audit), and the contract's path when `scope-reviewer` raised findings. Discard what it rules not reproducible or preference, downgrade what it overstates, and route what is out of scope by its size tag: a Small finding is a follow-up you do this run, and a Medium or larger one is filed, except that quality debt in files no task touches is filed whatever its size (see **Discoveries**). Size any untagged finding yourself. For 🔄 Needs context, re-read the code yourself and decide; if it still turns on runtime behavior or an external contract you cannot see, put the check that would settle it under **Needs you** and file the finding with your evidence. **Skip the verifier when the panel returns no findings, or only Nits with none tagged Cleanup candidate.** Nits never start a fix round, so verifying them buys nothing: record them in the task's commit body on the `Nits left:` line, marked unverified. A cleanup audit's findings are the work of the run, so always verify them.
 
