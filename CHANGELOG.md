@@ -16,6 +16,24 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.18.1] - 2026-10-20
+
+**Summary.** `/orc` now sends independent subagents out together so they run at the same time, which shortens a run without changing its token cost. Until now the skill never said to batch them, so a task's review lanes and the ready check's runners could run one after another. Builders still run one at a time.
+
+**Changed areas.**
+
+- **`skills/orc/SKILL.md`** — a new **Parallel dispatch** section: independent read-only dispatches go out in one message, nothing reads the working tree while a builder writes it, a whole set finishes before orc acts on it, and an agent that reports an infrastructure failure (a port in use, a locked file, a suite that didn't start) after running alongside others is retried once on its own. Step 1 orients while `next-issue-finder` runs. Step 5 sends the review panel and each scoped re-review in one message. **Cleanup runs** dispatch `test-coverage-reviewer`'s cleanup pass with the audit reviewers. Step 7 runs `lint`, `typecheck`, and `test` together instead of in sequence. Refresh.
+- **`skills/orc-loop/SKILL.md`** — round 1 retries an agent's infrastructure failure on its own, as orc's new section says. Refresh.
+- **`README.md`** and **`CLAUDE.md`** — describe which agents run side by side and where the rule lives. Kit docs only; nothing to copy.
+
+**Update steps.** Refresh `skills/orc/SKILL.md` and `skills/orc-loop/SKILL.md` (skip the loop when the install pruned `orc-loop`), and move every `pack:` marker to `orc-pack@1.18.1`. Nothing to migrate.
+
+**Breaking changes.** None. Which agents run, their models, their efforts, and their inputs are unchanged; only their timing is.
+
+**Files to read.** `skills/orc/SKILL.md` (**Parallel dispatch**, step 1, step 5, **Cleanup runs**, step 7), `skills/orc-loop/SKILL.md` (Round 1).
+
+---
+
 ## [1.18.0] - 2026-10-20
 
 **Summary.** `/orc` now sets `effort` on individual dispatches, applying the idea behind Anthropic's `opusplan` (Opus plans, Sonnet executes) through effort instead of a model switch. The pack's own evidence says Opus 5.5 at low effort outscores Sonnet 5.5 at medium for about the same cost, so the builders stay on Opus 5.5 and orc spends reasoning where the plan is made: design briefs, the design review, and fix round two run at `high`, and the build of a trivial task runs at `low`. Claude Code v2.1.292 added a per-dispatch `effort` parameter, which the pack previously documented as impossible. Efficiency mode also gets stronger: every move to Sonnet 5.5 now runs at `high` effort (Sonnet 5.5 is weak at the Opus-calibrated `medium` and `low` its frontmatter would give it), and an optional Opus advisor (`/advisor opus`) checks orc's own calls, which closes the mode's documented gap. Haiku 5.5 was reviewed and earns no new lanes. This is a minor release because it changes how every `/orc` run spends tokens.

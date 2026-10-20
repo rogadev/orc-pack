@@ -464,8 +464,11 @@ lanes below. Otherwise pick the lanes from the range:
   `releaseBase` as its base and the carried part's `files.txt` as its file list.
 
 Also dispatch the gate: the `lint`, `typecheck`, and `test` agents, which only check. A gate
-failure is a fact, not a finding to verify. Each lane's brief gives the goal ("full review of
-work on <integration> that may never have been reviewed"), `$D/diff.patch`, `$D/files.txt`, the
+failure is a fact, not a finding to verify. An agent in the round that reports an infrastructure
+failure (such as a port in use, not a real lint, type, or test failure) is dispatched once more,
+alone, before its result counts, as `/orc`'s **Parallel dispatch** says. Each lane's brief gives
+the goal ("full review of work on <integration> that may never have been reviewed"),
+`$D/diff.patch`, `$D/files.txt`, the
 repo's `CLAUDE.md` / `AGENTS.md` paths, and its standards. `ui-reviewer` also gets the repo's
 local run command and `$D/renders` for screenshots. In efficiency mode, `quality-reviewer` runs
 on `sonnet` at `high` effort.
