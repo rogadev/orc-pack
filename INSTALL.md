@@ -35,7 +35,8 @@ orc-pack/
 │   ├── newissue/
 │   │   └── SKILL.md
 │   ├── shipcheck/
-│   │   └── SKILL.md
+│   │   ├── SKILL.md
+│   │   └── references/     ← smoke-runner.mjs, the Playwright smoke template
 │   └── update-orc/
 │       └── SKILL.md
 └── agents/
@@ -101,16 +102,17 @@ The destination root for project scope is the **target** you resolved in Phase 0
 
 Copy each kit file to the destination below. The directory names — `.claude/skills/<name>/SKILL.md` and `.claude/agents/<name>.md` — are exactly what Claude Code scans, so the paths are not negotiable.
 
-| Kit file                        | → Destination in the repo                      |
-| ------------------------------- | ---------------------------------------------- |
-| `skills/orc/SKILL.md`           | `<root>/.claude/skills/orc/SKILL.md`           |
-| `skills/orc/references/` (all)  | `<root>/.claude/skills/orc/references/` (all)  |
-| `skills/orc-loop/SKILL.md`      | `<root>/.claude/skills/orc-loop/SKILL.md`      |
-| `skills/orc-loop-iter/SKILL.md` | `<root>/.claude/skills/orc-loop-iter/SKILL.md` |
-| `skills/newissue/SKILL.md`      | `<root>/.claude/skills/newissue/SKILL.md`      |
-| `skills/shipcheck/SKILL.md`     | `<root>/.claude/skills/shipcheck/SKILL.md`     |
-| `skills/update-orc/SKILL.md`    | `<root>/.claude/skills/update-orc/SKILL.md`    |
-| `agents/<name>.md` (every file) | `<root>/.claude/agents/<name>.md` (same name)  |
+| Kit file                             | → Destination in the repo                           |
+| ------------------------------------ | --------------------------------------------------- |
+| `skills/orc/SKILL.md`                | `<root>/.claude/skills/orc/SKILL.md`                |
+| `skills/orc/references/` (all)       | `<root>/.claude/skills/orc/references/` (all)       |
+| `skills/orc-loop/SKILL.md`           | `<root>/.claude/skills/orc-loop/SKILL.md`           |
+| `skills/orc-loop-iter/SKILL.md`      | `<root>/.claude/skills/orc-loop-iter/SKILL.md`      |
+| `skills/newissue/SKILL.md`           | `<root>/.claude/skills/newissue/SKILL.md`           |
+| `skills/shipcheck/SKILL.md`          | `<root>/.claude/skills/shipcheck/SKILL.md`          |
+| `skills/shipcheck/references/` (all) | `<root>/.claude/skills/shipcheck/references/` (all) |
+| `skills/update-orc/SKILL.md`         | `<root>/.claude/skills/update-orc/SKILL.md`         |
+| `agents/<name>.md` (every file)      | `<root>/.claude/agents/<name>.md` (same name)       |
 
 **Copy nothing else.** `INSTALL.md`, `UPDATE.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `LICENSE`, `docs/`, `.claude-plugin/`, and `.github/` are kit docs and kit CI, not runtime files. The kit's own `.claude/` holds this repo's `required-secrets.md` and `smoke-checklist.md`, which are repo-owned: never copy them over the target's. It also holds `skills/condense/`, a maintainer skill for this repo only: never copy it. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
 
@@ -131,7 +133,7 @@ Then, for every destination path, check whether a file already exists. **Never b
 - **No file there** → copy it in. Done.
 - **A file with the same name exists** → check its frontmatter for a `pack:` marker.
   - **`pack: orc-pack@<version>` present** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits made since (the repo's git history for that file shows them).
-  - **No `pack:` marker, under `skills/orc/references/`** → pack-owned. The reference files carry no marker but belong to the pack whenever `skills/orc/SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never treat them as repo-owned.
+  - **No `pack:` marker, under `skills/orc/references/` or `skills/shipcheck/references/`** → pack-owned. The reference files carry no marker but belong to the pack whenever the skill's own `SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never treat them as repo-owned.
   - **Any other file with no `pack:` marker** → the repo's own artifact. Do **not** clobber it. If it's richer or repo-tuned than the kit's, prefer the repo's and note it — the kit's agents are deliberately generic starting points. Otherwise ask the user: keep the repo's, take the kit's, or install the kit's under a suffixed name (for example `security-reviewer-orc`) with the orc skill's references updated — a last resort, because it desyncs the skill's agent names.
 - **A skill is its whole directory, not just `SKILL.md`.** When replacing one, decide the fate of every file in the destination directory: remove support files the new version doesn't reference — they're orphans — and say so in the report.
 
