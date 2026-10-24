@@ -1,7 +1,7 @@
 ---
 name: shipcheck
-pack: orc-pack@1.18.0
-description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md in Chrome at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
+pack: orc-pack@1.18.1
+description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md (Playwright by default, Claude in Chrome as the fallback) at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
 ---
 
 # Shipcheck
@@ -60,16 +60,31 @@ Before polling, record the SHA currently live as `BASELINE`; step 6 uses the `BA
 
 If no method can prove which commit is live, stop. Report that the live commit can't be verified, and name the cheapest fix (usually a version endpoint or `<meta name="commit">` with the SHA). Don't run the smoke checks on a guess.
 
-## 4. Smoke checks in Chrome
+## 4. Smoke checks
 
-Use Claude in Chrome. Load its tools in one ToolSearch call, call `tabs_context_mcp` first, and work in a new tab you create, not one of the user's.
+Run every flow in the checklist in each of four passes: **390px light, 390px dark, 1440px light, 1440px dark.** What is always a finding, whatever runs the flows: console errors, failed requests (4xx or 5xx on the page's own origin), horizontal scroll at 390px, clipped or overlapping text, unreadable contrast, broken images, and controls that do nothing.
 
-Run every flow in the checklist in each of four passes: **390px light, 390px dark, 1440px light, 1440px dark.**
+**Safety.** Use only the test data the checklist names. Never enter a real password, payment detail, or personal data. Never submit a form whose effect is irreversible or reaches real people (an email, a payment, a published post) unless the checklist marks that step safe for this environment. Never trigger a browser dialog.
 
-- **Width.** `resize_window` sets the window, not the viewport. After resizing, read `window.innerWidth` with `javascript_tool` and adjust until it matches. If the browser won't go narrow enough (desktop Chrome often stops near 500px), record the narrowest width you reached and say plainly that 390px was not tested. Never report it as tested.
+### Playwright (default)
+
+Use Playwright when the repo has `playwright` or `@playwright/test` installed. It sets the viewport exactly, emulates a phone at 390px (touch, mobile user agent, pixel density), switches `prefers-color-scheme` per pass, and runs in a clean profile, so it never touches the user's own browser session.
+
+1. Copy `references/smoke-runner.mjs` from this skill's directory to the scratchpad, never into the repo.
+2. Replace its `FLOWS` with the checklist's flows: one entry per flow, its `path`, and a `check` that performs the steps and returns facts. Encode each **Expect** line as an `ok*` key or a locator that must resolve.
+3. Run `node <scratchpad>/smoke-runner.mjs <repoRoot> <URL proven live in step 3> <scratchpad>/smoke-out [themeStorageKey]`. Pass the storage key when the checklist's **Theme** line names one; `colorScheme` covers sites that follow the system setting.
+4. Read `results.json`, then open a sample of the screenshots, at least one per pass and every failed flow, to confirm each pass rendered what its checks claim. A green check on a blank or error page is a failure.
+
+If Playwright can't run (not installed and no other way to get it without adding a dependency, or the browser binary is missing and can't be installed), fall back to Claude in Chrome and say so in the report.
+
+### Claude in Chrome (fallback, or a flow that needs the user's session)
+
+Load its tools in one ToolSearch call, call `tabs_context_mcp` first, and work in a new tab you create, not one of the user's.
+
+- **Width.** `resize_window` sets the window, not the viewport, and the extension's key presses reach the page, not Chrome, so it can't open DevTools device mode. After resizing, read `window.innerWidth` with `javascript_tool` and adjust until it matches. If the browser won't go narrow enough (desktop Chrome often stops near 500px), record the narrowest width you reached and say plainly that 390px was not tested. Never report it as tested.
 - **Theme.** Use the method the checklist gives (a toggle, a storage key, a class on `<html>`). If the site follows only `prefers-color-scheme`, the extension can't switch it: test the theme the browser is in and report the other as not tested.
-- **Each step.** Perform it, wait for the page to settle, take a screenshot with `save_to_disk: true`, and record the path against the pass, flow, and step. Then check the step's **Expect** line, plus what is always a finding: console errors (`read_console_messages` with an error pattern), failed requests (4xx or 5xx on the page's own origin), horizontal scroll at 390px, clipped or overlapping text, unreadable contrast, broken images, and controls that do nothing.
-- **Safety.** Use only the test data the checklist names. Never enter a real password, payment detail, or personal data. Never submit a form whose effect is irreversible or reaches real people (an email, a payment, a published post) unless the checklist marks that step safe for this environment. Never trigger a browser dialog.
+- **Each step.** Perform it, wait for the page to settle, take a screenshot with `save_to_disk: true`, and record the path against the pass, flow, and step. Check console errors with `read_console_messages` and an error pattern.
+- **The user's session.** This is the user's real profile: a flow that signs in (a public demo, for example) replaces their session, and saved autofill may fill forms. Skip such a flow here and report it, or run it in Playwright.
 
 ## 5. Auth, SSO, and VPN walls
 
@@ -83,7 +98,7 @@ Report exactly what to unlock: the URL, what you saw (with the screenshot path),
 
 ## 6. Regressions
 
-A regression is a failed **Expect** line or an always-a-finding defect from step 4. Confirm it before acting: reproduce it once more in a fresh tab. A flake is reported, not fixed.
+A regression is a failed **Expect** line or an always-a-finding defect from step 4. Confirm it before acting: reproduce it once more in a fresh Playwright context or a fresh tab. A flake is reported, not fixed.
 
 For each confirmed regression, pick one:
 
