@@ -64,7 +64,7 @@ Two passes, both required.
 
 **Direction drift** — the pass people skip, and the one that costs. If this issue moves the project from X toward Y, find every open issue that still assumes X; whoever picks one up later would quietly revert Y. For each affected issue: name it under `Supersedes / conflicts with` with one line on what goes stale, and post a short comment on it pointing back (`gh issue comment <n>`).
 
-**Dependencies.** Classify the rest: **would be resolved by** an open issue → surface it and stop rather than filing covered work; **blocked by** → file anyway, name `Blocked by #NNN`, don't imply it's ready; **blocks** → file, note `Blocks #NNN`, comment on the blocked issue; **parent/child** → file and link both ways — a child still stands on its own.
+**Dependencies.** Classify the rest: **would be resolved by** an open issue → surface it and stop rather than filing covered work; **blocked by** → file anyway, name `Blocked by #NNN` in the body and set the native blocked-by link (step 8), don't imply it's ready; **blocks** → file, note `Blocks #NNN`, comment on the blocked issue; **parent/child** → file and link both ways — a child still stands on its own.
 
 **Do not close or edit other issues.** Flag them; that call is the user's.
 
@@ -74,7 +74,7 @@ Size for the executor: each filed issue should be a unit one autonomous agent ru
 
 - **One issue** — a single coherent unit with one "Done when", small enough for one run. The common case.
 - **Several issues** — either the seed bundles unrelated work (a bug _and_ a feature — two pieces in one issue wrecks board tracking), or it's one coherent fix or feature that's simply too large for a single run. Split the large one by aspect, each issue self-contained with its own "Done when", cross-linked with `#NNN`; when one must land first, say so (`Blocked by #NNN`).
-- **An epic** — work so large and interconnected it needs a roadmap (a sweeping refactor, a multi-stage migration). File a parent tagged `[EPIC]` (matching the repo's convention) whose body is the plain-language goal, the why, and a task list of the children **in execution order — the list is the roadmap**; file each child as its own self-contained issue, linked both ways (`Part of #NNN` / `- [ ] #NNN`). "See the epic" is not context. Don't manufacture an epic for an ordinary multi-file change — two cross-linked issues beat a ceremony parent.
+- **An epic** — work so large and interconnected it needs a roadmap (a sweeping refactor, a multi-stage migration). File a parent tagged `[EPIC]` (matching the repo's convention) whose body is the plain-language goal, the why, and a task list of the children **in execution order — the list is the roadmap**; file each child as its own self-contained issue, linked both ways (`Part of #NNN` / `- [ ] #NNN`), then attach each child to the epic as a native **sub-issue** (step 8) so the epic shows a progress bar. Never mark the epic "blocked by" its own children; the sub-issue link already says that, and the epic is done when every sub-issue is closed. "See the epic" is not context. Don't manufacture an epic for an ordinary multi-file change — two cross-linked issues beat a ceremony parent.
 
 ### 5. Write for a stranger
 
@@ -119,7 +119,7 @@ Match the repo's prevailing tone; read a recent well-written issue if one exists
 6. Title type-tagged and a specific claim, and title and first paragraph plain enough for a PM with zero technical background?
 7. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
 8. Type label agrees with the title tag; priority obvious or absent?
-9. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked?
+9. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked, in the body and as native links (sub-issues for an epic's children, blocked-by for real ordering)?
 
 Fix inline. Then file.
 
@@ -134,6 +134,21 @@ gh issue create \
   --assignee @me \
   --label "<label>"
 ```
+
+Then set GitHub's native relationships, which the board shows and the text links don't. Both endpoints take the other issue's numeric `id`, not its number:
+
+```bash
+id() { gh api "repos/<owner>/<repo>/issues/$1" --jq .id; }
+
+# Epic to child: attach each child as a sub-issue of the epic.
+gh api -X POST "repos/<owner>/<repo>/issues/<epic>/sub_issues" -F sub_issue_id="$(id <child>)"
+
+# Order between issues: <later> is blocked by <earlier>. Only where the order is real,
+# not for "best built after", and never epic-by-child.
+gh api -X POST "repos/<owner>/<repo>/issues/<later>/dependencies/blocked_by" -F issue_id="$(id <earlier>)"
+```
+
+Keep the `Part of #NNN` and `Blocked by #NNN` text in the bodies as well; tools that read issue text, such as `/orc`, rely on it. Read the links back (`GET .../sub_issues`, `GET .../dependencies/blocked_by`) to confirm them, because both POSTs answer with the issue being edited, not the link.
 
 Report the URL back.
 

@@ -16,6 +16,26 @@ The release guard fails and publishes nothing if there is no section for the ver
 
 ---
 
+## [1.18.2] - 2026-10-25
+
+**Summary.** `/newissue` now sets GitHub's native issue relationships as well as the text links. When it files an epic, it attaches each child to the epic as a **sub-issue**, so the epic shows a progress bar and is done when every sub-issue is closed. When one issue must land before another, it sets a native **blocked-by** link as well as writing `Blocked by #NNN` in the body. Before this, the skill wrote only text links (`Part of #NNN`, a checklist in the epic, `Blocked by #NNN`), which the board doesn't track. It never marks an epic blocked by its own children: the sub-issue link already says that, and the duplicate adds noise to every child.
+
+**Changed areas.**
+
+- **`skills/newissue/SKILL.md`**:
+  - **Step 3, Dependencies:** a blocked-by relationship now also sets the native link.
+  - **Step 4, the epic bullet:** each child is attached as a sub-issue, never as a blocker of the epic.
+  - **Step 7, check 9:** asks for native links too.
+  - **Step 8:** after `gh issue create`, sets the links with `gh api` (`POST .../issues/<epic>/sub_issues` with `sub_issue_id`, and `POST .../issues/<later>/dependencies/blocked_by` with `issue_id`, both the other issue's numeric `id`, not its number), then reads them back, because both calls answer with the issue being edited rather than the link. The `Part of #NNN` and `Blocked by #NNN` text stays in issue bodies, because tools that read issue text (such as `/orc`) rely on it.
+
+  Refresh.
+
+**Update steps.** Refresh `skills/newissue/SKILL.md`. Nothing else to migrate. The native links need a `gh` that can call the issue sub-issue and dependency REST endpoints; a repository without them keeps working through the text links.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/newissue/SKILL.md` (steps 3, 4, 7, and 8).
+
 ## [1.18.1] - 2026-10-24
 
 **Summary.** `/shipcheck` now runs its smoke checks in Playwright by default, with Claude in Chrome as the fallback. Chrome couldn't test the 390px pass: desktop Chrome stops resizing near 500px, and the extension's key presses reach the page rather than Chrome, so it can't open DevTools device mode. Playwright sets exact viewports, emulates a phone at 390px, switches `prefers-color-scheme` per pass, and runs in a clean profile, so a flow that signs in (a public demo, for example) no longer replaces the user's own session. The skill ships a runner template, `skills/shipcheck/references/smoke-runner.mjs`, that loads Playwright from the target repo's `node_modules`, so nothing is installed.
