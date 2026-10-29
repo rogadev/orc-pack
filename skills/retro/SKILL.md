@@ -70,7 +70,11 @@ Find what to improve. Look at least for:
      the task was), and a builder's tool errors, which show wasted turns;
    - repeated dispatches of the same agent and description (retries) and why they happened;
    - main-session context growth (peak context, compactions) and polling (wakeups, heartbeats);
-   - the same file or search read again and again across a timeline.
+   - the same file or search read again and again across a timeline;
+   - reviewer lanes that still search and explore a lot when a `usages` map ran before them
+     (**Tool mix by agent type**): compare their search and explore calls per dispatch with
+     sessions where no `usages` dispatch ran. A map that saves less than it costs (one Haiku
+     dispatch per panel), or that lanes don't use, is a finding.
 2. Problems: NOT FINISHED, halts, parked attempts, blockers filed, failed ready checks,
    infrastructure retries, tool errors that repeat, and anything the reports flag.
 3. Quality: Blockers a batch review or sweep found that a per-task panel missed (a lane gap),

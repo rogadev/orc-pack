@@ -169,6 +169,7 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 | `typecheck`              | Runs the repo's type checker                                                                                              |
 | `test`                   | Runs the repo's test suite(s)                                                                                             |
 | `impact`                 | Diff stats for a change                                                                                                   |
+| `usages`                 | Maps where a diff's code is used (callers, importers, tests) once, so the review lanes don't each search for it           |
 | `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
 | `scope-reviewer`         | Holds each diff to the run's work contract: out-of-scope changes, unproven criteria, unwanted mocks                       |
 | `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |

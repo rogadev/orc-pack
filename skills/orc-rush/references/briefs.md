@@ -68,6 +68,7 @@ Goal: cross-issue review of <n> issues an unattended loop built and pushed one a
 Diff: <D>/diff.patch
 Changed files: <D>/files.txt
 Issue map (which commit came from which issue): <D>/map.md
+Usages: <D>/usages.md (where the changed code is used; a starting point, not a boundary)
 Repo rules: <CLAUDE.md / AGENTS.md paths>
 Standards: <the absolute paths /orc's Standards section lists for this agent>
 

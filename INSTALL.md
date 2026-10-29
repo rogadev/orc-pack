@@ -73,6 +73,7 @@ orc-pack/
     ├── typecheck.md
     ├── ui-implementer.md
     ├── ui-reviewer.md
+    ├── usages.md
     └── verifier.md
 ```
 
@@ -168,6 +169,7 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
 1. **Confirm the ready command and working branch.** The orc skill runs "the repo's aggregate check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them — no edit needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every agent benefits. Ask the user before creating or editing repo docs.
 2. **Prune what the repo can't use.**
    - `impact` is optional metrics; keep or drop per the user's preference.
+   - Keep `agents/usages.md`: orc, the loops, and `/orc-review` dispatch it before every review panel with two or more lanes that read it.
    - Keep `agents/fallow.md` even on a non-JS/TS repo: it self-skips, and dropping it desyncs the kit. Phase 4.5 installs the CLI.
    - `skills/newissue/` is optional but recommended (orc's Discoveries step files follow-up work with it). Drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3) or the repo doesn't track work as GitHub issues. Tell the user it reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
    - `skills/orc-loop/` is optional; keep it unless the user declines. It runs `/orc` over a batch of issues unattended, so it needs GitHub issues and an integration branch, the same as `/orc`. On its first run in a repo it asks once whether the agents' notes in `.claude/agent-memory/` go in `.gitignore`, so don't decide that during the install. `skills/orc-loop-iter/` belongs to it: `/orc-loop` runs every `/orc` through it, and it is hidden from the `/` menu. Keep or drop the two together.

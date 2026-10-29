@@ -50,7 +50,7 @@ Never pick a stale issue. List it under STALE with the evidence so orc can comme
 
 ## Screen out blocked candidates
 
-An issue with `blockedBy` above 0 is not ready: never pick it, and don't open its body. Put it under SET_ASIDE only if it would otherwise rank, naming its blocker. A body that says `Blocked by #N` with `#N` still open counts the same, because not every repo sets the native link. Not every repo writes the text either, so check both.
+An issue with `blockedBy` above 0 is not ready: never pick it, and don't open its body. Put it under SET_ASIDE only if it would otherwise rank, naming its blocker. A body that says `Blocked by #N` with `#N` still open counts the same, because not every repo sets the native link.
 
 ## Pick
 

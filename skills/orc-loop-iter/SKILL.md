@@ -28,7 +28,7 @@ This list replaces orc's step 5 reviewer selection for a standard or structural 
 - `test-coverage-reviewer`: as orc, except skip it on a standard task when your arguments contain `(the batch's issues are independent)`: the loop picked those issues to avoid sharing files, so no later issue is meant to build on this one's code, and the loop's round 1 checks its coverage once. `scope-reviewer` still checks each criterion's test.
 - `comment-reviewer`: skip. The loop's comment cleanup reads every file the batch changed, once, after the last fix.
 
-Everything else in step 5 is unchanged. A scoped re-review after a fix never adds a lane this list skips.
+Everything else in step 5 is unchanged, including the usages map: it runs when this list leaves two or more of the lanes that read it. A scoped re-review after a fix never adds a lane this list skips.
 
 ### Light comment pass
 

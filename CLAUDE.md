@@ -48,7 +48,7 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 Each agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter. The split is a deliberate cost/quality tradeoff mirrored in the orc prompt:
 
-- **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `impact`, `fallow`. Haiku doesn't support `effort`, so these carry no `effort:` line. The alias follows new Haiku releases.
+- **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `impact`, `usages`, `fallow`. Haiku doesn't support `effort`, so these carry no `effort:` line. The alias follows new Haiku releases.
 - **Sonnet 5.5** (`claude-sonnet-5-5`, `effort: high`) — `test-coverage-reviewer` only. Whether logic is tested is a mechanical, recall-heavy question, and the Opus 5.5 verifier filters its false positives.
 - **Opus 5.5** (`claude-opus-5-5`) — every other agent that makes a judgement call, with `effort` as the cost control:
   - `high` — `security-reviewer`, `skill-vetter`, `dependency-vetter`, `orc-updater`: security work, plus jobs that run too rarely for effort to matter to cost. Also `data-implementer`, the one builder at high effort: a bad migration or backfill is the hardest mistake in the pack to reverse, so it gets the extra reasoning on every task.
