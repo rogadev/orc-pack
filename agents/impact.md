@@ -1,6 +1,6 @@
 ---
 name: impact
-pack: orc-pack@1.19.0
+pack: orc-pack@1.19.1
 description: Calculate diff stats for changes — meaningful lines added and removed, with the noise filtered out. Cheap and fast.
 tools:
   - Bash

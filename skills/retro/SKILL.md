@@ -1,6 +1,6 @@
 ---
 name: retro
-pack: orc-pack@1.19.0
+pack: orc-pack@1.19.1
 description: Retrospective on past /orc, /orc-loop, and /orc-rush runs in this repo. Measures where the tokens went, reads the runs' saved reports, reviews, and commit Lanes lines, and reports what to improve, each finding with its evidence, rough cost, and where to change it. Read-only. Use when the user says "/retro", "retro on the last run", "how did the orc loop do", "where did the tokens go", or "what can orc do better".
 argument-hint: "[last | <n>d | since <date> | session <id>...]"
 ---
