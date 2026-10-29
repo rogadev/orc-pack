@@ -39,7 +39,7 @@ orc-pack/
 │   │   └── SKILL.md
 │   ├── orc-review/
 │   │   ├── SKILL.md
-│   │   └── references/     ← profile-template.md, the project profile /orc-review setup fills in
+│   │   └── references/     ← profile-template.md (the project profile /orc-review setup fills in) and lane-template.md (the repo-lane contract)
 │   ├── newissue/
 │   │   └── SKILL.md
 │   ├── retro/
@@ -198,7 +198,7 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review` with its `references/profile-template.md`, `orc-rush` with its `references/briefs.md` and `orc-rush-iter`, `retro` with its `references/usage.mjs`, `newissue`, and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review` with its `references/profile-template.md` and `references/lane-template.md`, `orc-rush` with its `references/briefs.md` and `orc-rush-iter`, `retro` with its `references/usage.mjs`, `newissue`, and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
@@ -217,5 +217,6 @@ Give them a short, human summary:
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5 and Sonnet 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
 - The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The pack is calibrated for Opus 5.5, and Opus 5 drives it poorly. (The skill refuses to start on Opus 5, but the session model is the user's to set.) Starting orc on Sonnet 5.5 (`claude-sonnet-5-5`) runs it in efficiency mode after the user confirms: a lower token bill for slightly lower quality. The README's "Pick a model" section explains it.
 - That `/orc` is available in a new session.
+- When you installed `orc-review`, whether the repo has a project review profile. With no `<root>/.claude/skills/deep-review/SKILL.md`, tell them to run `/orc-review setup` once in a new session: it drafts the profile that tailors the review to this project's stack and architecture. When that file exists without a `based-on: orc-review@` line, it is a hand-written reviewer: tell them `/orc-review setup` converts it into a profile and keeps its project-specific parts.
 
 Do **not** run `/orc` yourself to "test" it unless the user asks — it's an autonomous run that commits code. Installation is done when the files are in place and verified.

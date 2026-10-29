@@ -4,7 +4,18 @@ SvelteKit-specific rules on top of the standards files. The repo's own docs and 
 
 ## Check the version first
 
-Read the installed `svelte` and `@sveltejs/kit` versions. Svelte 5 uses runes (`$state`, `$derived`, `$effect`, `$props`); Svelte 4 syntax (`export let`, `$:`, stores for local state) is legacy. Match what the repo uses, and write runes in new code on a Svelte 5 repo. Newer SvelteKit versions add remote functions (`.remote.ts` files with `query`, `form`, and `command`); use them only when the repo already does or has enabled them. When this playbook and the installed version's docs disagree, the installed version wins.
+Read the installed `svelte` and `@sveltejs/kit` versions. Svelte 5 uses runes (`$state`, `$derived`, `$effect`, `$props`); Svelte 4 syntax (`export let`, `$:`, stores for local state) is legacy. Match what the repo uses, and write runes in new code on a Svelte 5 repo. Newer SvelteKit versions add remote functions (`.remote.ts` files with `query`, `form`, and `command`); use them only when the repo already does or has enabled them. When this playbook and the installed version's docs disagree, the installed version wins. The rules below are written in SvelteKit 2's forms; on SvelteKit 3, read them through the next section.
+
+## SvelteKit 3
+
+Observed in repos that ran the `sveltekit-3` codemod; confirm each against the installed version's docs and the repo's own code before you rely on it.
+
+- **Config:** there is no `svelte.config.js`; options go to `sveltekit({ ... })` in `vite.config.ts`, and `tsconfig.json` extends `$app/tsconfig`.
+- **`$lib` is gone:** `src/lib` is imported through a package.json subpath import (`"imports": { "#lib/*": "./src/lib/*" }`) as `#lib/...`, with the file extension. Server-only code lives in `#lib/server/`.
+- **Environment:** `$env/*` is deprecated. Variables are declared in a `src/env.ts` and read through `$app/env/private` and `$app/env/public`, often re-exported by a server module. `$app/environment` is now `$app/env`.
+- **Renamed APIs:** `refreshAll` replaces `invalidateAll` (and keeps `page.state`); `Response.json` replaces the `json()` helper; `error()` takes three arguments; `goto` options are renamed; `resolve()` with a route ID, or `resolvePathname` for a runtime path, from `$app/paths` replaces `base`. `$app/state` replaces `$app/stores`.
+
+A finding that asks for a SvelteKit 2 form on a SvelteKit 3 repo is wrong.
 
 ## Routing files
 
@@ -45,7 +56,7 @@ Read the installed `svelte` and `@sveltejs/kit` versions. Svelte 5 uses runes (`
 - `onMount` plus `fetch` for data a `load` could provide.
 - Legacy `$:` reactive statements or `export let` in new code on a Svelte 5 repo.
 - Stores used for component-local state on Svelte 5.
-- `+server.ts` endpoints called by the app's own pages instead of a load or form action.
+- `+server.ts` endpoints called by the app's own pages instead of a load or form action, unless the repo documents why (for example a gateway session that lapses on the background requests loads and remote functions make).
 - Form actions that throw on validation failure instead of returning `fail()`.
 
 ## Deployment
