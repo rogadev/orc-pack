@@ -24,9 +24,12 @@ Run these (parallel is fine):
 
 ```bash
 gh issue list --state open --limit 50 --json number,title,labels,createdAt,assignees,milestone
+gh api graphql -F owner='{owner}' -F name='{repo}' -f query='query($owner:String!,$name:String!){repository(owner:$owner,name:$name){issues(states:OPEN,first:100,orderBy:{field:CREATED_AT,direction:DESC}){nodes{number issueDependenciesSummary{blockedBy blocking}}}}}' --jq '.data.repository.issues.nodes[] | select(.issueDependenciesSummary.blockedBy + .issueDependenciesSummary.blocking > 0) | "#\(.number) blockedBy=\(.issueDependenciesSummary.blockedBy) blocking=\(.issueDependenciesSummary.blocking)"'
 git branch --show-current
 git status --short
 ```
+
+The second command lists only the issues with native dependency links: `blockedBy` counts open blockers, and `blocking` counts open issues waiting on this one. If it errors (an older GitHub Enterprise without issue dependencies), go on without it and rely on the bodies.
 
 Then `gh issue view <n>` on only the handful of plausible candidates — read the real body, not just the title. Skim `CLAUDE.md` / `AGENTS.md` for any priority conventions the repo declares.
 
@@ -45,11 +48,15 @@ Use the second command only when the issue names files or symbols. A candidate i
 
 Never pick a stale issue. List it under STALE with the evidence so orc can comment and close it. Keep this cheap: two `git log` calls per candidate, and a code read only on a hit.
 
+## Screen out blocked candidates
+
+An issue with `blockedBy` above 0 is not ready: never pick it, and don't open its body. Put it under SET_ASIDE only if it would otherwise rank, naming its blocker. A body that says `Blocked by #N` with `#N` still open counts the same, because not every repo sets the native link. Not every repo writes the text either, so check both.
+
 ## Pick
 
 Choose ONE issue using judgement across four signals, weighted in this order:
 
-1. **Does it unblock other work?** (highest weight) If issue A establishes a direction that B and C assume, A goes first. Doing a dependent issue before its foundation is the mistake that gets silently reverted later.
+1. **Does it unblock other work?** (highest weight) If issue A establishes a direction that B and C assume, A goes first. Doing a dependent issue before its foundation is the mistake that gets silently reverted later. A `blocking` count above 0 is direct evidence; without one, judge it from the bodies.
 2. **Severity and user impact.** A live bug beats an enhancement; broken-in-production beats merely-absent.
 3. **Readiness to execute.** Prefer concrete evidence and an observable "done when". A vague issue isn't disqualified — orc can sharpen it — but a clearly executable one wins when the other signals are close.
 4. **Age.** All else close to equal, older wins so nothing rots.

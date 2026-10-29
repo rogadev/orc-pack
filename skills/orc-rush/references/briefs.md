@@ -36,7 +36,10 @@ Write the queue to: <queue path>.
    depends on it).
 2. Learn the relationships: sub-issues and parents (gh api graphql:
    issue(number:N){ parent{number} subIssues(first:50){nodes{number state}} }), "Blocked by #N",
-   "Part of #N", and epic task lists.
+   "Part of #N", and epic task lists. Get every native blocker in one call:
+   repository(owner,name){ issues(states:OPEN,first:100){ nodes{ number
+   issueDependenciesSummary{blockedBy blocking} } } }, where blockedBy counts open blockers
+   (skip it if the field errors).
 3. Hold, with the reason, issues that cannot be built now: an open blocker; labelled wontfix,
    duplicate, invalid, or question; labelled "in progress" by someone else; blocked by an issue
    this run filed; already fixed (git log origin/<integration> -E --grep "#N\b"). Hold nothing

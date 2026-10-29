@@ -878,7 +878,10 @@ User arguments: <arguments or "none">.
    --json number,title,labels,createdAt,body (skim bodies; read fully only your candidates).
 2. Learn the relationships: GitHub sub-issues and parents (gh api graphql:
    issue(number:N){ parent{number} subIssues(first:50){nodes{number state}} }), "Part of #N",
-   "Blocked by #N", task lists in epic bodies, and epic-style labels.
+   "Blocked by #N", task lists in epic bodies, and epic-style labels. Get every native blocker in
+   one call: repository(owner,name){ issues(states:OPEN,first:100){ nodes{ number
+   issueDependenciesSummary{blockedBy blocking} } } }, where blockedBy counts open blockers
+   (skip it if the field errors).
 3. Drop: issues labelled blocked, wontfix, question, needs-human, or similar; issues with an
    open blocker; issues already fixed on the integration branch
    (git log origin/<integration> -E --grep "#N\b").
