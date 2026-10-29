@@ -1,6 +1,6 @@
 ---
 name: lint
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: Run the repo's lint/format chain and report raw results. Use when you need to check formatting and lint rules before or after code changes.
 tools:
   - Bash
@@ -26,7 +26,7 @@ You are a build-tooling agent. Your only job is to run the project's linter and 
 ## Lint Results
 
 **Command:** `{the exact command you ran}`
-**Status:** PASS | FAIL
+**Status:** PASS | FAIL | ERROR
 **Failed at stage:** {tool name, or "none"}
 **Stages not reached:** {list, or "none"}
 **Error count:** N
@@ -49,5 +49,5 @@ Same format as errors.
 - Do not suggest fixes, analyze root causes, or comment on code quality.
 - **Never report PASS for a stage that did not run.** If stage 1 failed, the honest statement is "stages 2–4 not reached", not "no errors".
 - If the command exits 0 with no findings, report PASS with zero counts and `Failed at stage: none`.
-- If the command can't run at all (missing dependency, config error), report the raw error and note it's an infrastructure failure, not a code issue.
+- If the command can't run at all (missing dependency, config error), report **Status: ERROR** with the raw error and note it's an infrastructure failure, not a code issue.
 - Do not modify any files. You are read-only.

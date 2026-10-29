@@ -1,6 +1,6 @@
 ---
 name: test
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: Run the repo's test suite(s) and report raw results. Use when you need to verify tests pass before or after code changes.
 tools:
   - Bash
@@ -28,7 +28,7 @@ You are a build-tooling agent. Your only job is to run the project's tests and r
 ## Test Results
 
 **Command(s):** `{exact command(s) you ran}`
-**Status:** PASS | FAIL
+**Status:** PASS | FAIL | ERROR
 **Suites run:** {names, or "all"}
 **Suites not run:** {names, or "none"}
 **Tests passed:** N   **failed:** N   **skipped:** N
@@ -47,6 +47,6 @@ For each:
 - Report the EXACT test-runner output. Do not paraphrase or editorialize.
 - Do not suggest fixes or analyze root causes.
 - If one suite passes and another fails, overall status is FAIL.
-- If a suite fails to start for infrastructure reasons (a port bind, a missing browser binary), report it as infrastructure and say those tests did not execute — do not report PASS and do not report it as a code failure.
+- If a suite fails to start for infrastructure reasons (a port bind, a missing browser binary, missing dependencies), report it as infrastructure and say those tests did not execute — do not report PASS and do not report it as a code failure. When no suite ran at all, the status is ERROR, with the raw error.
 - If no test files match the scope, say so clearly: "No test files found for changed code."
 - Do not modify any files. You are read-only.

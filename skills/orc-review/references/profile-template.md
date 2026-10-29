@@ -14,16 +14,18 @@ This is a project profile for orc-pack's `orc-review` skill. Invoke the `orc-rev
 - **Framework:** <name and installed major version>, playbook `frameworks/<name>.md`
 - **Platform:** <deploy target>, playbook `platforms/<name>.md`, or none
 - **Run locally:** `<command>` at `<url>`
+- **Default mode:** <optional: `quick`, `full`, or a size rule such as `quick below 5 files`; delete the line to run the standard depth>
 
 ## Checks
 
-Check-only commands for the gate. **When** is `always`, a path condition, or `remind` (never run; name it under **Needs your attention** when the condition's paths change).
+Check-only commands for the gate. **When** is `always`, a path condition, or `remind` (never run; name it under **Needs your attention** when the condition's paths change). The `install` row is the frozen install orc-review runs inside a range's worktree, never a link to another checkout's install.
 
-| Check     | Command     | When   |
-| --------- | ----------- | ------ |
-| lint      | `<command>` | always |
-| typecheck | `<command>` | always |
-| test      | `<command>` | always |
+| Check     | Command     | When     |
+| --------- | ----------- | -------- |
+| install   | `<command>` | worktree |
+| lint      | `<command>` | always   |
+| typecheck | `<command>` | always   |
+| test      | `<command>` | always   |
 
 **Never run:** <commands that rewrite files or data, for example a `ready` script that formats, or a seed that wipes the database>.
 
@@ -33,7 +35,7 @@ Check-only commands for the gate. **When** is `always`, a path condition, or `re
 
 ## Risk map
 
-Each row tells orc-review which surface a path is, and a path may sit in several rows (an auth endpoint is both Trust boundary and Server); the lanes come from orc-review's rules for every surface a changed file touches. **Surface** is one of orc-review's nine (Docs, Comments, Tests, UI, Logic, Server, Data, Trust boundary, Config and infra), optionally with a label in parentheses, for example `Server (API contract)`. A labelled row only attaches its repo lanes to those paths and never classifies them, so the generic lanes are unaffected. **Extra lanes** names repo lanes that run on top when a row matches. A path no row matches is classified by the generic rules. Paths are globs that exist in this repo; write `None` in a row that doesn't apply, with the reason.
+Each row tells orc-review which surface a path is, and a path may sit in several rows (an auth endpoint is both Trust boundary and Server); the lanes come from orc-review's rules for every surface a changed file touches. **Surface** is one of orc-review's nine (Docs, Comments, Tests, UI, Logic, Server, Data, Trust boundary, Config and infra), optionally with a label in parentheses, for example `Server (API contract)`. A labelled row only attaches its repo lanes to those paths and never classifies them, so the generic lanes are unaffected. **Extra lanes** names repo lanes that run on top when a row matches. A path no row matches is classified by the generic rules. Paths are globs that exist in this repo, except a framework file convention the repo hasn't used yet, marked `(none yet)`; write `None` in a row that doesn't apply, with the reason. A row never hides Logic: a file whose hunks change behavior is also Logic, whatever rows match it.
 
 | Surface          | Paths                                                                               | Extra lanes |
 | ---------------- | ----------------------------------------------------------------------------------- | ----------- |
@@ -45,7 +47,7 @@ Each row tells orc-review which surface a path is, and a path may sit in several
 
 ## Repo lanes
 
-<Optional. Leave empty when the generic lanes cover this project. Each lane is an agent in `.claude/agents/` that follows orc-review's repo-lane contract (`orc-review/references/lane-template.md`). **Owns** is what it reviews in depth, so the verifier merges duplicates toward the owner. **Runs when** is a condition on the change, or `always`; a lane with no risk-map row runs on any change outside the docs-only and tests-only shortcuts when its condition holds. **Standards** are the orc standards and playbooks it gets.>
+<Optional. Leave empty when the generic lanes cover this project. Each lane is an agent in `.claude/agents/` that follows orc-review's repo-lane contract (`orc-review/references/lane-template.md`). **Owns** is what it reviews in depth, so the verifier merges duplicates toward the owner. **Runs when** is a condition on the change, or `always`, which means whenever one of the lane's risk-map rows matches; a lane with no risk-map row runs on any change outside the docs-only and tests-only shortcuts when its condition holds. **Standards** are the orc standards and playbooks it gets.>
 
 | Lane | Owns | Runs when | Standards |
 | ---- | ---- | --------- | --------- |
@@ -70,7 +72,9 @@ Paths left out of the diff the reviewers read: <generated types, vendored code, 
 
 Reference: `.claude/skills/deep-review/references/security.md`
 
-- Every `+page.server.ts` load checks `locals.user`.>
+- Blocker: every `+page.server.ts` load checks `locals.user`.
+
+A bullet that starts with `Blocker:` or `Warning:` fixes the severity of a finding that breaks it.>
 
 ## After verification
 

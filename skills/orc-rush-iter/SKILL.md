@@ -1,6 +1,6 @@
 ---
 name: orc-rush-iter
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: One /orc run inside an /orc-rush loop, with a fast review whose skipped lanes the loop's sweeps and /orc-review cover later. Invoked only by /orc-rush; standalone work uses /orc.
 user-invocable: false
 ---
