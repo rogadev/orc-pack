@@ -85,6 +85,25 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 Run `/orc-review setup` once per project. It writes `.claude/skills/deep-review/SKILL.md`, a short profile with that project's stack, a risk map of real paths (which files sit on the trust boundary, which are server, data, and UI), what to leave out of the diff, the architecture, and the patterns that look wrong but are deliberate. From then on, `/deep-review` runs the same workflow with the profile, so the choice of reviewers is exact for that app. The profile belongs to your repo: a pack update never overwrites it, and improvements to the workflow reach it without copying anything. If you already wrote your own `deep-review` skill, `setup` converts it and keeps its project-specific parts. `/orc-loop` already uses a repo's `/deep-review` for work no per-issue review has seen.
 
+### Build fast, review later: `/orc-rush`
+
+```
+/orc-rush          # the whole open board, highest priority first
+/orc-rush #41      # an epic's open sub-issues
+/orc-rush status   # where it is; also stop and reset
+```
+
+`/orc-rush` lands as many issues as it can, as fast as it can. It ranks the open board (priority, then bugs first, with dependencies respected), then builds one issue at a time with `/orc`, pushes it, closes it, and takes the next. Each issue gets a fast review: quality, scope, and security when it touches a trust boundary. Everything else is deferred, not dropped: every three to five issues a sweep reviews how they fit together, adds the architecture and test-coverage lanes, fixes what it finds, and marks a promotion point, and the final report tells you to run `/orc-review` over the swept range before you promote it. A failed issue gets one fresh retry; a second failure parks the work and files a blocker issue. It runs under `/loop` until the board is empty or your session or weekly limit runs low (with paceline, it pauses for a session reset), and it resumes from `.git/orc-rush/`. Use `/orc-loop` instead when you want each batch reviewed before it is pushed.
+
+### Look back at a run: `/retro`
+
+```
+/retro             # the most recent run
+/retro 7d          # every run in the last week
+```
+
+`/retro` reads the session transcripts of your `/orc`, `/orc-loop`, and `/orc-rush` runs in this repo, with their saved reports and commits, and tells you what to improve. It measures where the tokens went (each session, each agent type, the costliest dispatches) and looks for spend that bought nothing, such as a review lane whose findings the verifier kept rejecting, fix rounds on Nits, retries, or a main session whose context kept growing. It also lists the problems the run hit and what worked well. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
+
 ### Run two sessions in one project
 
 You can start a second `/orc` while another orc run, or an `/orc-loop` batch, is still working in the same checkout. The first run holds a lock inside `.git`; the second sees it and moves into its own git worktree under `.claude/worktrees/`, on an `orc/<slug>` branch, so neither run sweeps the other's changes into its commits. Start with `/orc in a worktree …` to isolate a run even when nothing else is running. Orc keeps the worktree out of `git status` and removes it when the run ends, unless it still holds uncommitted work.
@@ -127,6 +146,8 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 - `skills/orc-loop/` — runs `/orc` over a batch of issues unattended, then reviews the batch as a whole. See [Run a batch unattended](#run-a-batch-unattended-orc-loop).
 - `skills/orc-loop-iter/` — the lighter-review `/orc` run that `/orc-loop` uses for each issue and fix. Hidden from the `/` menu; it ships with `orc-loop`.
 - `skills/orc-review/` — the read-only deep review of a branch before a merge, plus `references/profile-template.md`, the project profile `/orc-review setup` fills in as the repo's own `/deep-review`. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review).
+- `skills/orc-rush/` — the speed-first loop: builds the board one issue at a time with a fast review and pushes each issue, deferring the deeper review to its sweeps and `/orc-review`. See [Build fast, review later](#build-fast-review-later-orc-rush).
+- `skills/retro/` — a retrospective on past runs: where the tokens went, the problems they hit, and what to improve. See [Look back at a run](#look-back-at-a-run-retro).
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
 - `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
 - `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` at 390px and 1440px in light and dark mode, in Playwright by default (exact viewports and a clean browser profile) with Claude in Chrome as the fallback. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test or an issue with screenshots. It drafts both files from your code the first time.
