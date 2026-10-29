@@ -1,6 +1,6 @@
 ---
 name: orc-rush-iter
-pack: orc-pack@1.19.0
+pack: orc-pack@1.19.1
 description: One /orc run inside an /orc-rush loop, with a fast review whose skipped lanes the loop's sweeps and /orc-review cover later. Invoked only by /orc-rush; standalone work uses /orc.
 user-invocable: false
 ---
@@ -28,7 +28,7 @@ This list replaces orc's step 5 reviewer selection for a standard or structural 
 - `security-reviewer`: as orc, on a trust boundary. A hole can't wait for a later review.
 - Skip `architecture-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `comment-reviewer`, and `fallow`. The loop's sweeps cover architecture and UI; the user's `/orc-review` before promotion covers test coverage, comments, and dead code.
 
-A scoped re-review never adds a lane this list skips. After fix round two, a Warning still open is filed as an issue instead of fixed; a Blocker still open gets orc's round three, because failing the run would cost a full rebuild. Orc's design brief and design review for a structural task stay, because a wrong design costs more to undo than it saves.
+The rest of orc's step 5 holds. Its usages map runs only when `quality-reviewer` and `security-reviewer` both run, the only two lanes here that read it. A scoped re-review never adds a lane this list skips. After fix round two, a Warning still open is filed as an issue instead of fixed; a Blocker still open gets orc's round three, because failing the run would cost a full rebuild. Orc's design brief and design review for a structural task stay, because a wrong design costs more to undo than it saves.
 
 A sweep fix gets this review too: it repairs findings a verifier already confirmed, and the sweep's recheck reviews it again.
 

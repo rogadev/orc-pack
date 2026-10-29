@@ -1,6 +1,6 @@
 ---
 name: orc-rush
-pack: orc-pack@1.19.0
+pack: orc-pack@1.19.1
 description: Endless, one-issue-at-a-time build loop over the GitHub issue board. Ranks every open issue into a priority queue (p0 to p3, bugs first, dependencies respected), then for each issue claims it, builds it fast with /orc (a fast review limited to the lanes that catch what can't wait, ready check, push to the integration branch, close), and moves on; the deeper review comes later, at its sweeps and in /orc-review before promotion. Every few issues it runs a cross-issue sweep (integration review, fix, triage, promotion point). A failed issue gets one fresh retry; a second failure parks the attempt and files a blocker issue for the user. Runs under /loop until the board is empty or the Claude session or weekly limit runs low, pausing for a session reset, and resumes from state in .git. User-invoked only.
 argument-hint: "[#a #b ... | #epic] [status | stop | reset]"
 disable-model-invocation: true
@@ -413,12 +413,15 @@ Set `phase: "sweeping"`, refresh the lock, run the usage gate with the sweep est
 1. **Inputs.** Write `diff.patch` and `files.txt` for the range, and `map.md`: one section per
    issue in `sinceSweep` with its commits (`git log --format='%h %s'`) and the files each touched.
    Commits in the range that the map does not list are another session's: context, never findings.
+   Then dispatch `usages` with the diff, the file list, and `$D/usages.md`, as `/orc`'s step 5
+   makes it, and start step 2 when it answers; the sweep always has two lanes that read it.
 2. **Review.** In one message, dispatch `architecture-reviewer` and `quality-reviewer` always,
    `security-reviewer` when the range touches a surface `/orc`'s step 5 gives it, and
    `ui-reviewer`, told to review statically, when the range touches UI (the fast review skipped
    it, and a UI pattern one issue gets wrong is the one later issues copy), each with
    the **Sweep brief** from `references/briefs.md`, the inputs, the repo rules, and its standards
-   (found as `/orc-loop`'s **Standards** paragraph says). Send every finding to one `verifier`;
+   (found as `/orc-loop`'s **Standards** paragraph says). Send every finding to one `verifier`,
+   with `$D/usages.md`;
    keep what it confirms, and write the confirmed findings and the triage `DO` items to
    `$D/report.md`. Skip the verifier when the lanes reported nothing, or only Nits.
    In the same message, dispatch the triage agent of step 4 when it has items, so its `DO` items

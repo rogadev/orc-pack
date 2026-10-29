@@ -205,6 +205,42 @@ function statusLines(lines) {
   return found;
 }
 
+const SEARCH_BASH =
+  /^\s*(cd [^&;]+&&\s*)?(grep|rg|find|ls|tree|git grep|git ls-files)\b/;
+
+function emptyMix() {
+  return { search: 0, explore: 0, editRead: 0, edit: 0, other: 0 };
+}
+
+// Sorts an agent's tool calls into searching, reading files it never edits (exploring), reading
+// files it edits, editing, and everything else, so a retro can see how much of a lane is search.
+function toolMix(lines) {
+  const mix = emptyMix();
+  const edited = new Set();
+  const uses = [];
+  for (const o of lines) {
+    for (const c of contentBlocks(o)) {
+      if (c.type !== "tool_use") continue;
+      uses.push(c);
+      if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(c.name))
+        edited.add(path.normalize(String(c.input?.file_path ?? "")));
+    }
+  }
+  for (const c of uses) {
+    if (["Grep", "Glob", "LSP"].includes(c.name)) mix.search += 1;
+    else if (c.name === "Bash" && SEARCH_BASH.test(c.input?.command ?? ""))
+      mix.search += 1;
+    else if (c.name === "Read")
+      edited.has(path.normalize(String(c.input?.file_path ?? "")))
+        ? (mix.editRead += 1)
+        : (mix.explore += 1);
+    else if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(c.name))
+      mix.edit += 1;
+    else mix.other += 1;
+  }
+  return mix;
+}
+
 function summarizeSubagents(sessionDir) {
   const dir = path.join(sessionDir, "subagents");
   const byToolUse = new Map();
@@ -244,6 +280,7 @@ function summarizeSubagents(sessionDir) {
           : 0,
       toolCalls,
       errors,
+      mix: toolMix(lines),
     };
     byToolUse.set(meta.toolUseId ?? base, entry);
   }
@@ -315,6 +352,7 @@ function summarizeSession(file) {
             toolCalls: 0,
             errors: 0,
             model: null,
+            mix: emptyMix(),
           }),
         };
         dispatches.push(d);
@@ -407,8 +445,12 @@ for (const s of sessions) {
       max: 0,
       seconds: 0,
       errors: 0,
+      toolCalls: 0,
+      mix: emptyMix(),
     };
     t.count += 1;
+    t.toolCalls += d.toolCalls;
+    for (const k of Object.keys(t.mix)) t.mix[k] += d.mix[k];
     t.weighted += d.weighted;
     t.output += d.usage.output;
     t.max = Math.max(t.max, d.weighted);
@@ -425,6 +467,23 @@ md.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 for (const t of [...byType.values()].sort((a, b) => b.weighted - a.weighted)) {
   md.push(
     `| ${t.agentType} | ${t.model} | ${t.count} | ${fmt(t.weighted)} | ${fmt(Math.round(t.weighted / t.count))} | ${fmt(t.max)} | ${fmt(t.output)} | ${Math.round(t.seconds / 60)} | ${t.errors} |`,
+  );
+}
+
+// Search and explore are the calls a shared usages map is meant to cut from the reviewer lanes.
+md.push("", "## Tool mix by agent type", "");
+md.push(
+  "Per dispatch. Search is Grep, Glob, and grep-like Bash; explore is reading a file the agent never edits.",
+  "",
+);
+md.push(
+  "| Agent | Model | Dispatches | Tool calls | Search | Explore | Read then edited | Edits | Other |",
+);
+md.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+const per = (n, t) => (n / t.count).toFixed(1);
+for (const t of [...byType.values()].sort((a, b) => b.weighted - a.weighted)) {
+  md.push(
+    `| ${t.agentType} | ${t.model} | ${t.count} | ${per(t.toolCalls, t)} | ${per(t.mix.search, t)} | ${per(t.mix.explore, t)} | ${per(t.mix.editRead, t)} | ${per(t.mix.edit, t)} | ${per(t.mix.other, t)} |`,
   );
 }
 

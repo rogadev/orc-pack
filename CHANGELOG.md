@@ -14,7 +14,42 @@ Every released version needs a section headed `## [x.y.z] - YYYY-MM-DD` containi
 
 The release guard fails and publishes nothing if there is no section for the version being released. That is deliberate: an update with no map is an update an agent cannot safely apply. Entries must stand alone — an updater may skip straight from any older version to this one, so do not write an entry that assumes the reader applied the previous release.
 
+A released version's section is frozen. Once its tag exists, never edit it: later changes, including a patch released soon after, go in a new section. When a release follows the previous one closely, the new section may recap the earlier release's changes and link its release notes, but it does not copy that release's update steps, because an updater applies every in-range section once.
+
 ---
+
+## [1.19.1] - 2026-10-29
+
+**Summary.** Two changes. First, the issue pickers read GitHub's native blocked-by links, which `/newissue` sets since 1.19.0. The `next-issue-finder` scout and the queue builders in `/orc-rush` and `/orc-loop` fetch every open issue's open-blocker count in one GraphQL call, so they no longer pick or queue an issue whose blocker is still open just because its body doesn't say so, and the scout ranks an issue that blocks others higher. They still read `Blocked by #NNN` in issue bodies, because not every repo sets the native link. Second, review panels search the change's surroundings once instead of once per lane. Measured across about 5,300 past dispatches, nearly every tool call a reviewer or the `verifier` makes is a search or a read of code it doesn't change, and the lanes on one panel search the same callers, importers, and tests. A new Haiku runner, `usages`, now maps them with `git grep` before the panel: the names the diff adds, changes, or removes, where each is used outside the diff, the tests that touch them, and removed names still referenced. The five lanes that look past the diff (`quality-reviewer`, `architecture-reviewer`, `security-reviewer`, `test-coverage-reviewer`, `ui-reviewer`) and the `verifier` get the map's path, marked as a starting point, not a boundary. It runs only when a panel has two or more of those lanes, in `/orc`'s step 5 and its fix rounds (so in every `/orc-loop` and `/orc-rush` run too), `/orc-loop`'s round 1, `/orc-rush`'s sweeps, and `/orc-review` (so every `/deep-review` profile). `/retro` now reports each agent type's tool mix, so a retro shows whether the map cut the lanes' searching.
+
+**Also new since 1.18.1.** 1.19.0 shipped earlier the same day, so if you're coming from 1.18.1 or older, this update brings its changes too:
+
+- **`/orc-review`**: a read-only deep review of a branch, a range, or uncommitted work, which runs only the reviewer lanes the change's risk surfaces call for. `/orc-review setup` writes a per-project profile to `.claude/skills/deep-review/SKILL.md`, which becomes that repo's own `/deep-review`.
+- **`/orc-rush`**: a speed-first loop that builds the board one issue at a time with a fast review, pushes each issue, and runs deeper sweeps every few issues.
+- **`/retro`**: a read-only retrospective on past runs that measures where the tokens went and what to improve.
+- **`/newissue`**: sets GitHub's native sub-issue and blocked-by links, the links this release's issue pickers read.
+
+The full details and update steps are in the [1.19.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v1.19.0), the `1.19.0` section of `CHANGELOG.md`. An updater applies that section's steps as well as this one's, each once.
+
+**Changed areas.**
+
+- **`agents/next-issue-finder.md`**: **Gather** adds a `gh api graphql` call that lists open issues with `issueDependenciesSummary { blockedBy blocking }` above 0 (`blockedBy` counts open blockers only) and is skipped if the field errors, for example on an older GitHub Enterprise. A new **Screen out blocked candidates** section never picks an issue with an open blocker, native or `Blocked by #NNN` in its body. Signal 1 of **Pick** treats a `blocking` count as direct evidence. Refresh.
+- **`agents/usages.md`** (new): the Haiku runner that writes the usages map. Inputs: the diff, the changed-file list, an output path, and optionally a tree and paths to exclude. It returns one line. Copy it in.
+- **`skills/orc/SKILL.md`**, step 5: a **Map the usages once, before the panel** paragraph; the five lanes and the `verifier` get the map; a scoped re-review regenerates it when two or more of its lanes re-review, and otherwise gets none. **Model selection** lists `usages` with the Haiku runners. Refresh.
+- **`skills/orc-loop-iter/SKILL.md`** and **`skills/orc-rush-iter/SKILL.md`**: state that the map still runs under their reduced lane lists (in a rush run, only when `security-reviewer` joins `quality-reviewer`). Refresh.
+- **`skills/orc-loop/SKILL.md`**: the queue brief's step 2 gets the one-call fetch of native blocker counts, feeding its existing "open blocker" drop rule. Step 3 gets a **The usages map** paragraph for round 1's parts (the integration review always gets one; the batch lanes, with one lane, don't; rechecks never do), the line in the integration brief, and the map for the `verifier`. Refresh.
+- **`skills/orc-rush/SKILL.md`** and **`skills/orc-rush/references/briefs.md`**: the queue brief's step 2 gets the same blocker fetch, feeding its "open blocker" hold rule. **Sweep** step 1 maps the sweep range's usages, and the **Sweep brief** and the sweep's `verifier` get the map. Refresh.
+- **`skills/orc-review/SKILL.md`**: step 2's **The usages map** paragraph (it excludes the profile's **Ignore** paths and lockfiles, and searches the `a..b` worktree), the plan line, step 3 dispatching `usages` with the gate before the lanes, the brief's `Usages:` line, and the map for the `verifier`. Project profiles need no change. Refresh.
+- **`skills/retro/SKILL.md`** and **`skills/retro/references/usage.mjs`**: `usage.md` gains a **Tool mix by agent type** table (search, explore, read then edited, edits, other, per dispatch), and the analyst compares reviewer search before and after the map. Refresh.
+- **`.github/workflows/pack-integrity.yml`**: treats `usages` as an agent name. Kit CI only.
+- **`INSTALL.md`**, **`README.md`**, and **`CLAUDE.md`**: list `usages`. Kit docs only.
+- **Every skill and agent file**: the `pack:` marker moves to `orc-pack@1.19.1`. Refresh.
+
+**Update steps.** Copy `agents/usages.md` into `.claude/agents/`, even when other optional agents were pruned, because every review path dispatches it. Refresh the other files above. Nothing else to migrate. The blocker fetch needs GitHub's issue dependencies; on a host without them, the pickers skip the call and read issue bodies as before.
+
+**Breaking changes.** None.
+
+**Files to read.** `agents/usages.md`, `agents/next-issue-finder.md` (**Gather** and **Screen out blocked candidates**), `skills/orc/SKILL.md` (step 5, **Map the usages once, before the panel**), `skills/orc-loop/SKILL.md` (step 3, **The usages map**), `skills/orc-rush/SKILL.md` (**Sweep**), and `skills/orc-review/SKILL.md` (steps 2 and 3).
 
 ## [1.19.0] - 2026-10-29
 
