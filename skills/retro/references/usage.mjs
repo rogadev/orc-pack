@@ -37,8 +37,24 @@ if (!repoRoot || !outDir) {
 let since = null;
 const onlySessions = [];
 for (let i = 2; i < args.length; i++) {
-  if (args[i] === "--since") since = new Date(args[++i]);
-  else if (args[i] === "--session") onlySessions.push(args[++i]);
+  if (args[i] === "--since") {
+    const raw = args[++i];
+    since = new Date(raw);
+    if (Number.isNaN(since.getTime())) {
+      console.error(`--since: unparseable date '${raw}'`);
+      process.exit(2);
+    }
+  } else if (args[i] === "--session") onlySessions.push(args[++i]);
+}
+
+// A session belongs to this repo only when it ran in the repo or one of its orc worktrees.
+// The directory-name prefix alone can match an unrelated folder named like a worktree.
+const rootPath = path.resolve(repoRoot).toLowerCase();
+const worktreesPath = path.join(rootPath, ".claude", "worktrees") + path.sep;
+function inThisRepo(cwd) {
+  if (!cwd) return false;
+  const p = path.resolve(cwd).toLowerCase();
+  return p === rootPath || p.startsWith(worktreesPath);
 }
 
 const projectsDir = path.join(os.homedir(), ".claude", "projects");
@@ -127,10 +143,32 @@ function textOf(content) {
   return "";
 }
 
+// Masks credential-shaped text, so a secret a tool call or error echoed never reaches a report.
+function redact(s) {
+  return s
+    .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
+    .replace(
+      /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
+      "$1$2[redacted]",
+    )
+    .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
+    .replace(
+      /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
+      "[redacted]",
+    )
+    .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, "[redacted]");
+}
+
+// One redacted line of transcript text, safe to place inside a Markdown table cell or list item.
 function oneLine(s, n = 120) {
-  return String(s ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
+  return redact(
+    String(s ?? "")
+      .replace(/[\u0000-\u001f\u007f]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  )
+    .replace(/[`|]/g, "'")
+    .replace(/^[#>\-*\s]+/, "")
     .slice(0, n);
 }
 
@@ -220,6 +258,7 @@ function summarizeSession(file) {
     .filter(Boolean)
     .sort();
   if (times.length === 0) return null;
+  if (!inThisRepo(lines.find((o) => o.cwd)?.cwd)) return null;
   if (onlySessions.length > 0 && !onlySessions.includes(id)) return null;
   if (since && new Date(times.at(-1)) < since) return null;
   const skills = skillsInvoked(lines);
@@ -232,7 +271,15 @@ function summarizeSession(file) {
   for (const o of lines) {
     for (const c of contentBlocks(o)) {
       if (c.type === "tool_result" && c.is_error)
-        errorsById.set(c.tool_use_id, oneLine(textOf(c.content), 160));
+        errorsById.set(
+          c.tool_use_id,
+          oneLine(
+            textOf(c.content)
+              .split("\n")
+              .find((l) => l.trim()),
+            120,
+          ),
+        );
     }
   }
 
@@ -278,7 +325,7 @@ function summarizeSession(file) {
         wakeups += 1;
         what = `ScheduleWakeup ${c.input?.delaySeconds ?? ""}s ${oneLine(c.input?.reason, 60)}`;
       } else {
-        what = `${c.name} ${oneLine(c.input?.description ?? c.input?.command ?? c.input?.file_path ?? c.input?.pattern ?? "", 90)}`;
+        what = `${c.name} ${oneLine(c.input?.description ?? c.input?.file_path ?? c.input?.pattern ?? "", 90)}`;
       }
       timeline.push(`${t} ${what}${err}`);
     }
@@ -306,7 +353,8 @@ function summarizeSession(file) {
     dispatchCount: dispatches.length,
     wakeups,
     compactions,
-    toolErrors: [...errorsById.values()],
+    toolErrors: [...errorsById.values()].slice(0, 20),
+    toolErrorCount: errorsById.size,
     repeatedDispatches: retries,
     dispatches,
     timeline,
@@ -342,7 +390,7 @@ md.push(
 md.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 for (const s of sessions) {
   md.push(
-    `| ${s.id.slice(0, 8)} | ${s.start.slice(0, 16)} | ${s.minutes} | ${s.skills.join(", ")} | ${fmt(s.main.weighted)} | ${fmt(s.main.usage.peakContext)} | ${fmt(s.subagentWeighted)} | ${s.dispatchCount} | ${s.wakeups} | ${s.compactions} | ${s.toolErrors.length} |`,
+    `| ${s.id.slice(0, 8)} | ${s.start.slice(0, 16)} | ${s.minutes} | ${s.skills.join(", ")} | ${fmt(s.main.weighted)} | ${fmt(s.main.usage.peakContext)} | ${fmt(s.subagentWeighted)} | ${s.dispatchCount} | ${s.wakeups} | ${s.compactions} | ${s.toolErrorCount} |`,
   );
 }
 
@@ -404,7 +452,7 @@ for (const s of sessions) {
         .map((k) => k.replace("|", ": "))
         .join("; ")}`,
     );
-  if (s.toolErrors.length)
+  if (s.toolErrorCount)
     md.push(
       `- Tool errors (first 10): ${s.toolErrors
         .slice(0, 10)
