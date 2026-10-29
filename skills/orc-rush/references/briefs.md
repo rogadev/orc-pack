@@ -21,9 +21,14 @@ at a time. Read-only: never edit git state, the board, or any file except the qu
 Repo rules: <CLAUDE.md path>. Integration branch: <integration>.
 User arguments: <issue numbers, or "whole board">.
 Already handled this run (leave out unless their updatedAt changed after the time shown):
-<done, noBuild with updatedAt, failed with blocker numbers>.
+<done, noBuild with updatedAt, failed with blocker numbers>. List a failed issue as held until
+its blocker closes, never as left out, and list these issues, which wait on the user, as held:
+<heldForUser numbers>.
 Current queue: <path, or "none, build it fresh">. When given, keep its order except where the
 board changes require a move, and say what moved.
+Changed issues: <numbers, or "all">. When numbers are given, read only those issues (and the
+relationships that place them), place or remove them in the current queue, and leave every other
+entry where it is.
 Write the queue to: <queue path>.
 
 1. Read the open issues: gh issue list --state open --limit 500
@@ -64,7 +69,7 @@ Repo rules: <CLAUDE.md / AGENTS.md paths>
 Standards: <the absolute paths /orc's Standards section lists for this agent>
 
 Every issue already passed a fast review on its own: quality, scope, and security on a trust
-boundary. <architecture-reviewer and test-coverage-reviewer only> Your lane did not review the
+boundary. <architecture-reviewer and ui-reviewer only> Your lane did not review the
 issues one at a time, so also report what you find inside each change. <other lanes> Do not
 re-review each change on its own. Report what appears when the changes are read together:
 - one issue's change breaks, contradicts, or silently depends on another's;
@@ -161,7 +166,7 @@ Repo rules: <CLAUDE.md / AGENTS.md paths>. Integration branch: <integration>.
 Issue: #<n> (gh issue view <n> --comments).
 Run reports: <paths>. Parked work: <folders>.
 
-1. Read both reports and find where each attempt stopped and why.
+1. Read each attempt's report and find where it stopped and why.
 2. Reproduce the failure at HEAD when you can.
 3. Decide what blocks the issue: an open issue that has to land first (search the board, open and
    closed), a defect outside the issue's scope, an environment or access gap, a flaky or broken

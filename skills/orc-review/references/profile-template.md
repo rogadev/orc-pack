@@ -18,15 +18,15 @@ This is a project profile for orc-pack's `orc-review` skill. Invoke the `orc-rev
 
 ## Risk map
 
-A change to a path in a row runs that row's lanes. Paths are globs that exist in this repo.
+Each row tells orc-review which surface a path is, and a path may sit in several rows (an auth endpoint is both Trust boundary and Server); the lanes come from orc-review's rules for every surface a changed file touches. **Extra lanes** adds lanes on top of those. A path no row matches is classified by the generic rules. Paths are globs that exist in this repo.
 
-| Surface          | Paths                                                                               | Lanes                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Trust boundary   | <auth module, server hooks or middleware, endpoints, actions, webhooks, env access> | `security-reviewer`                                                   |
-| Server           | <routes, services, jobs>                                                            | `quality-reviewer`, `architecture-reviewer`, `test-coverage-reviewer` |
-| Data             | <schema, migrations, query modules>                                                 | `architecture-reviewer` with `data.md`, `quality-reviewer`            |
-| UI               | <components, pages, styles, tokens, copy>                                           | `ui-reviewer`                                                         |
-| Config and infra | <framework config, CI workflows, deploy config>                                     | `security-reviewer`, `architecture-reviewer`                          |
+| Surface          | Paths                                                                               | Extra lanes |
+| ---------------- | ----------------------------------------------------------------------------------- | ----------- |
+| Trust boundary   | <auth module, server hooks or middleware, endpoints, actions, webhooks, env access> |             |
+| Server           | <routes, services, jobs>                                                            |             |
+| Data             | <schema, migrations, query modules>                                                 |             |
+| UI               | <components, pages, styles, tokens, copy>                                           |             |
+| Config and infra | <framework config, CI workflows, deploy config>                                     |             |
 
 ## Ignore
 
