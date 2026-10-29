@@ -36,11 +36,12 @@ This repo has no `package.json`, no local scripts, and no test suite — it is p
 
 ## Versioning is load-bearing — how releases actually ship
 
-Plugin users only receive updates when `.claude-plugin/plugin.json`'s `version` changes. Three coupled facts follow:
+Plugin users only receive updates when `.claude-plugin/plugin.json`'s `version` changes. Four coupled facts follow:
 
 1. **Every skill and agent file carries a `pack: orc-pack@x.y.z` marker** in its frontmatter (line 3). The reference files under `skills/orc/references/` carry none; install and update docs treat them as pack-owned because they sit in the pack's skill directory. These must all match `plugin.json`'s version.
 2. **You normally don't bump or sync these by hand.** The release-guard workflow, on PRs into `main` (and direct pushes to `main`), detects any change under `skills/` or `agents/` that landed without a version bump, bumps the patch version, rewrites every `pack:` marker to match, runs Prettier, and commits the fixes back onto the branch under review.
 3. **Every released version needs a `CHANGELOG.md` section.** The guard extracts the `## [x.y.z]` section and publishes it verbatim as the GitHub release body; with no section, the job fails and nothing is tagged or published. `/update-orc` reads that body, plus every section between the installed and target versions, as the map an updater agent follows — so write each entry for a stranger who may be jumping several releases: what changed, the exact files, any migration, and the paths to read.
+4. **A released version's section is frozen.** Once `v<x.y.z>` is tagged, never edit its `CHANGELOG.md` section: it is already published as that release's notes, and a later release (for example a `1.19.1` patch after `1.19.0`) gets its own new section. Run `git fetch --tags` and check the tag immediately before editing a section, because the guard can publish a version while you work on `dev`. When the new release follows the last one closely, recap the earlier release's changes in the new section and link its release notes, without copying its update steps.
 
 Practical consequence: when editing skill or agent content on `dev`, you can leave the version alone and let the guard bump it, **or** bump `plugin.json` yourself for an intentional minor/major release — but if you bump by hand, sync the `pack:` markers in the same commit so they don't drift. Never hand-edit a `pack:` marker to a version that disagrees with `plugin.json`.
 

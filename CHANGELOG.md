@@ -14,6 +14,8 @@ Every released version needs a section headed `## [x.y.z] - YYYY-MM-DD` containi
 
 The release guard fails and publishes nothing if there is no section for the version being released. That is deliberate: an update with no map is an update an agent cannot safely apply. Entries must stand alone — an updater may skip straight from any older version to this one, so do not write an entry that assumes the reader applied the previous release.
 
+A released version's section is frozen. Once its tag exists, never edit it: later changes, including a patch released soon after, go in a new section. When a release follows the previous one closely, the new section may recap the earlier release's changes and link its release notes, but it does not copy that release's update steps, because an updater applies every in-range section once.
+
 ---
 
 ## [1.19.1] - 2026-10-29
