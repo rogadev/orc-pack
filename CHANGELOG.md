@@ -18,6 +18,23 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [1.19.2] - 2026-10-29
+
+**Summary.** Installing or updating the pack now tells you when the project has no review profile yet. `/orc-review setup` (new in 1.19.0) drafts `.claude/skills/deep-review/SKILL.md`, the profile that tailors `/orc-review` to a project's stack, risk map, and architecture, but nothing pointed a new user at it until a review ran without one. The install report and the `/update-orc` report now check for the profile and, when it is missing, tell you to run `/orc-review setup`. When the repo has a hand-written `deep-review` skill instead, they say that `setup` converts it into a profile. No workflow changes.
+
+**Changed areas.**
+
+- **`skills/update-orc/SKILL.md`**, step 7: the report gains a **Next** heading that suggests `/orc-review setup` when the install has `orc-review` and the profile is missing, hand-written, or outdated. Refresh.
+- **`UPDATE.md`**, Phase 4: a new step 5 makes the same check after an update. Kit docs only.
+- **`INSTALL.md`**, Phase 6: the install report makes the same check after an install. Kit docs only.
+- **Every skill and agent file**: the `pack:` marker moves to `orc-pack@1.19.2`. Refresh.
+
+**Update steps.** Refresh the files above. Nothing to migrate. The update never creates or edits `.claude/skills/deep-review/SKILL.md`; it only suggests `/orc-review setup`.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/update-orc/SKILL.md` (step 7) and `UPDATE.md` (Phase 4).
+
 ## [1.19.1] - 2026-10-29
 
 **Summary.** Two changes. First, the issue pickers read GitHub's native blocked-by links, which `/newissue` sets since 1.19.0. The `next-issue-finder` scout and the queue builders in `/orc-rush` and `/orc-loop` fetch every open issue's open-blocker count in one GraphQL call, so they no longer pick or queue an issue whose blocker is still open just because its body doesn't say so, and the scout ranks an issue that blocks others higher. They still read `Blocked by #NNN` in issue bodies, because not every repo sets the native link. Second, review panels search the change's surroundings once instead of once per lane. Measured across about 5,300 past dispatches, nearly every tool call a reviewer or the `verifier` makes is a search or a read of code it doesn't change, and the lanes on one panel search the same callers, importers, and tests. A new Haiku runner, `usages`, now maps them with `git grep` before the panel: the names the diff adds, changes, or removes, where each is used outside the diff, the tests that touch them, and removed names still referenced. The five lanes that look past the diff (`quality-reviewer`, `architecture-reviewer`, `security-reviewer`, `test-coverage-reviewer`, `ui-reviewer`) and the `verifier` get the map's path, marked as a starting point, not a boundary. It runs only when a panel has two or more of those lanes, in `/orc`'s step 5 and its fix rounds (so in every `/orc-loop` and `/orc-rush` run too), `/orc-loop`'s round 1, `/orc-rush`'s sweeps, and `/orc-review` (so every `/deep-review` profile). `/retro` now reports each agent type's tool mix, so a retro shows whether the map cut the lanes' searching.
