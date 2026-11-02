@@ -39,13 +39,14 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 - **`skills/orc-review/references/profile-template.md`**: **Stack** gains an optional **Default mode**; **Checks** gains an `install` row (`worktree`); the risk map allows `(none yet)` globs and states that a row never hides Logic; **Repo lanes** defines `always`; the **Extra focus** example shows a `Blocker:` rule. Refresh.
 - **`agents/usages.md`**: excludes use the long pathspec form. Refresh.
 - **`agents/lint.md`**, **`agents/typecheck.md`**, **`agents/test.md`**: a check that couldn't run reports `Status: ERROR` with the raw error, distinct from FAIL. Refresh.
+- **`skills/orc/SKILL.md`** (**Model selection**, **Effort by role**, **Efficiency mode**, and the design-first and builder-dispatch steps): orc no longer moves `ui-implementer` to Fable 5.1 for a structural UI task's brief and first build. Those dispatches now use the agent's frontmatter model (Opus 5.5), with the brief at `high` effort like every other builder. Fable 5.1 is used only for round three of a fix loop. In one project those Fable dispatches were about 10% of all usage, and orc's UI work extends an existing design system, which is the fixed-spec case Opus 5.5 wins. `docs/model-tiers.md` has the reasoning. Refresh.
 - **Every skill and agent file**: the `pack:` marker moves to `orc-pack@1.21.0`. Refresh.
 
 **Update steps.** Refresh the files above. Never edit the project's `.claude/skills/deep-review/SKILL.md` or its repo lanes during the update: they are repo-owned. Tell the user that running `/orc-review setup` refreshes the profile and its lanes: it adds the `install` check, reports any surface change from labelled rows, and rewrites the lanes' brief and report sections. Some projects patched 1.20.0's gaps in their own profile (a **Local workarounds** or **Workflow notes** section) or in their lanes (`Tree:` and `Base:` paragraphs, line-number rules). That refresh should remove each patch this release covers and keep any it doesn't. Start a new session after the refresh before the first `/deep-review`.
 
-**Breaking changes.** None. A 1.20 profile runs unchanged. A repo lane written to the 1.20 contract that expects `Project:` and `Ownership:` inline reads them from the named files instead, because every brief value was already allowed to be a path.
+**Breaking changes.** None. A 1.20 profile runs unchanged. A repo lane written to the 1.20 contract that expects `Project:` and `Ownership:` inline reads them from the named files instead, because every brief value was already allowed to be a path. Structural UI tasks run on Opus 5.5 instead of Fable 5.1. That's a cost change, not a workflow change: nothing in a project needs migrating.
 
-**Files to read.** `skills/orc-review/SKILL.md` (steps 1 to 5 and **Setup**), `skills/orc-review/references/lane-template.md`, and `skills/orc-review/references/profile-template.md`.
+**Files to read.** `skills/orc-review/SKILL.md` (steps 1 to 5 and **Setup**), `skills/orc-review/references/lane-template.md`, `skills/orc-review/references/profile-template.md`, and `skills/orc/SKILL.md` (**Model selection**).
 
 ## [1.20.0] - 2026-10-29
 
