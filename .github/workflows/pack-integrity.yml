@@ -105,8 +105,36 @@ jobs:
             fi
           done
 
+          # 5. The review template's current number has its own section, so a
+          # refresh can always find the notes for the version it is told about.
+          TC=skills/orc-review/references/template-changes.md
+          TNUM=$(grep -oE '^\*\*Current review template: [0-9]+\.\*\*' "$TC" | grep -oE '[0-9]+' || true)
+          if [ -z "$TNUM" ]; then
+            echo "::error file=$TC::no '**Current review template: <n>.**' line"
+            fail=1
+          elif [ "$TNUM" -gt 1 ] && ! grep -qE "^## Template $TNUM( |$)" "$TC"; then
+            echo "::error file=$TC::current review template is $TNUM but there is no '## Template $TNUM' section"
+            fail=1
+          fi
+
           if [ "$fail" -ne 0 ]; then
             echo "::error::Pack integrity check failed."
             exit 1
           fi
           echo "Pack integrity OK (version $VER)."
+
+      # A reminder, never a failure: a change to the review template on its way
+      # to main should either bump the review template number in
+      # template-changes.md or be one that existing profiles don't need to see.
+      - name: Remind to version the review template
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          changed=$(git diff --name-only FETCH_HEAD HEAD -- skills/orc-review/references/)
+          if echo "$changed" | grep -qE 'references/(profile|lane)-template\.md$' \
+             && ! echo "$changed" | grep -q 'references/template-changes\.md$'; then
+            echo "::warning file=skills/orc-review/references/template-changes.md::The review template changed without a template-changes.md update. If existing profiles or repo lanes need the change, bump the review template number and add a '## Template <n>' section; otherwise ignore this."
+          fi
