@@ -39,6 +39,7 @@ A sweep fix gets this review too: it repairs findings a verifier already confirm
 
 ## Report
 
+- Skip orc's update check in step 9: the loop runs it once, for its own report.
 - List your commits by full SHA in the report's **Landed** section.
 - Add a **Filed** line listing every issue filed or commented on.
 - **Do not end the turn on the report.** Write it and its status line, then return to `/orc-rush`, in the same message as your next tool call: to its **Record** after an issue build, or to the **Sweep** step that started you after a sweep fix.

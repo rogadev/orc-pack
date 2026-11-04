@@ -513,7 +513,8 @@ status, then these sections:
 - `## Next`: before the release PR, run the deeper review the fast one deferred:
   `/orc-review origin/<release>..<latest promotion point>` (or the repo's `/deep-review`
   with that range), fix what it finds, then open the release PR up to that point. Then clear the
-  blockers, and say how to resume (`/orc-rush`).
+  blockers, and say how to resume (`/orc-rush`). Last, the line from the update check in orc's
+  `references/update-check.md`, run once before the report.
 
 Close with the folder holding everything: `<git-dir>/orc-rush/`. The last line is exactly one of:
 

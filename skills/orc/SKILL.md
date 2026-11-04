@@ -168,6 +168,7 @@ Each entry names a file, what it holds, and who gets it:
 - `work-contract.md`: the contract template orc fills in during **Make it buildable**. Orc only; the filled contract (`<scratchpad>/contract.md`) goes to every builder, `design-reviewer`, `scope-reviewer`, and the `verifier`.
 - `design-brief.md`: the brief template for structural tasks. Goes to the task's builder in brief mode and `design-reviewer`.
 - `your-call.md`: what a run settles itself and what it hands back, the toss-up test, the reserved calls, and the **Your call** card. Orc only; `/orc-loop` also gives it to its triage agents.
+- `update-check.md`: the check for a newer pack release and its one report line. Orc reads and runs it itself in **9. Report**; `/orc-loop`, `/orc-rush`, and `/orc-review` run it for their own reports.
 
 Pass each agent only the files whose entry names it and that apply to the task. **The `verifier` gets the union of the files the reviewers who raised findings were given**, because it can only confirm "a documented rule was broken" against the rule itself. The repo's own docs and established patterns outrank every one of these files, and each file says so; a client repo's existing structure is followed, never reshaped.
 
@@ -421,6 +422,8 @@ gh issue close <n>
 The deployment note keeps the close honest where a release branch is what ships. Pushing never applies a migration, backfill, or environment change: orc, like its builders, never runs one against a shared database or environment, so a builder's **Deploy notes** go to the user as a `Deploy:` line under the matching **Landed** entry, as well as in the commit body. Issues only _partly_ resolved get the comment without the close, stating what landed and what remains. A free-text run with no issue simply reports what landed.
 
 ### 9. Report
+
+First run the update check in `update-check.md` (see **Standards**). It takes one command and at most one network call a day, and a newer release becomes the last **Heads-up** line.
 
 Lead with what you picked and did, in the voice from **How you communicate**. Evidence and reasoning belong in issue comments, where they persist; the chat report is state and next action — a paragraph explaining a query you ran is an issue comment you forgot to post.
 

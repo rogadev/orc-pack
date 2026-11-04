@@ -40,7 +40,7 @@ Skip orc's **Land it** whole: no fetch or catch-up, no push, no CI lookup, and n
 
 ## Report
 
-The loop builds its final report from these runs' reports, so add two sections to orc's step 9 report. Write each line in plain language a user who never saw the run can follow.
+The loop builds its final report from these runs' reports, so add two sections to orc's step 9 report, and skip its update check: the loop runs it once for the batch. Write each line in plain language a user who never saw the run can follow.
 
 - **Approach**, right after **Picked**: what the work asked for, in one line; what you built and where, from the contract's restatement; each decision orc's **Make it buildable** step made (a split, a provisional value, or the reading you chose when the work meant two things), with its reason; and what the premise check found when the code disagreed with the issue.
 - **Review**, right after **Landed**: the lanes that ran and the number of fix rounds; then one line per confirmed Blocker and Warning, with a title, the lane that raised it, and its outcome (fixed in round N, or still open); then the Nits as a count only.

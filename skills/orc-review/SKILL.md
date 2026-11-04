@@ -204,6 +204,8 @@ Write the full report to `$D/report.md`:
 
 **Report destination.** When the profile names one and `git check-ignore -q <folder>/x` succeeds, copy `$D/report.md` to `<folder>/<yyyy-mm-dd>-<branch, slashes as dashes>.md` (add `-pr-<n>` for a PR target, and `-<HHMM>` when that file exists), and run its record command, if it names one, as the profile writes it, with the verdict, counts, and saved path filled in and under the conditions it gives. A gate failure counts as one Blocker. If either fails, say so in one line and carry on. A folder git doesn't ignore is a profile defect: keep the report in `$D` and say so.
 
+**Update check.** Unless the arguments contain `auto`, run the check in orc's `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
+
 Return the report in chat (drop empty sections) and end with a bold action line, for example `**Fix the 2 Warnings, then re-run the review.**` or `**Ready to merge.**` Give the full report's path (the saved copy when there is one) just above it.
 
 **Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so `/orc-loop` can read it:

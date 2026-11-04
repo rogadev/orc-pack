@@ -263,8 +263,10 @@ Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every
 
 ## Updating the pack
 
-- **Plugin install** — nothing to do by hand. `/plugin update orc-pack@orc-pack` (or an automatic update) picks up a new version once `plugin.json`'s version changes.
+- **Plugin install** — run `/plugin update orc-pack@orc-pack`, which picks up a new version once `plugin.json`'s version changes. To get releases without asking, turn on auto-update: in `/plugin`, open **Marketplaces**, select `orc-pack`, and choose **Enable auto-update**. Claude Code leaves it off for third-party marketplaces, and a marketplace can't turn it on for you.
 - **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes, then commit and push them yourself.
+
+You don't have to watch for releases. `/orc`, `/orc-loop`, `/orc-rush`, and `/orc-review` check the latest GitHub release at most once a day, and when it's newer than your install, the report ends with one line naming the new version and the command for your install kind. The check never updates anything, and it stays silent when you're offline.
 
 Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 
