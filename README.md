@@ -1,6 +1,6 @@
 # The orc pack
 
-> **New in v1.20.0:** `/orc-review setup` builds a project's review the way real projects needed it. The pack's reviewers are the base, and your project's own specialist lanes (accessibility, performance, API contracts, and so on) layer on top where that base is thin. Setup converts a hand-written review suite lane by lane with evidence, rewrites the specialists it keeps to one contract, and checks every fact it writes against the code. `/orc-review #123` now reviews a pull request. 1.19.0 added `/orc-review`, `/orc-rush`, and `/retro`. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review) and the [changelog](CHANGELOG.md#1200---2026-10-29).
+> **New in v1.21.0:** `/orc-review` fixes from its first real runs. A range or pull-request review installs dependencies inside its worktree so the gate runs there, and cleans it up safely on Windows. Reviewers read the range's own code, cite real file lines, and tell new code from old. Flaky or unrelated test failures no longer block a merge. v1.20.0 added project repo lanes and `/orc-review #123`. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review) and the [changelog](CHANGELOG.md#1210---2026-10-29).
 
 `/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
 
@@ -263,8 +263,10 @@ Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every
 
 ## Updating the pack
 
-- **Plugin install** — nothing to do by hand. `/plugin update orc-pack@orc-pack` (or an automatic update) picks up a new version once `plugin.json`'s version changes.
+- **Plugin install** — run `/plugin update orc-pack@orc-pack`, which picks up a new version once `plugin.json`'s version changes. To get releases without asking, turn on auto-update: in `/plugin`, open **Marketplaces**, select `orc-pack`, and choose **Enable auto-update**. Claude Code leaves it off for third-party marketplaces, and a marketplace can't turn it on for you.
 - **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes, then commit and push them yourself.
+
+You don't have to watch for releases. `/orc`, `/orc-loop`, `/orc-rush`, and `/orc-review` check the latest GitHub release at most once a day, and when it's newer than your install, the report ends with one line naming the new version and the command for your install kind. The check never updates anything, and it stays silent when you're offline.
 
 Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 

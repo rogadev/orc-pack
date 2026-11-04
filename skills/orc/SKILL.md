@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: Orchestrator for subagent-driven development. Pick or receive a unit of work, plan it as a live task list sized per task, design structural work before building it, dispatch a specialist builder and only the reviewers each diff needs against shared code, comment, structure, and UI standards, loop review/fix until only nitpicks remain, run the repo's ready check, commit, close out. Also runs behavior-preserving cleanups of slop code and comments. Runs unsupervised and ends with FINISHED / FINISHED (no build) / NOT FINISHED. Use whenever the user says "/orc", "orc", "pick up the next issue", "work the board", "grab an issue and start", "just do it", or gives a free-text task like "/orc add rate limiting to the upload endpoint" or "/orc clean up the slop in src/lib/billing".
 ---
 
@@ -168,6 +168,7 @@ Each entry names a file, what it holds, and who gets it:
 - `work-contract.md`: the contract template orc fills in during **Make it buildable**. Orc only; the filled contract (`<scratchpad>/contract.md`) goes to every builder, `design-reviewer`, `scope-reviewer`, and the `verifier`.
 - `design-brief.md`: the brief template for structural tasks. Goes to the task's builder in brief mode and `design-reviewer`.
 - `your-call.md`: what a run settles itself and what it hands back, the toss-up test, the reserved calls, and the **Your call** card. Orc only; `/orc-loop` also gives it to its triage agents.
+- `update-check.md`: the check for a newer pack release and its one report line. Orc reads and runs it itself in **9. Report**; `/orc-loop`, `/orc-rush`, and `/orc-review` run it for their own reports.
 
 Pass each agent only the files whose entry names it and that apply to the task. **The `verifier` gets the union of the files the reviewers who raised findings were given**, because it can only confirm "a documented rule was broken" against the rule itself. The repo's own docs and established patterns outrank every one of these files, and each file says so; a client repo's existing structure is followed, never reshaped.
 
@@ -265,9 +266,9 @@ Per task, in order. **Never dispatch builders in parallel** — concurrent write
 
 **Every dispatch carries the standards set.** Pass each agent the absolute paths of the standards files and playbooks that **Standards** lists for it, and tell it to read them before starting. That one habit is what makes the builders and the reviewers hold the same bar. Every builder dispatch also carries the path to `builder-contract.md`, which the builder reads first.
 
-**Design first — structural tasks only.** Dispatch the task's builder in `brief` mode (`ui-implementer` on Fable 5.1, any other builder at `high` effort; see **Model selection**) with the `design-brief.md` template, the contract's path and the criteria the task owns, and an output path outside the repo (`<scratchpad>/task-<n>-brief.md`). Then dispatch the `design-reviewer` (at `high` effort) with the brief's path, the contract's path, the criteria the task owns verbatim, and its standards. On `REVISE`, send the requested changes back to the same builder in `brief` mode and review once more. A second `REVISE` on the same blocker is a real design disagreement: decide it yourself — the reviewer's position unless the brief's evidence is stronger (always the reviewer's in efficiency mode) — and record the call. The build-mode builder then gets the brief **plus your decided changes, marked binding**, so it never builds the unrevised plan. The approved brief (with any binding changes) is the task's design spec from here on. Trivial and standard tasks skip this step.
+**Design first — structural tasks only.** Dispatch the task's builder in `brief` mode (at `high` effort; see **Model selection**) with the `design-brief.md` template, the contract's path and the criteria the task owns, and an output path outside the repo (`<scratchpad>/task-<n>-brief.md`). Then dispatch the `design-reviewer` (at `high` effort) with the brief's path, the contract's path, the criteria the task owns verbatim, and its standards. On `REVISE`, send the requested changes back to the same builder in `brief` mode and review once more. A second `REVISE` on the same blocker is a real design disagreement: decide it yourself — the reviewer's position unless the brief's evidence is stronger (always the reviewer's in efficiency mode) — and record the call. The build-mode builder then gets the brief **plus your decided changes, marked binding**, so it never builds the unrevised plan. The approved brief (with any binding changes) is the task's design spec from here on. Trivial and standard tasks skip this step.
 
-**Dispatch the task's builder** (in `build` mode, on the model and effort **Model selection** names: its frontmatter by default, Fable 5.1 for `ui-implementer` on a structural task, and `low` effort for a trivial task unless `data-implementer` builds it). Record `git rev-parse HEAD` first; the reviewers need the base. The dispatch carries:
+**Dispatch the task's builder** (in `build` mode, on the model and effort **Model selection** names: its frontmatter by default, and `low` effort for a trivial task unless `data-implementer` builds it). Record `git rev-parse HEAD` first; the reviewers need the base. The dispatch carries:
 
 - One line on where this task sits in the larger work, and the task's size.
 - The acceptance criteria the task owns, **quoted from the contract, not paraphrased**, with the test each one names, and the contract's path. The builder writes those tests first and shows each one failing before it writes the change.
@@ -422,6 +423,8 @@ The deployment note keeps the close honest where a release branch is what ships.
 
 ### 9. Report
 
+First run the update check in `update-check.md` (see **Standards**). It takes one command and at most one network call a day, and a newer release becomes the last **Heads-up** line.
+
 Lead with what you picked and did, in the voice from **How you communicate**. Evidence and reasoning belong in issue comments, where they persist; the chat report is state and next action — a paragraph explaining a query you ran is an issue comment you forgot to post.
 
 Use these headings, in this order. Drop any section that's empty, and drop every line that would only say there is nothing to report: no "Deploy notes: none", no "Your call: Nothing."
@@ -457,11 +460,10 @@ Everything the user reads — the pick line, mid-run assumptions, the report, th
 
 Each agent's frontmatter pins its calibrated model and `effort`. Every agent runs on Opus 5.5 (`claude-opus-5-5`) except `test-coverage-reviewer` (Sonnet 5.5, `claude-sonnet-5-5`) and the tooling runners `lint`, `typecheck`, `test`, `impact`, `usages`, and `fallow` (Haiku). A dispatch's `model` overrides the frontmatter, takes only a family alias (`opus`, `sonnet`, `haiku`, or `fable`), and resolves to the session's own model when the session is in that family. A dispatch's `effort` also overrides the frontmatter (Claude Code v2.1.292 and later; an older version ignores it and the frontmatter level applies).
 
-- **Leave `model` off every dispatch whose frontmatter is already right**, which is almost every dispatch. Pass an alias only to move an agent: `sonnet` for an efficiency-mode move, and `fable` for a structural UI task or a round-three fix. Never pass `opus`. State the model each dispatch runs on, so the run is legible.
+- **Leave `model` off every dispatch whose frontmatter is already right**, which is almost every dispatch. Pass an alias only to move an agent: `sonnet` for an efficiency-mode move, and `fable` for a round-three fix. Never pass `opus`. State the model each dispatch runs on, so the run is legible.
 - **Don't move an agent to Sonnet 5.5 outside Efficiency mode.** Opus 5.5 at `low` outscores Sonnet 5.5 at `medium` for about the same cost per task, and Opus 5.5 at `medium` ties Sonnet 5.5 at `xhigh` for half of it, so a move saves money only by giving up quality, which is the trade only that mode makes.
 - **Security review and verification always stay on Opus 5.5**, even when a builder ran on a stronger model, and in efficiency mode.
-- **Fable 5.1 (`claude-fable-5-1`) only where it beats Opus 5.5.** Opus 5.5 matches or beats Fable 5.1 on coding at a fraction of the cost, so Fable gets two jobs:
-  - **Structural UI tasks:** dispatch `ui-implementer` with `model: fable` for the brief and the first build of a structural task, the new screens and UI features where visual direction is decided. Fable's edge is open-ended visual design: hierarchy, typography, spacing, and a look that isn't templated. Standard and trivial UI tasks extend an existing design and stay on Opus 5.5, and so do the fix rounds.
+- **Fable 5.1 (`claude-fable-5-1`) only where it beats Opus 5.5.** Opus 5.5 matches or beats Fable 5.1 on coding at a fraction of the cost, so Fable gets one job. UI tasks, structural ones included, stay on Opus 5.5 like every other build.
   - **Round three of a fix loop:** if a Blocker survives two fix rounds, run round three on the task's same builder with `model: fable`, for a second model's look at work Opus keeps getting wrong. Fable tends to cut corners to get tests passing, so a round-three fix that weakens, skips, or deletes a test or assertion is itself a Blocker.
 - **A forced subagent model overrides all of this.** See the forced-model check in **Preflight**.
 
@@ -473,7 +475,7 @@ Anthropic's `opusplan` pairs Opus for planning with Sonnet for execution: think 
 - **`low`** for the build of a trivial task: a precisely described, mechanical edit.
 - **Frontmatter** for everything else: the build of a standard or structural task, fix round one, every reviewer, the `verifier`, the scout, and the runners.
 - **Never lower** `security-reviewer`, `verifier`, or `data-implementer` below their frontmatter effort.
-- **Fable dispatches carry no `effort`.** Fable's own default applies to the structural UI brief and build and to round three.
+- **Fable dispatches carry no `effort`.** Fable's own default applies to round three.
 
 ### Efficiency mode
 
@@ -484,8 +486,7 @@ Efficiency mode runs only on a Sonnet 5.5 session whose user confirmed it in **P
 - `next-issue-finder`, at its frontmatter `low` effort, because a wrong pick costs a cycle, not a commit. You still check its pick in **Make it buildable**.
 - A builder's **first fix round**, with `effort: high`, when the verified findings hold no Blocker and nothing from `security-reviewer`, and the builder isn't `data-implementer`. Sonnet 5.5 is competitive at `high` and weak at the Opus-calibrated `medium` its frontmatter would otherwise give it. The scoped re-review after it always includes `quality-reviewer` when the fix changed source code, so an Opus 5.5 lane confirms the fix.
 
-Everything else keeps its frontmatter model: every reviewer, the `verifier`, `data-implementer`, the build of every task and every brief, and every later fix round, with round three following the Fable rule above. A trivial build stays on Opus 5.5 at `low` effort, which costs less than Sonnet 5.5 at `high`. A structural UI task also stays on Opus 5.5 in this mode, without the Fable move.
-
+Everything else keeps its frontmatter model: every reviewer, the `verifier`, `data-implementer`, the build of every task and every brief, and every later fix round, with round three following the Fable rule above. A trivial build stays on Opus 5.5 at `low` effort, which costs less than Sonnet 5.5 at `high`.
 **Leave more decisions to Opus agents:**
 
 - **Consult the advisor when one is on.** If an advisor tool is available in this session, consult it before you write the contract and before the final report. It is the Opus check on your own calls; Anthropic's docs pair a Sonnet main model with an Opus advisor for this reason. It is experimental and Anthropic-API only, so the mode works the same without it: when no advisor tool is available, skip this, and never tell the user to run a command mid-run.

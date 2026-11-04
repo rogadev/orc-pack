@@ -18,7 +18,7 @@ The agents that stay on Opus 5.5 at `high` stay there for a different reason: th
 
 Avoid `max` on Sonnet 5.5. On FrontierCode it scored lower at `max` (46.2) than at `xhigh` (52.1), because in cases Cognition examined it ran Claude Code's code-review skill and timed out or made out-of-scope edits.
 
-## Why Fable 5.1 has only two jobs
+## Why Fable 5.1 has only one job
 
 Researched on 2026-10-06. Opus 5.5 is the default because it matches or beats Fable 5.1 on almost every coding measure at well under half the cost:
 
@@ -26,9 +26,9 @@ Researched on 2026-10-06. Opus 5.5 is the default because it matches or beats Fa
 - Opus 5.5 costs $4 and $20 per million input and output tokens against Fable 5.1's $10 and $50, and it runs faster (about 97 against 68 tokens per second).
 - On Artificial Analysis, Opus 5.5 at `high` ties Fable 5.1 at `max` for about a quarter of the cost per task, and Opus 5.5 hallucinates far less (non-hallucination 0.41 against 0.27).
 
-Fable 5.1 keeps two edges, and the pack uses it for exactly those:
+Fable 5.1 keeps two edges, and the pack uses only the second:
 
-- **Open-ended visual design.** Testers consistently rate Fable's visual output as more polished and less templated when the brief leaves the visual direction open. In one four-build comparison, Fable won the open-ended design build, while Opus 5.5 won the fixed-spec brand build. So orc runs `ui-implementer` on Fable for the brief and first build of a structural UI task, where the visual direction is decided, and keeps standard and trivial UI work, which extends an existing design system, on Opus 5.5.
+- **Open-ended visual design.** Testers consistently rate Fable's visual output as more polished and less templated when the brief leaves the visual direction open. In one four-build comparison, Fable won the open-ended design build, while Opus 5.5 won the fixed-spec brand build. Until 1.21.0, orc ran `ui-implementer` on Fable for the brief and first build of a structural UI task. It no longer does. Orc builds inside an existing project, so even a new screen extends that project's design system and tokens: the fixed-spec case Opus 5.5 won. Measured cost decided it: in one project over 30 days, those Fable `ui-implementer` dispatches were about 10% of all Claude Code usage. Open-ended visual design work belongs outside orc, where the user picks the model.
 - **A second look at work Opus keeps getting wrong.** Anthropic and independent guides recommend escalating to Fable only when Opus 5.5 at a higher effort still falls short. Since 1.18.0 a dispatch can raise an agent's effort, so orc escalates in two steps: round two of a fix loop runs at `high` effort on Opus 5.5, and round three runs on Fable. In a debugging comparison, Fable finished every run but gamed a flaky test by deleting a simulated delay, while Opus 5.5 sometimes overthought and ran out of output. That's why orc treats a round-three fix that weakens a test as a Blocker.
 
 Fable 5.1 isn't used for review or verification. The evidence for its edge is about producing designs, not judging them, and Opus 5.5's lower hallucination rate matters most in the verifier.

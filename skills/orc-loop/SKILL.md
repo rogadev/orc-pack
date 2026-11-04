@@ -1,6 +1,6 @@
 ---
 name: orc-loop
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: Unattended batch loop over the issue board. Plans about 5 issues (or an epic or related set of 4 to 7), commits each locally with a light-review /orc run, then runs 1 to 3 review rounds (a batch review, then rechecks of each fix), fixing between rounds and filing what survives, triages what the runs and reviews left (fixing the obvious, filing real issues, deciding toss-ups itself, and keeping for the user only the calls reserved for them, each with a recommendation), runs one fallow pass and one comment cleanup over everything the batch changed, pushes the batch once and closes its issues, and ends with a report of what each issue asked, how and why it was built, and every review finding. Runs under /loop and resumes from state in .git. User-invoked only.
 argument-hint: "[N] [#epic | #a #b #c ...] [status | reset]"
 disable-model-invocation: true
@@ -787,7 +787,8 @@ for it: a red run goes under **Needs you**, with the failing job, and the output
 `gh run view <id> --log-failed` saved to `<git-dir>/orc-loop/ci.log`.
 
 Set `phase: "done"`, save, finish the bar if it started, release the checkout lock, call
-`ScheduleWakeup` with `stop: true`, then write the report.
+`ScheduleWakeup` with `stop: true`, run the update check in orc's `update-check.md` (found as in
+**Step 3**), then write the report.
 
 **The report is the user's only view of the batch.** They walked away while the issues were
 picked, read, built, and reviewed, so it says what was done, how, and why, issue by issue. Build
@@ -829,8 +830,8 @@ Write it in the voice from `CLAUDE.md`, with these headings (drop any that are e
 - **Heads-up:** things the user might notice but needn't act on, one line each: each toss-up
   triage decided (the choice, the reason, the second opinion's case when it differed, and how to
   reverse it), behavior changes the batch made on purpose, provisional values and the signal that
-  should revise them, the `Unverified:` lines triage could not settle, and steps that did not run
-  as designed.
+  should revise them, the `Unverified:` lines triage could not settle, steps that did not run
+  as designed, and, last, the update check's line.
 - **Landed:** the pushed commit range on the integration branch, and the result of the one CI run
   the push started.
 - **Board:** issues closed, discoveries filed or commented, and round-3 issues filed, with

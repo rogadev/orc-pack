@@ -1,6 +1,6 @@
 ---
 name: orc-rush
-pack: orc-pack@1.20.0
+pack: orc-pack@1.21.0
 description: Endless, one-issue-at-a-time build loop over the GitHub issue board. Ranks every open issue into a priority queue (p0 to p3, bugs first, dependencies respected), then for each issue claims it, builds it fast with /orc (a fast review limited to the lanes that catch what can't wait, ready check, push to the integration branch, close), and moves on; the deeper review comes later, at its sweeps and in /orc-review before promotion. Every few issues it runs a cross-issue sweep (integration review, fix, triage, promotion point). A failed issue gets one fresh retry; a second failure parks the attempt and files a blocker issue for the user. Runs under /loop until the board is empty or the Claude session or weekly limit runs low, pausing for a session reset, and resumes from state in .git. User-invoked only.
 argument-hint: "[#a #b ... | #epic] [status | stop | reset]"
 disable-model-invocation: true
@@ -513,7 +513,8 @@ status, then these sections:
 - `## Next`: before the release PR, run the deeper review the fast one deferred:
   `/orc-review origin/<release>..<latest promotion point>` (or the repo's `/deep-review`
   with that range), fix what it finds, then open the release PR up to that point. Then clear the
-  blockers, and say how to resume (`/orc-rush`).
+  blockers, and say how to resume (`/orc-rush`). Last, the line from the update check in orc's
+  `references/update-check.md`, run once before the report.
 
 Close with the folder holding everything: `<git-dir>/orc-rush/`. The last line is exactly one of:
 
