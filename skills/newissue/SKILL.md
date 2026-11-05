@@ -1,7 +1,7 @@
 ---
 name: newissue
 pack: orc-pack@1.22.0
-description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
+description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, sizes each issue (Small, Medium, Large, Huge), then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
 ---
 
 # New Issue
@@ -23,7 +23,7 @@ You turn a rough idea into a GitHub issue that stands entirely on its own. The t
 
 ## House rules (per-repo config)
 
-This skill is the engine and is identical in every repo. Per-repo specifics — the label and `[TYPE]` tag vocabulary, milestones or a project board, required extras, issue tone — live outside it. Honour the first that exists:
+This skill is the engine and is identical in every repo. Per-repo specifics — the label and `[TYPE]` tag vocabulary, a size scale (labels, a project field, or a mapping from the four size bands), milestones or a project board, required extras, issue tone — live outside it. Honour the first that exists:
 
 1. `.claude/newissue.local.md` in the repo root.
 2. A `## New issue house rules` (or clearly equivalent) section in the repo's `AGENTS.md` or `CLAUDE.md`.
@@ -68,13 +68,28 @@ Two passes, both required.
 
 **Do not close or edit other issues.** Flag them; that call is the user's.
 
-### 4. Decide the shape: one issue, several, or an epic
+### 4. Size the work, then decide the shape: one issue, several, or an epic
 
-Size for the executor: each filed issue should be a unit one autonomous agent run can carry to done. Two reasons to split, one reason to go bigger:
+Size for the executor: each filed issue should be a unit one autonomous agent run can carry to done. Size the whole idea first with these four bands — the same bands `/orc` uses for follow-up work and reads back from issue bodies to set its run budget. Size by scope, never by guessed hours. When in doubt between two bands, take the larger.
+
+- **Small** — one focused task: a single fix or change with one or two "Done when" lines.
+- **Medium** — one dedicated agent run of 2 to 4 tasks.
+- **Large** — several runs. Usually needs a spec.
+- **Huge** — an epic. Needs a plan before anyone starts.
+
+The band decides the shape:
+
+- **Small or Medium** → one issue.
+- **Large** → several cross-linked issues, each Small or Medium. If it can't be split yet because the design is unknown, file one Medium issue whose deliverable is the spec, and name the build as the next step.
+- **Huge** → an epic.
+
+Never file a single non-epic issue sized Large or Huge. After splitting, size each piece on its own; a piece that still comes out Large gets split again. Unrelated work bundled in one seed is split regardless of size (below).
+
+Two reasons to split, one reason to go bigger:
 
 - **One issue** — a single coherent unit with one "Done when", small enough for one run. The common case.
 - **Several issues** — either the seed bundles unrelated work (a bug _and_ a feature — two pieces in one issue wrecks board tracking), or it's one coherent fix or feature that's simply too large for a single run. Split the large one by aspect, each issue self-contained with its own "Done when", cross-linked with `#NNN`; when one must land first, say so (`Blocked by #NNN`).
-- **An epic** — work so large and interconnected it needs a roadmap (a sweeping refactor, a multi-stage migration). File a parent tagged `[EPIC]` (matching the repo's convention) whose body is the plain-language goal, the why, and a task list of the children **in execution order — the list is the roadmap**; file each child as its own self-contained issue, linked both ways (`Part of #NNN` / `- [ ] #NNN`), then attach each child to the epic as a native **sub-issue** (step 8) so the epic shows a progress bar. Never mark the epic "blocked by" its own children; the sub-issue link already says that, and the epic is done when every sub-issue is closed. "See the epic" is not context. Don't manufacture an epic for an ordinary multi-file change — two cross-linked issues beat a ceremony parent.
+- **An epic** — work so large and interconnected it needs a roadmap (a sweeping refactor, a multi-stage migration). File a parent tagged `[EPIC]` (matching the repo's convention) whose body is the plain-language goal, the why, and a task list of the children **in execution order — the list is the roadmap**; file each child as its own self-contained issue, linked both ways (`Part of #NNN` / `- [ ] #NNN`), then attach each child to the epic as a native **sub-issue** (step 8) so the epic shows a progress bar. Never mark the epic "blocked by" its own children; the sub-issue link already says that, and the epic is done when every sub-issue is closed. **Size the children, not the epic:** each child carries its own size band (step 5) and size label (step 6); the epic carries neither, so board filters and sums never count the work twice. Instead, each line of the epic's task list shows the child's band (`- [ ] #NNN (Medium)`), and the list ends with a one-line roll-up, for example "4 sub-issues: 2 Small, 2 Medium". "See the epic" is not context. Don't manufacture an epic for an ordinary multi-file change — two cross-linked issues beat a ceremony parent.
 
 ### 5. Write for a stranger
 
@@ -86,6 +101,7 @@ Zero conversation context:
 **Required content** — headings adapt to type (a bug leads with what breaks and how to reproduce, a feature with the need, a chore with what's accumulated and why now). Drop a section rather than pad it — but if you're dropping "Evidence" or "Done when", you haven't investigated enough.
 
 - **Summary (plain language)** — the _first_ paragraph of the body, no heading above it, so the board reader always finds it in the same place. One short paragraph a PM with no engineering background grasps at a glance: what this is and why. No paths, symbols, or jargon — those begin in the next section. For a bug: the effect and the stakes in ordinary terms, not the mechanism.
+- **Size band** — its own line directly after the summary, on every issue except an epic: `**Size band:** <Small|Medium|Large|Huge> (<one clause naming the scope>)`, for example `**Size band:** Medium (two endpoints and their tests, one run)`. The clause names scope, never hours. Keep this exact format; `/orc` reads it to set a run's budget.
 - **What** — the concrete situation in full technical detail. This is where the symbols and paths begin. No hedging.
 - **Why it matters** — the consequences, numbered by severity when there's more than one.
 - **Evidence** — `file:line`, real command output in fenced blocks, error IDs, Sentry links, commit SHAs. Show the thing; don't describe having seen it. For anything visual, describe it in text precise enough to stand in for a screenshot: the page or URL, viewport width and theme, the steps to reach the state, what appears (element, position, text, color), and what should appear instead. Quote on-screen text and error messages exactly.
@@ -105,6 +121,14 @@ Match the repo's prevailing tone; read a recent well-written issue if one exists
   - Plain words: what's affected and what's happening, never the symbol, file, status code, or mechanism.
   - Still a specific claim, not a topic. `[BUG] Several tools break on the deployed site` works for both readers; `[BUG] PR deploy: health dots red + multiple tools 500 (likely env/egress in pr-7f3a1c)` loses the board reader; `[BUG] Deploy issue` is a topic and helps no one.
 - **Labels** — only from `gh label list` (or the house-rules set); never invent one. The type label must agree with the title tag; add the area label when one fits; priority only when genuinely obvious — a guessed priority is worse than none. Nothing fits → file unlabelled.
+- **Size label or field** — the body's size band is the source of truth; copy it onto the project's own size scale only when one already exists. Use the first that matches:
+  1. **House rules** that name a size convention (labels, a project field, or a band mapping) — follow them exactly.
+  2. **Size labels already in `gh label list`** — patterns such as `size/<x>`, `size: <x>`, `size-<x>`, `effort/<x>`, `effort: <x>`, `estimate: <x>`, or bare `XS`/`S`/`M`/`L`/`XL`. Map Small → S, Medium → M, Large → L, Huge → XL. A three-value scale (for example `effort: low/medium/high`) maps Small → low, Medium → medium, Large → high. Use a value below S (such as XS) only when the house rules say so.
+  3. **A Projects (v2) Size or Estimate single-select field**, only on the project the house rules name — set it with `gh project item-edit` after `gh project item-add`.
+  4. **Nothing matches** → the body line only. Never create a size label or field.
+
+  A numeric scale (story points, hours) is set only from an explicit house-rules mapping; never guess a number. An epic gets no size label or field value.
+
 - **Milestone & project** — apply what the house rules name (`--milestone`, `gh project item-add`); if the repo uses neither, skip.
 - **Assignee** — `@me`.
 - **Links** — related issues (`#12`), the PR or commit that introduced the code, inline where relevant.
@@ -119,7 +143,8 @@ Match the repo's prevailing tone; read a recent well-written issue if one exists
 6. Title type-tagged and a specific claim, and title and first paragraph plain enough for a PM with zero technical background?
 7. Shape: genuinely one issue, or did a second issue or an epic get smuggled in?
 8. Type label agrees with the title tag; priority obvious or absent?
-9. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked, in the body and as native links (sub-issues for an epic's children, blocked-by for real ordering)?
+9. Sized: every issue except an epic has a `**Size band:**` line right after the summary; no non-epic issue is Large or Huge; an epic's task list shows each child's band and a roll-up; any size label or field value comes from the project's existing scale and agrees with the band?
+10. Blocked-by / blocks / would-be-resolved-by relationships surfaced and linked, in the body and as native links (sub-issues for an epic's children, blocked-by for real ordering)?
 
 Fix inline. Then file.
 
@@ -132,7 +157,8 @@ gh issue create \
   --title "<title>" \
   --body-file "<scratchpad>/issue-body.md" \
   --assignee @me \
-  --label "<label>"
+  --label "<label>" \
+  --label "<size label, only when step 6 found one>"
 ```
 
 Then set GitHub's native relationships, which the board shows and the text links don't. Both endpoints take the other issue's numeric `id`, not its number:
@@ -150,7 +176,7 @@ gh api -X POST "repos/<owner>/<repo>/issues/<later>/dependencies/blocked_by" -F 
 
 Keep the `Part of #NNN` and `Blocked by #NNN` text in the bodies as well; tools that read issue text, such as `/orc`, rely on it. Read the links back (`GET .../sub_issues`, `GET .../dependencies/blocked_by`) to confirm them, because both POSTs answer with the issue being edited, not the link.
 
-Report the URL back.
+Report the URL back, with each issue's size band.
 
 ## The one stop condition
 

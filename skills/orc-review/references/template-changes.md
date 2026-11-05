@@ -1,6 +1,6 @@
 # Review template changes
 
-**Current review template: 3.**
+**Current review template: 4.**
 
 The review template is `profile-template.md` and `lane-template.md` together: the shape of a project's profile and of its repo lanes. Its number moves only when a change would make an existing profile or lane read differently or miss something, which is rare; pack releases that change anything else leave it alone. It is not the pack version.
 
@@ -35,3 +35,9 @@ Each section below lists, for one template version, what an existing profile or 
 - **3.5 Repo lanes `always`:** a **Runs when** of `always` means whenever one of the lane's risk-map rows matches; rewrite a blank cell or an equivalent condition to it.
 - **3.6 Lane brief and report:** rewrite each repo lane's **Your brief** and **Report** to the current `lane-template.md`: it reads code in `Tree` when present, `Project` and `Ownership` arrive as files, it cites lines in the file, never in the diff, calls only added lines introduced, names unread files under `Not read:`, and honours a fixed severity. Delete facts the profile's Platform constraints or Architecture hold from the lane body.
 - **3.7 Local workarounds:** remove patches a profile or lane added for 1.20.0's gaps (a **Local workarounds** or **Workflow notes** section, `Tree:` and `Base:` paragraphs, line-number rules) that this template now covers, and keep any it doesn't.
+
+## Template 4 (orc-review 1.22.0)
+
+**Summary:** repo lanes write their findings to a report file and reply with one line, so the verifier reads them and orc-review never relays them.
+
+- **4.1 Report file:** give each repo lane the `Write` tool, limited in its **Read-only** paragraph to the brief's `Report` file, add `Report` to **Your brief**, and rewrite its **Report** section to the current `lane-template.md`: findings go to the file, and the reply is one line with the counts and the path. A lane left as it is still works: orc-review passes its reply to the verifier, at the cost of the orchestrator copying the findings.

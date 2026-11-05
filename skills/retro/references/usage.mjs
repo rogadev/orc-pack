@@ -70,15 +70,39 @@ if (projectDirs.length === 0) {
   process.exit(1);
 }
 
+// Reads one transcript, dropping lines that only repeat earlier content. `api-request-blob`
+// lines re-send earlier messages with no timestamp, and any other repeat would count a tool
+// call twice, so each tool_use id and each tool_result's tool_use_id is kept once per file.
 function readLines(file) {
   const out = [];
+  const seenTools = new Set();
   for (const line of fs.readFileSync(file, "utf8").split("\n")) {
     if (!line) continue;
+    let o;
     try {
-      out.push(JSON.parse(line));
+      o = JSON.parse(line);
     } catch {
       // A line cut off by a crash or a session still writing; skip it.
+      continue;
     }
+    if (o.type === "api-request-blob") continue;
+    const content = o.message?.content;
+    if (Array.isArray(content)) {
+      o.message.content = content.filter((c) => {
+        const id =
+          c.type === "tool_use"
+            ? c.id
+            : c.type === "tool_result"
+              ? c.tool_use_id
+              : null;
+        if (!id) return true;
+        const key = `${c.type}:${id}`;
+        if (seenTools.has(key)) return false;
+        seenTools.add(key);
+        return true;
+      });
+    }
+    out.push(o);
   }
   return out;
 }
@@ -323,12 +347,15 @@ function summarizeSession(file) {
   const timeline = [];
   const dispatches = [];
   let wakeups = 0;
-  let compactions = 0;
+  // A compaction writes a boundary line and then a summary line; count the boundaries, and fall
+  // back to the summaries only for a transcript that has none.
+  let boundaries = 0;
+  let summaries = 0;
   let models = new Set();
   for (const o of lines) {
     if (o.type === "system" && /compact/i.test(o.subtype ?? ""))
-      compactions += 1;
-    if (o.isCompactSummary) compactions += 1;
+      boundaries += 1;
+    if (o.isCompactSummary) summaries += 1;
     if (o.type === "assistant" && o.message?.model) models.add(o.message.model);
     for (const c of contentBlocks(o)) {
       if (c.type !== "tool_use") continue;
@@ -389,8 +416,9 @@ function summarizeSession(file) {
     main: { usage: main, weighted: weighted(main) },
     subagentWeighted: dispatches.reduce((n, d) => n + d.weighted, 0),
     dispatchCount: dispatches.length,
+    subagentTranscripts: subagents.size,
     wakeups,
-    compactions,
+    compactions: boundaries || summaries,
     toolErrors: [...errorsById.values()].slice(0, 20),
     toolErrorCount: errorsById.size,
     repeatedDispatches: retries,
@@ -493,7 +521,7 @@ const all = sessions.flatMap((s) =>
 md.push("", "## Costliest dispatches", "");
 for (const d of all.sort((a, b) => b.weighted - a.weighted).slice(0, 15)) {
   md.push(
-    `- ${d.session} ${d.time?.slice(11, 16)} ${d.agentType} (${d.model ?? "?"}): ${oneLine(d.description, 80)} - ${fmt(d.weighted)} wtok, ${d.toolCalls} tool calls, ${d.seconds}s`,
+    `- ${d.session} ${d.time?.slice(11, 16) ?? "--:--"} ${d.agentType} (${d.model ?? "?"}): ${oneLine(d.description, 80)} - ${fmt(d.weighted)} wtok, ${d.toolCalls} tool calls, ${d.seconds}s`,
   );
 }
 
@@ -502,6 +530,10 @@ for (const s of sessions) {
   md.push(`### ${s.id.slice(0, 8)}`, "");
   md.push(`- Status: ${s.status.length ? s.status.join(" / ") : "none found"}`);
   md.push(`- Models: ${s.models.join(", ") || "unknown"}`);
+  if (s.dispatchCount > s.subagentTranscripts)
+    md.push(
+      `- Check the counts: ${s.dispatchCount} dispatches but ${s.subagentTranscripts} subagent transcripts. Either some agents left no transcript, or the transcript format repeats tool calls in a way this script doesn't drop.`,
+    );
   if (s.repeatedDispatches.length)
     md.push(
       `- Repeated dispatches (same agent and description): ${s.repeatedDispatches.length}: ${[

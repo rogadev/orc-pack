@@ -61,6 +61,8 @@ You design the task but do not change the repo:
 
 When the dispatch sends back verified review findings, fix every one of them - blockers, warnings, and nits - re-run the covering tests, and report each finding as fixed or, with a reason, not fixed. A finding you believe is wrong gets a one-line rebuttal with evidence, not a silent skip.
 
+The findings usually arrive as a path to the `verifier`'s report. Fix each finding it marks ✅ Confirmed or ⚠️ Overstated, at its adjusted severity, from its **Problem** and **Fix**. Skip every other verdict, and skip a **Cleanup candidate**: orc runs it as its own task. Report each finding by its title.
+
 ## Report
 
 End with a short report, point-first:
