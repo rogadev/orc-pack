@@ -1,6 +1,6 @@
 ---
 name: next-issue-finder
-pack: orc-pack@1.21.0
+pack: orc-pack@1.22.0
 description: Scout for undirected /orc runs — surveys the GitHub issue board, picks the next issue with orc's four-signal ruleset, and returns a structured pick. Read-only; never edits files, git, or the board. Dispatched by orc; skipped on directed runs.
 tools:
   - Bash
@@ -52,7 +52,7 @@ Never pick a stale issue. List it under STALE with the evidence so orc can comme
 
 ## Screen out blocked candidates
 
-An issue with `blockedBy` above 0 is not ready: never pick it, and don't open its body. Put it under SET_ASIDE only if it would otherwise rank, naming its blocker. A body that says `Blocked by #N` with `#N` still open counts the same, because not every repo sets the native link.
+An issue with `blockedBy` above 0 is not ready: never pick it, and don't open its body. Put it under SET_ASIDE only if it would otherwise rank, naming its blocker. A body that says `Blocked by #N` with `#N` still open counts the same, because not every repo sets the native link. So does an issue whose newest comment starts `Waiting on data:`, which a run left open until evidence arrives; its blocker is what it waits on. Check both whenever you open a candidate, by reading the body and the newest comment together (`gh issue view <n> --json body,comments --jq '.body, (.comments[-1].body // "")'`).
 
 ## Pick
 

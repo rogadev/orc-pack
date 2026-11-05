@@ -3,6 +3,8 @@ name: deep-review
 description: Deep review of a branch or range in <project> (<framework> on <platform>), sized to what changed. Use when the user says "/deep-review", "review my branch", "review dev before the PR", or "is this ready to merge".
 argument-hint: "[ref | a..b | #PR | working] [quick | full] [auto]"
 based-on: orc-review@<version>
+template: <current review template number from template-changes.md>
+template-reviewed: <the same number>
 ---
 
 # Deep review: <project>
@@ -83,3 +85,7 @@ A bullet that starts with `Blocker:` or `Warning:` fixes the severity of a findi
 ## Report destination
 
 <Optional. A gitignored folder the report is copied to, for example `tmp/reviews/`, and a command that records each review, for example a ledger script. Delete the section to keep the report in the scratch folder only.>
+
+## Declined template changes
+
+<Written by `/orc-review setup` only, and never read by the review. One line per review template change the user chose not to apply, so no later refresh proposes it again: `- <id> <title>: <the user's reason, or "no reason given">, <yyyy-mm-dd>`, with the id from `orc-review/references/template-changes.md`. Delete a line to have the next refresh offer that change again. Delete the section when it is empty.>

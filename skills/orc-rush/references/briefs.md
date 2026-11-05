@@ -86,7 +86,7 @@ For the other lanes, a problem inside a single change is in scope only if it is 
 Commits in the diff that the map does not list are another session's: context, never findings.
 Read whole files only when a hunk cannot be judged without them.
 For each finding give file, line, severity (Blocker, Warning, or Nit), the issues involved, the
-problem, and the fix.
+problem, and the fix, written to your Report file; reply with one line: your counts and the path.
 ```
 
 ## Recheck brief
@@ -95,11 +95,13 @@ problem, and the fix.
 Goal: confirm a fix. The findings below were reported and an /orc run has fixed them.
 Diff of the fix: <D>/fix-<r>/diff.patch
 Changed files: <D>/fix-<r>/files.txt
-Previous findings: <the sweep report path> (your lane's Blockers and Warnings)
+Previous findings: <the sweep's latest verified file> (your lane's kept Blockers and Warnings)
+Report: <D>/fix-<r>/<lane>.md
 
-For each of your lane's Blocker and Warning findings, answer RESOLVED or OPEN, with one line of
-evidence (file and line). Then report any new problem the fix introduced, in the fix's lines
-only, with file, line, severity, problem, and fix. Nothing outside the fix diff is in scope.
+For each of your lane's Blocker and Warning findings, write RESOLVED or OPEN to Report, with one
+line of evidence (file and line). Then write any new problem the fix introduced, in the fix's
+lines only, with file, line, severity, problem, and fix. Nothing outside the fix diff is in scope.
+Reply with one line: the OPEN count, the new findings' counts, and the path.
 ```
 
 ## Triage brief

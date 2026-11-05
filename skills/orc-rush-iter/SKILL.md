@@ -1,6 +1,6 @@
 ---
 name: orc-rush-iter
-pack: orc-pack@1.21.0
+pack: orc-pack@1.22.0
 description: One /orc run inside an /orc-rush loop, with a fast review whose skipped lanes the loop's sweeps and /orc-review cover later. Invoked only by /orc-rush; standalone work uses /orc.
 user-invocable: false
 ---
@@ -12,6 +12,10 @@ You run one `/orc` run inside an `/orc-rush` loop: an issue build, a sweep fix, 
 **Only `/orc-rush` runs this.** Its invocations contain `(the caller holds the checkout lock)`. When your arguments don't, stop and tell the user to run `/orc` instead, which keeps its full review.
 
 **Start orc.** Invoke the `orc` skill with your arguments exactly as you received them, caller notes included, and run it with the changes below. They come from the user and outrank orc's own rules for this run.
+
+## Waiting
+
+While agents run, the loop's `ScheduleWakeup` heartbeat (`delaySeconds: 3000`, once per wait) replaces orc's shell timer: never start a background `sleep`, which would keep waking the session after the loop stops. A completion notice while other agents still run leaves the heartbeat alone, and you never stop it (`stop: true` ends the loop): the loop's next `ScheduleWakeup` replaces it.
 
 ## Scope
 

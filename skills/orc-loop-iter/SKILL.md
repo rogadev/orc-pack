@@ -1,6 +1,6 @@
 ---
 name: orc-loop-iter
-pack: orc-pack@1.21.0
+pack: orc-pack@1.22.0
 description: One /orc run inside an /orc-loop batch, with a lighter per-task review whose skipped lanes the loop runs once over the whole batch. Invoked only by /orc-loop; standalone work uses /orc.
 user-invocable: false
 ---
@@ -13,6 +13,10 @@ You run one `/orc` run inside an `/orc-loop` batch: an issue build, a review fix
 
 **Start orc.** Invoke the `orc` skill with your arguments exactly as you received them, opt-in words and caller notes included, and run it with the changes below. They outrank orc's own rules for this run, as the loop's overrides in its **Build one issue** step do.
 
+## Waiting
+
+While agents run, the loop's `ScheduleWakeup` heartbeat (`delaySeconds: 3000`, once per wait) replaces orc's shell timer: never start a background `sleep`, which would keep waking the session after the loop stops. A completion notice while other agents still run leaves the heartbeat alone, and you never stop it (`stop: true` ends the loop): the loop's next `ScheduleWakeup` replaces it.
+
 ## Why the review is split
 
 A defect in an early issue spreads when a later issue builds on it: a misplaced module, a wrong contract, an untested module the next issue changes, a sloppy pattern the next builder copies as the house style, or a gap in a trust boundary. The per-task review keeps every lane that catches those. The lanes whose findings nothing later builds on run once over the whole batch instead, in the loop's round 1, its fallow pass, and its comment cleanup, so the batch pays for them once rather than once per task.
@@ -23,7 +27,7 @@ This list replaces orc's step 5 reviewer selection for a standard or structural 
 
 - `quality-reviewer`: as orc dispatches it, and it also takes the light comment pass (below).
 - `scope-reviewer`: as orc. It is the only lane that holds the diff to this run's contract, and the contract does not outlive the run.
-- `architecture-reviewer`, `ui-reviewer`, and `security-reviewer`: as orc.
+- `architecture-reviewer`, `ui-reviewer`, and `security-reviewer`: as orc, except that when your arguments contain `(the app can't be rendered locally: <reason>)`, `ui-reviewer` is told to review statically, with that reason.
 - `fallow`: skip. The loop's fallow pass runs once over everything the batch changed, just before its comment cleanup.
 - `test-coverage-reviewer`: as orc, except skip it on a standard task when your arguments contain `(the batch's issues are independent)`: the loop picked those issues to avoid sharing files, so no later issue is meant to build on this one's code, and the loop's round 1 checks its coverage once. `scope-reviewer` still checks each criterion's test.
 - `comment-reviewer`: skip. The loop's comment cleanup reads every file the batch changed, once, after the last fix.
@@ -43,7 +47,7 @@ Skip orc's **Land it** whole: no fetch or catch-up, no push, no CI lookup, and n
 The loop builds its final report from these runs' reports, so add two sections to orc's step 9 report, and skip its update check: the loop runs it once for the batch. Write each line in plain language a user who never saw the run can follow.
 
 - **Approach**, right after **Picked**: what the work asked for, in one line; what you built and where, from the contract's restatement; each decision orc's **Make it buildable** step made (a split, a provisional value, or the reading you chose when the work meant two things), with its reason; and what the premise check found when the code disagreed with the issue.
-- **Review**, right after **Landed**: the lanes that ran and the number of fix rounds; then one line per confirmed Blocker and Warning, with a title, the lane that raised it, and its outcome (fixed in round N, or still open); then the Nits as a count only.
+- **Review**, right after **Landed**: the lanes that ran and the number of fix rounds; then one line per confirmed Blocker and Warning, read from the verifier's files, with a title, the lane that raised it, and its outcome (fixed in round N, or still open); then the Nits as a count only; and when a `ui-reviewer` visual pass was skipped, `UI not rendered: <reason>`, from its reply.
 
 ## Fixes from a loop report
 

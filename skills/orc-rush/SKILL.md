@@ -1,6 +1,6 @@
 ---
 name: orc-rush
-pack: orc-pack@1.21.0
+pack: orc-pack@1.22.0
 description: Endless, one-issue-at-a-time build loop over the GitHub issue board. Ranks every open issue into a priority queue (p0 to p3, bugs first, dependencies respected), then for each issue claims it, builds it fast with /orc (a fast review limited to the lanes that catch what can't wait, ready check, push to the integration branch, close), and moves on; the deeper review comes later, at its sweeps and in /orc-review before promotion. Every few issues it runs a cross-issue sweep (integration review, fix, triage, promotion point). A failed issue gets one fresh retry; a second failure parks the attempt and files a blocker issue for the user. Runs under /loop until the board is empty or the Claude session or weekly limit runs low, pausing for a session reset, and resumes from state in .git. User-invoked only.
 argument-hint: "[#a #b ... | #epic] [status | stop | reset]"
 disable-model-invocation: true
@@ -63,7 +63,9 @@ announces the next step without taking it, not with an offer to continue, and no
 decisions that block nothing.
 
 **While a cycle waits on background subagents,** use `ScheduleWakeup` with `delaySeconds: 3000`
-as the heartbeat, instead of orc's background `sleep` timer. Completion notices are the main wake signal.
+as the heartbeat, never a background shell timer: a shell timer outlives the cycle and keeps
+waking the session after the loop stops. Completion notices are the main wake signal. Schedule
+it once per wait: a completion notice while other agents still run leaves it alone.
 
 **On every wake-up,** read the state file first, then refresh the checkout lock. If `current`
 names an issue, resume it (see **Resuming an interrupted issue**). If this conversation was
@@ -420,20 +422,23 @@ Set `phase: "sweeping"`, refresh the lock, run the usage gate with the sweep est
    `ui-reviewer`, told to review statically, when the range touches UI (the fast review skipped
    it, and a UI pattern one issue gets wrong is the one later issues copy), each with
    the **Sweep brief** from `references/briefs.md`, the inputs, the repo rules, and its standards
-   (found as `/orc-loop`'s **Standards** paragraph says). Send every finding to one `verifier`,
-   with `$D/usages.md`;
-   keep what it confirms, and write the confirmed findings and the triage `DO` items to
-   `$D/report.md`. Skip the verifier when the lanes reported nothing, or only Nits.
+   (found as `/orc-loop`'s **Standards** paragraph says), and `Report: $D/<lane>.md`. Findings
+   travel as files, as `/orc`'s step 5 says. Dispatch one `verifier` with `Findings:` the reports
+   of the lanes that raised anything, `Report: $D/verified.md`, and `$D/usages.md`; then write
+   `$D/report.md`: the lanes with their raised and kept counts, a pointer to `$D/verified.md`, one
+   line per kept Blocker and Warning (title, `path:line`, lane), and the triage `DO` items. Skip
+   the verifier when the lanes reported nothing, or only Nits.
    In the same message, dispatch the triage agent of step 4 when it has items, so its `DO` items
    can join step 3's fix.
 3. **Fix.** When a confirmed Blocker or Warning remains, set `current` to
    `{ "n": "sweep-<k>", "attempt": <round>, "runBase": <HEAD> }` (clear it after), and run
    `orc-rush-iter` as a free-text task:
-   `fix the Blocker and Warning findings in <git-dir>/orc-rush/sweeps/<k>/report.md; leave the
-Nits` (adding the triage `DO` items; a fix runs for `DO` items alone when nothing else was confirmed), with the **Build** notes 1 to 3. It pushes like any run, or leaves the push to step 7 when pushing waits for the sweep. Save its
+   `fix the Blocker and Warning findings in <the sweep's latest verified file> and the DO items in report.md; leave the Nits`, where the latest verified file is `$D/verified.md` until a recheck writes a newer one (with no verified file, the task is `fix the DO items in report.md`), with the **Build** notes 1 to 3. It pushes like any run, or leaves the push to step 7 when pushing waits for the sweep. Save its
    report to `runs/sweep-<k>-fix-<round>.md` and add its **Filed** issues to `filed` and
    `sweeps[].filed`. Then recheck with only
-   the lanes that raised findings, on the fix commits alone, with the **Recheck brief**. At most two
+   the lanes that raised findings, on the fix commits alone, with the **Recheck brief**, and
+   verify as `/orc-loop`'s rechecks do, with `Report: $D/fix-<r>/verified.md`, which becomes the
+   sweep's latest verified file. At most two
    fix rounds; file what is still open after the second, as `/orc-loop`'s **File (round 3)**
    says. A fix run that ends `NOT FINISHED` goes through **Failure handling** like an issue, with
    the sweep in place of the issue.

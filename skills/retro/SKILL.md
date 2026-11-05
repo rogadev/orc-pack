@@ -1,6 +1,6 @@
 ---
 name: retro
-pack: orc-pack@1.21.0
+pack: orc-pack@1.22.0
 description: Retrospective on past /orc, /orc-loop, and /orc-rush runs in this repo. Measures where the tokens went, reads the runs' saved reports, reviews, and commit Lanes lines, and reports what to improve, each finding with its evidence, rough cost, and where to change it. Read-only. Use when the user says "/retro", "retro on the last run", "how did the orc loop do", "where did the tokens go", or "what can orc do better".
 argument-hint: "[last | <n>d | since <date> | session <id>...]"
 ---
@@ -38,9 +38,10 @@ node "<base>/references/usage.mjs" "$(git rev-parse --show-toplevel)" "$D" [--si
 
 **Run artifacts,** for the runs in scope, all inside `$(git rev-parse --git-dir)`:
 
-- `orc-loop/`: the state file, `runs/` (each `/orc` report), `reviews/` (batch review rounds, fallow, comments), `triage/`, and `final-report.md`. Archived folders carry a timestamp suffix.
+- `orc-loop/`: the state file, `runs/` (each `/orc` report), `reviews/` (batch review rounds, fallow, comments), `triage/`, and `final-report.md`. Earlier batches are archived whole under `archive/<batchId>/`; read the one whose `batchId` matches the run.
 - `orc-rush/` (or `orc-pack/` from before the rename): the state file, `ledger.md`, `runs/`, `sweeps/`, `parked/`.
-- **Commits** in the runs' range: `git log --format='%h %s%n%b'`. Each `/orc` task commit carries a `Lanes:` line (each lane, its findings, the findings the verifier confirmed, and the fix rounds) and may carry `Nits left:`.
+- **Commits** in the runs' range: `git log --format='%h %s%n%b'`. Each `/orc` task commit carries a `Lanes:` line (each lane, its findings, the findings the verifier kept, and the fix rounds) and may carry `Nits left:`.
+- **Saved `/orc-review` reports:** when `.claude/skills/deep-review/SKILL.md` names a **Report destination** folder, the reports in it dated within the window. Each report's plan gives every lane that ran with its raised and kept counts.
 - **Issues the runs filed:** `gh issue list --state all --search "<run id or loop marker>"`, when the reports name them.
 
 ## 2. Analyze
@@ -63,7 +64,8 @@ name the model when you cite a number.
 
 Find what to improve. Look at least for:
 1. Token spend that bought nothing:
-   - a review lane whose findings the verifier mostly rejected (Lanes lines: raised vs confirmed);
+   - a review lane whose findings the verifier mostly rejected (raised vs kept, from commit Lanes
+     lines and the plan lines of saved review reports);
    - a lane that ran on a diff outside its surface (a UI lane on a server-only change);
    - fix rounds spent on Nits, or re-reviews that added lanes;
    - builders far costlier than their task's size (compare the costliest dispatches with what
