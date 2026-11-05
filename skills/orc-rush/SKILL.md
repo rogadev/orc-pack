@@ -433,14 +433,12 @@ Set `phase: "sweeping"`, refresh the lock, run the usage gate with the sweep est
 3. **Fix.** When a confirmed Blocker or Warning remains, set `current` to
    `{ "n": "sweep-<k>", "attempt": <round>, "runBase": <HEAD> }` (clear it after), and run
    `orc-rush-iter` as a free-text task:
-   `fix the Blocker and Warning findings in <the sweep's latest verified file, when one exists>
-and the DO items in report.md; leave the Nits` (adding the triage `DO` items; a fix runs for `DO` items alone when nothing else was confirmed), with the **Build** notes 1 to 3. It pushes like any run, or leaves the push to step 7 when pushing waits for the sweep. Save its
+   `fix the Blocker and Warning findings in <the sweep's latest verified file> and the DO items in report.md; leave the Nits`, where the latest verified file is `$D/verified.md` until a recheck writes a newer one (with no verified file, the task is `fix the DO items in report.md`), with the **Build** notes 1 to 3. It pushes like any run, or leaves the push to step 7 when pushing waits for the sweep. Save its
    report to `runs/sweep-<k>-fix-<round>.md` and add its **Filed** issues to `filed` and
    `sweeps[].filed`. Then recheck with only
    the lanes that raised findings, on the fix commits alone, with the **Recheck brief**, and
-   verify as `/orc-loop`'s rechecks do: the verifier copies the `OPEN` entries from the previous
-   verified file, verifies the new findings, and writes `<D>/fix-<r>/verified.md`, the sweep's
-   latest verified file. At most two
+   verify as `/orc-loop`'s rechecks do, with `Report: $D/fix-<r>/verified.md`, which becomes the
+   sweep's latest verified file. At most two
    fix rounds; file what is still open after the second, as `/orc-loop`'s **File (round 3)**
    says. A fix run that ends `NOT FINISHED` goes through **Failure handling** like an issue, with
    the sweep in place of the issue.
