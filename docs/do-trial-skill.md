@@ -38,13 +38,14 @@ Either way, when a check fails, fix the cause. Never weaken, skip, or delete a t
 
 The text is the issue. Treat it exactly like one from here on, with these differences:
 
-1. **Check it isn't already tracked or done.** Search the board, open and closed (`gh issue list --state all --search "<key words>"`), and `git log <branch> --oneline` for the same work. If an open issue covers it, say so and work that issue in list mode, so it closes at push. If the work is already done, say where and stop.
-2. **Write the brief.** Turn the text into an issue's shape: a title, the problem, what's in scope, testable acceptance criteria, what's out of scope, and open questions. Read the code it touches first, so the scope is grounded. Save it as `do-brief.md` in the scratchpad; that file is the issue body from now on, and the build is held to it. Don't widen the scope past the text.
-3. **Split when it's several things.** If the text holds separate changes, make each one an item (`T1`, `T2`, and so on) in the brief, each with its own criteria and its own commit. One coherent change stays one item.
-4. **Too vague to test is a question.** If you can't write acceptance criteria for an item, ask the owner rather than guessing.
-5. **Don't file an issue** unless the owner says to (for example "file it" in the go-ahead). If they do, file it with `/newissue` from the brief before building, and from then on it's that issue.
+1. **Work this conversation names comes from this conversation.** When the text points at something already here, such as "warnings and nits" right after a review, or "the three follow-ups you listed", its scope is those items exactly as they were reported. Skip the board search in the next step and build the brief from them.
+2. **Check it isn't already tracked or done.** Search the board, open and closed (`gh issue list --state all --search "<key words>"`), and `git log <branch> --oneline` for the same work. If an open issue covers it, say so and work that issue in list mode, so it closes at push. If the work is already done, say where and stop.
+3. **Write the brief.** Turn the text into an issue's shape: a title, the problem, what's in scope, testable acceptance criteria, what's out of scope, and open questions. Read the code it touches first, so the scope is grounded. Save it as `do-brief.md` in the scratchpad; that file is the issue body from now on, and the build is held to it. Don't widen the scope past the text.
+4. **Split when it's several things.** If the text holds separate changes, make each one an item (`T1`, `T2`, and so on) in the brief, each with its own criteria and its own commit. One coherent change stays one item.
+5. **Too vague to test is a question.** If you can't write acceptance criteria for an item, ask the owner rather than guessing.
+6. **Don't file an issue** unless the owner says to (for example "file it" in the text). If they do, file it with `/newissue` from the brief before building, and from then on it's that issue.
 
-In step 2, show the brief in place of the issue and always wait for the go-ahead, even for a small change: the brief is your restatement, and a misread scope is this mode's main failure. Commits carry no `Closes` or `Refs` line unless an issue was filed.
+**The text is the go-ahead.** Typing `/do <text>` already says yes, so don't stop to ask whether to proceed. In step 2, show the brief's items as the plan in a short message, then start building in the same turn. End the turn before building only for a question in item 5, or for one of the stops in step 3; any other doubt about scope goes in the plan message as the reading you chose, so the owner can correct it while you build. Commits carry no `Closes` or `Refs` line unless an issue was filed.
 
 ### Picking the next N
 
@@ -65,7 +66,7 @@ For each issue, read the issue, the docs that cover its area (architecture notes
 - **Small change** (copy, a one-file fix): one line saying what changes and where.
 - **Anything larger:** the files, the approach, the risks, and how you'll know it's done: the test names, the routes and roles to screenshot, any schema change and its migration, and the doc to update. The bar is that someone who never saw this conversation could build from it.
 
-With one small issue, state the one-line plan and start building (a text request always waits; see **Working a text request**). Otherwise put every plan in one message, in build order. Note where two issues touch the same code, and ask any question only the owner can answer. Then end your turn and wait. The owner approves, edits, or drops items, and that one go-ahead covers the whole list.
+With one small issue, state the one-line plan and start building. A text request never waits for a go-ahead; see **Working a text request**. Otherwise put every plan in one message, in build order. Note where two issues touch the same code, and ask any question only the owner can answer. Then end your turn and wait. The owner approves, edits, or drops items, and that one go-ahead covers the whole list.
 
 ## 3. Build each issue in order
 
@@ -130,8 +131,8 @@ When the paceline `progress_*` tools are available, mirror the run as a status-l
 
 Paceline only appends steps and never reshapes one, so start small and add the rest once the plan is approved.
 
-- **Start** in step 1, once `$ARGUMENTS` parses: one `progress_start` named `do` (`do #356` for a single issue, `do: <short title>` for a text request), with one step: `id` `plan`, `label` `plan`, `weight` 1, `stages` `["resolve", "plan", "go-ahead"]`. Move it to `resolve` at once, to `plan` when you start reading for the plans, and to `go-ahead` when you end the turn to wait. A single small issue that needs no go-ahead skips that stage.
-- **After the go-ahead**, mark `plan` done and append with `progress_add_steps`:
+- **Start** in step 1, once `$ARGUMENTS` parses: one `progress_start` named `do` (`do #356` for a single issue, `do: <short title>` for a text request), with one step: `id` `plan`, `label` `plan`, `weight` 1, `stages` `["resolve", "plan", "go-ahead"]`. Move it to `resolve` at once, to `plan` when you start reading for the plans, and to `go-ahead` when you end the turn to wait. A single small issue or a text request, which need no go-ahead, skips that stage.
+- **After the go-ahead** (or once the plan is shown, when none is needed), mark `plan` done and append with `progress_add_steps`:
   - One step per approved issue, in build order: `id` `i356`; `label` `#356` plus a word or two of its title (for a text request's items, `id` `t1` and `label` `T1` plus a word or two); `weight` 1 for a small change, 3 for anything larger, 5 for a schema change or a change across several areas; `stages` `["test", "build", "look", "commit"]`, without `look` when the issue changes no UI.
   - `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "fix"]`.
   - `id` `review`, `label` `review`, `weight` 2, `stages` `["round 1", "fix 1", "round 2"]`.

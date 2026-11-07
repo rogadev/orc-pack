@@ -30,6 +30,13 @@ A Wednesday-versus-Friday benchmark in techcentral (2026-11) found `/do` plus a 
 
 A `/condense` pass afterward found the file already tight (under 1% saved). It kept the cuts anyway, because one fixed a gap: text-mode commits originally ruled out only `Closes`, not `Refs`.
 
+### 2026-11-07: text mode no longer waits
+
+The forced go-ahead failed in use. The owner's main text request is `/do warnings and nits` right after a deep review, and the answer to "shall I proceed?" was always yes, so the extra turn bought nothing.
+
+- **The text is the go-ahead.** `/do` shows the brief's items as a short plan and starts building in the same turn. It ends the turn first only for a question it can't resolve (criteria it can't write) or one of step 3's stops. Other scope doubts go in the plan message as the reading it chose, so the owner can correct it mid-build.
+- **Scope can come from the conversation.** When the text points at items already in the session, such as a review's Warnings and Nits, those items are the scope as reported, and the board search is skipped.
+
 ## The direction under consideration
 
 Decided on 2026-11-12, not before. The owner is leaning toward:
@@ -44,7 +51,7 @@ Open questions for the evaluation are in the next section.
 ## Questions for the evaluation
 
 - Did `/do` plus a deep review catch what an `/orc` run would have caught? Compare the review findings per run with past `/orc-loop` reports (`<git-dir>/orc-loop/reviews/`).
-- Did text mode's brief match what the owner meant, and was the forced go-ahead worth the extra reply?
+- Did text mode's brief match what the owner meant once it stopped waiting for a go-ahead, and did any run build the wrong scope?
 - Does the heavy variant cover both a single issue and a batch, or does batching move into the main `/orc` only?
 - What happens to the agents only the heavy path uses (the builders, `design-reviewer`, `scope-reviewer`), and to `/retro`, which reads `/orc` run artifacts?
 - Renaming `/orc` changes what installed users get, so it is a breaking release (2.0.0) and needs an `/update-orc` migration step in `CHANGELOG.md`.
