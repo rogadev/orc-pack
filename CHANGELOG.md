@@ -18,6 +18,21 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [1.22.1] - 2026-11-07
+
+**Summary.** A new optional skill, `/tiedown`, answers one question at the end of a session: can this session end now? It checks the whole conversation and the real state of the repo and machine for unanswered questions, unfinished requests, uncommitted or unpushed work, failed or skipped checks, things still running, open issues, promised follow-ups, and surprises. When nothing is open it replies "We're done." Otherwise it thinks through each open item before it reports: an obvious item gets its answer written directly, and every other item goes to a read-only subagent sized to it (Haiku for a single factual lookup, Sonnet for a routine call, Opus for a real judgment call or real risk), with a result that comes back hedged re-run one tier up. It then presents one decided list, each item with the exact action, a one-sentence reason, and who does it, so the user can approve all of it with one reply. It is user-invoked only and read-only: it recommends and never changes anything. Nothing else in the pack changes.
+
+**Changed areas.**
+
+- **`skills/tiedown/SKILL.md`** (new): the skill, with no references or setup files. Add it. It is optional, so skip it if the user declines.
+- **`README.md`**, **`INSTALL.md`**, **`CLAUDE.md`**: list the new skill, its install-table row, its optional-pruning note, and the Phase 5 and Phase 6 skill lists. Kit docs only.
+
+**Update steps.** Copy `skills/tiedown/SKILL.md` to `.claude/skills/tiedown/SKILL.md` and set its `pack:` marker to the release version, as for any other skill. If the project already has a `tiedown` skill of its own, treat it as a same-name conflict and route it through conflict handling; do not overwrite it. Nothing else needs migrating.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/tiedown/SKILL.md`.
+
 ## [1.22.0] - 2026-11-04
 
 **Summary.** A project's `/deep-review` profile now knows which version of the review template it was built for, so the pack can tell a project when its profile or repo lanes would benefit from a refresh, and stop telling it once the user has decided. The **review template** (`profile-template.md` and the repo-lane contract in `lane-template.md`, together) gets its own number, separate from the pack version, which moves only when a change would make an existing profile or lane read differently or miss something. Template 1 is every profile from before 1.20.0, template 2 is 1.20.0's shape, template 3 is 1.21.0's, and template 4, new in this release, has repo lanes write their findings to a report file (below). A new file, `skills/orc-review/references/template-changes.md`, holds the current number and, per version, the items an existing profile or lane needs, each with an id. Profiles record `template:` (the version they were built or refreshed to) and `template-reviewed:` (the latest version the user decided on). When the current template is newer than both, `/deep-review` ends its report with one line naming what changed. `/orc-review setup` refreshes the profile by walking those items, applies the ones the user accepts, and records the rest under a new **Declined template changes** section so they are never offered again. `/orc-review setup skip` keeps the profile as it is and silences the reminder until the template changes again. `/update-orc` and `UPDATE.md` use the same comparison, so a pack update that doesn't touch the template no longer suggests a refresh.

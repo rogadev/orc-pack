@@ -49,6 +49,8 @@ orc-pack/
 │   ├── shipcheck/
 │   │   ├── SKILL.md
 │   │   └── references/     ← smoke-runner.mjs, the Playwright smoke template
+│   ├── tiedown/
+│   │   └── SKILL.md
 │   └── update-orc/
 │       └── SKILL.md
 └── agents/
@@ -131,6 +133,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/newissue/SKILL.md`            | `<root>/.claude/skills/newissue/SKILL.md`            |
 | `skills/shipcheck/SKILL.md`           | `<root>/.claude/skills/shipcheck/SKILL.md`           |
 | `skills/shipcheck/references/` (all)  | `<root>/.claude/skills/shipcheck/references/` (all)  |
+| `skills/tiedown/SKILL.md`             | `<root>/.claude/skills/tiedown/SKILL.md`             |
 | `skills/update-orc/SKILL.md`          | `<root>/.claude/skills/update-orc/SKILL.md`          |
 | `agents/<name>.md` (every file)       | `<root>/.claude/agents/<name>.md` (same name)        |
 
@@ -178,6 +181,7 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
    - `skills/retro/` is optional; keep it unless the user declines. It is the read-only retrospective on past runs, and its `references/usage.mjs` needs Node to measure tokens.
    - `skills/orc-review/` is optional; keep it unless the user declines. It is the read-only deep review of a branch before a merge, and `/orc-review setup` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its risk map, architecture, and known non-issues), so don't create that file during the install.
    - `skills/shipcheck/` is optional; keep it unless the user declines. It drafts `.claude/required-secrets.md` and `.claude/smoke-checklist.md` from the code on first use, so don't create them during the install.
+   - `skills/tiedown/` is optional; keep it unless the user declines. It is the read-only end-of-session check, has no references or setup files, and runs only when the user types `/tiedown`.
 3. **Leave the reviewers and the standards generic unless asked.** They adapt per-repo at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when orc detects that stack, so keep them all even if the repo uses one. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version — that's a bigger, opt-in step, not part of a basic install.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
@@ -199,7 +203,7 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review` with its `references/profile-template.md`, `references/lane-template.md`, and `references/template-changes.md`, `orc-rush` with its `references/briefs.md` and `orc-rush-iter`, `retro` with its `references/usage.mjs`, `newissue`, and `shipcheck` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, `update-check.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review` with its `references/profile-template.md`, `references/lane-template.md`, and `references/template-changes.md`, `orc-rush` with its `references/briefs.md` and `orc-rush-iter`, `retro` with its `references/usage.mjs`, `newissue`, `shipcheck`, and `tiedown` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, `update-check.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
 2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
 4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
@@ -212,7 +216,7 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 Give them a short, human summary:
 
 - Where you installed (project or global, and the path).
-- The count: N skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review`, `orc-rush` with `orc-rush-iter`, `retro`, `newissue`, and `shipcheck` unless pruned) and N agents.
+- The count: N skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review`, `orc-rush` with `orc-rush-iter`, `retro`, `newissue`, `shipcheck`, and `tiedown` unless pruned) and N agents.
 - Any conflicts you hit and how you resolved them (especially anything you renamed or skipped).
 - Fallow status (Phase 4.5): installed at the vetted version, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5 and Sonnet 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
