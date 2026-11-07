@@ -70,6 +70,7 @@ orc-pack/
     ├── quality-reviewer.md
     ├── scope-reviewer.md
     ├── security-reviewer.md
+    ├── setup-auditor.md
     ├── skill-vetter.md
     ├── test-coverage-reviewer.md
     ├── test.md
