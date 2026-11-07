@@ -6,7 +6,7 @@ Maintainer notes on a one-week trial of `/do` as the main build workflow, and th
 
 `/do` is a personal skill at `~/.claude/skills/do/SKILL.md`, outside this repo. It was built from rogadispatch's repo-level `/do`, plus a paceline progress bar. A snapshot of the version under trial is in [`do-trial-skill.md`](do-trial-skill.md); the live file can change during the week, so compare against it.
 
-It works issues end to end in the main session, one at a time: read, plan, wait for one go-ahead, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue. It dispatches no builder or reviewer agents. Review happens afterward, when the owner runs `/deep-review`, `/orc-review`, or `/deep-review-generic` over the run's commits. A repo's own `.claude/skills/do/SKILL.md` acts as a profile the global skill reads for repo specifics.
+It works issues end to end in the main session, one at a time: read, plan, wait for one go-ahead, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue. It dispatches no builder or reviewer agents. Review happens afterward, when the owner runs `/deep-review`, `/orc-review`, or `/deep-review-generic` over the run's commits. It takes repo specifics only from the repo's `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`, and hooks, the same way orc's agents do.
 
 ## Why the trial
 
@@ -36,6 +36,13 @@ The forced go-ahead failed in use. The owner's main text request is `/do warning
 
 - **The text is the go-ahead.** `/do` shows the brief's items as a short plan and starts building in the same turn. It ends the turn first only for a question it can't resolve (criteria it can't write) or one of step 3's stops. Other scope doubts go in the plan message as the reading it chose, so the owner can correct it mid-build.
 - **Scope can come from the conversation.** When the text points at items already in the session, such as a review's Warnings and Nits, those items are the scope as reported, and the board search is skipped.
+
+### 2026-11-07: no repo profiles
+
+`/do` started as repo copies in techcentral, stp, and rogadispatch, and the global skill read a repo's copy as a profile whose specifics won over its own steps. Those copies held the old workflow, so old steps could leak into a trial run, and a pack skill that needs a per-repo skill file isn't portable.
+
+- **The repo copies are deleted** (techcentral `a00ee142`, stp `6e531d4`, rogadispatch `776fba95`). The few facts that lived only in them moved into each repo's `CLAUDE.md`.
+- **The skill's profile paragraph is gone.** Step 0 now reads repo facts only from `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`, the manifest, and `.claude/settings.json`, and ignores any `.claude/skills/do/` left in a repo.
 
 ## The direction under consideration
 

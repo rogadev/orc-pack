@@ -13,7 +13,7 @@ Work the issues in `$ARGUMENTS` on the integration branch, in this session, one 
 
 Read the repo's `CLAUDE.md` or `AGENTS.md`, its `.claude/rules/`, and its manifest, to find the integration branch (usually `dev`), the commands for type checking, tests, and the full ready check (for example `pnpm ready`), the dev server and its port, where tests and docs live, and any UI verification recipe.
 
-**The repo's own `/do` is its profile.** If `.claude/skills/do/SKILL.md` exists in the repo, read it now. This personal skill takes precedence over it, so it never loads on its own, but its repo specifics win over the general steps here: the docs to read, the guards and gates it lists, the schema workflow, the screenshot recipe (port, sign-in, headers, widths), the ready command, and the board's ranking rules. The run's shape, the progress bar, and the report stay as written here.
+**Repo facts come only from the repo's own docs and hooks.** Its docs to read, guards and gates, schema workflow, screenshot recipe (port, sign-in, headers, widths), ready command, and board ranking come from the files above and `.claude/settings.json`, and they win over the general steps here. A `.claude/skills/do/` left in the repo is ignored: this skill holds the whole workflow.
 
 **Gates.** Check the repo's `.claude/settings.json` for hooks that gate `git commit` and the finish (a commit gate or Stop gate that runs the type check, related tests, and a test-integrity check):
 
@@ -49,7 +49,7 @@ The text is the issue. Treat it exactly like one from here on, with these differ
 
 ### Picking the next N
 
-If the repo documents its own ranking (a roadmap or priority rule in `CLAUDE.md`, `.claude/rules/`, or the repo's `/do`), follow it. Otherwise read the board with `gh issue list --state open --limit 200 --json number,title,labels,milestone,body,createdAt`, then rank:
+If the repo documents its own ranking (a roadmap or priority rule in `CLAUDE.md` or `.claude/rules/`), follow it. Otherwise read the board with `gh issue list --state open --limit 200 --json number,title,labels,milestone,body,createdAt`, then rank:
 
 1. **Leave out** pull requests, issues labelled `in progress` (another session owns them), `wontfix`, `duplicate`, `invalid`, or `question`, and issues whose body says `blocked by #N` while #N is still open.
 2. **Urgent first:** anything labelled `p0` or critical, and any security issue, labelled or not.
