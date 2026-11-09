@@ -52,6 +52,14 @@ Every run ended by asking whether to run `/deep-review`, push, or both. The owne
 - **The progress bar puts `push` before `review`.** The report leaves the bar on `push needed`. A finished push marks `review` skipped and finishes the run, because the review happens in another session. A review the owner asks for in the build session still works as before.
 - **A review after a push asks whether to push its fixes.**
 
+### 2026-11-09: review-fix tally
+
+The owner's routine after a deep review is `/do warnings and nits`, repeated until a review finds only one or two items (stricter on work projects). Deciding whether to ship needs two facts at the end of each fix run: that it reached `dev`, and how many items it fixed.
+
+- **Step 4 adds a tally** when the run fixed review findings: Blockers, Warnings, and Nits fixed, and how many of each were left open, with why.
+- **The bold done line carries the fixed counts,** for example **Done: fixed 1 Blocker, 3 Warnings, and 2 Nits in 2 commits, pushed to `dev`. This run is complete.**
+- **A review run in the build session** reports with the same tally.
+
 ## The direction under consideration
 
 Decided on 2026-11-12, not before. The owner is leaning toward:

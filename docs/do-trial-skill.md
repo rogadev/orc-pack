@@ -104,17 +104,21 @@ Then, for each issue, give:
 - the full paths of its screenshots
 - anything skipped, found, or still open
 
-Then list the dropped numbers and why. If this run started the dev server, stop it and confirm its port is free.
+Then list the dropped numbers and why.
+
+**When the run fixed review findings** (a text request scoped to a review's items, such as `/do warnings and nits`, or a review in this session), add a tally by the review's severities: how many Blockers, Warnings, and Nits were fixed, and how many of each were left open, with why. The bold done line carries the fixed counts.
+
+If this run started the dev server, stop it and confirm its port is free.
 
 **Don't mention a review.** The owner decides on their own whether to re-review, and does it in a fresh session. Never say that no review has run, never name a review to run, and never offer one.
 
 **When the request already said to push** (for example "push to dev when finished" or "and push"), push as **When the owner says push** describes before writing the report, without asking. Otherwise, end with one question, naming the integration branch: "Do you want me to push this to `<branch>`?"
 
-**End every finished run with one bold line, on its own, as the very last thing in the reply,** so the owner sees at a glance that the run is complete. For example: **Done: 8 commits pushed to `dev`. This run is complete.** When the push is still waiting on the owner, the question above takes that place instead. Put nothing after that line, not even a caveat or a follow-up offer; anything the owner should know goes above it.
+**End every finished run with one bold line, on its own, as the very last thing in the reply,** so the owner sees at a glance that the run is complete. For example: **Done: 8 commits pushed to `dev`. This run is complete.** After a review fix: **Done: fixed 1 Blocker, 3 Warnings, and 2 Nits in 2 commits, pushed to `dev`. This run is complete.** When the push is still waiting on the owner, the question above takes that place instead. Put nothing after that line, not even a caveat or a follow-up offer; anything the owner should know goes above it.
 
 ## When the owner asks for a review
 
-This covers "review", and the owner running `/deep-review`, `/orc-review`, or `/deep-review-generic` right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, what you fixed, and what's still open. Then push or ask about it, and end with the bold done line, as step 4 says.
+This covers "review", and the owner running `/deep-review`, `/orc-review`, or `/deep-review-generic` right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, with step 4's tally of what you fixed and what's still open. Then push or ask about it, and end with the bold done line, as step 4 says.
 
 ## When the owner says push
 
