@@ -183,23 +183,27 @@ Only the five lanes that read the map and the repo lanes get the `Usages:` line,
 - **Ready to merge:** only Nits, or nothing.
 - **Review incomplete:** a lane or gate runner that was dispatched did not return a result. A lane `quick` left out is listed in the plan as `skipped (quick)`, not as incomplete.
 
+**Mark every finding with its severity dot:** 🔴 Blocker, 🟡 Warning, 🔵 Nit, on its heading or list line and on its section heading, so the user can count the reds and yellows at a glance. A gate failure listed as a Blocker gets 🔴 too. Any recap of the findings in chat keeps the same dots. The auto-mode block below stays plain text.
+
 Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' reports for Nits the verifier never saw). **Each lane that ran gets its counts on its plan line,** from the verifier's **By lane** line: `quality: ran (new endpoint logic): 4 raised, 2 kept`, or `3 raised, unverified (Nits only)` when the verifier was skipped. A finding two lanes raised counts once, under the lane that kept it. These counts are what `/retro` measures each lane by.
 
 ```
 # Review: <range> (<n> files)
 
 **Verdict:** <verdict>
+🔴 <n> Blockers · 🟡 <n> Warnings · 🔵 <n> Nits
 <the plan from step 2, with the counts>
 
-## Blockers
-### <plain-language title>
+## 🔴 Blockers
+### 🔴 <plain-language title>
 `path:line` - <problem, in user terms>. **Fix:** <the change to make>. (<lane>)
 
-## Warnings
+## 🟡 Warnings
+### 🟡 <plain-language title>
 ...
 
-## Nits
-- `path:line` - <one line>
+## 🔵 Nits
+- 🔵 `path:line` - <one line>
 
 ## Gate
 <lint / typecheck / test: pass, fail with the first lines of output, or did not run>
