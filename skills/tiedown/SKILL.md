@@ -16,9 +16,7 @@ trusting your memory of what you did.
 question you could answer by looking. Recommend what to do about each open item, and stop. The
 user's next message ("yes, do all of it") is what authorizes the work.
 
-The skill runs in three stages: find the open items (stage 1), think through each one (stage 2),
-then present one decided list (stage 3). If stage 1 finds nothing, reply "We're done." and skip
-stages 2 and 3.
+Work in three stages: find the open items, think through each one, then present one decided list.
 
 ## Stage 1: find the open items
 
@@ -58,7 +56,7 @@ When stage 1 is done, build the raw item list. If two items are really one, merg
 the list: five real items beat twelve vague ones. Each raw item records what is open and the
 evidence (file paths, branch, issue or PR numbers, commands run, what the user said and when).
 
-If every check is clear, reply with exactly this and nothing else:
+If every check is clear, skip stages 2 and 3 and reply with exactly this and nothing else:
 
 We're done.
 
@@ -67,12 +65,18 @@ We're done.
 Size each item first, then match the effort to it. Do not spend Opus on an item whose answer is
 already obvious.
 
-| Tier    | Use it when                                                                                                                                                                                                | How to handle it                                   |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Obvious | The right action is not in doubt and needs no reading to confirm: push an unpushed commit, stop a dev server this session started, delete a leftover temp worktree, file a follow-up you promised.         | No subagent. Write the action and reason yourself. |
-| Lookup  | The answer is one factual check with no judgment in it: is a port still held, did a PR merge, is a stash empty, does a promised file exist, did the last check pass on the final commit.                   | One subagent, `model: "haiku"`.                    |
-| Routine | One clear area, a small number of files, and a convention or the code settles the answer: which test to run on the final state, whether a stash is stale, whether an issue can be closed.                  | One subagent, `model: "sonnet"`.                   |
-| Hard    | A real judgment call, several plausible options, risk of data loss or a bad deploy, anything touching security, auth, or a migration, work that spans many files, or something you are unsure how to size. | One subagent, `model: "opus"`.                     |
+- **Obvious:** the right action is not in doubt and needs no reading to confirm, such as pushing an
+  unpushed commit, stopping a dev server this session started, deleting a leftover temp worktree,
+  or filing a follow-up you promised. Use no subagent; write the action and reason yourself.
+- **Lookup:** the answer is one factual check with no judgment in it, such as whether a port is
+  still held, a PR merged, a stash is empty, a promised file exists, or the last check passed on
+  the final commit. Use one subagent with `model: "haiku"`.
+- **Routine:** one clear area, a small number of files, and a convention or the code settles the
+  answer, such as which test to run on the final state, whether a stash is stale, or whether an
+  issue can be closed. Use one subagent with `model: "sonnet"`.
+- **Hard:** a real judgment call, several plausible options, risk of data loss or a bad deploy,
+  anything touching security, auth, or a migration, work that spans many files, or something you
+  are unsure how to size. Use one subagent with `model: "opus"`.
 
 When you are unsure between two tiers, take the higher one. Dispatch every subagent in a single
 message so they run in parallel, with `subagent_type: "Plan"` (read-only).
