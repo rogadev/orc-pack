@@ -44,6 +44,14 @@ The forced go-ahead failed in use. The owner's main text request is `/do warning
 - **The repo copies are deleted** (techcentral `a00ee142`, stp `6e531d4`, rogadispatch `776fba95`). The few facts that lived only in them moved into each repo's `CLAUDE.md`.
 - **The skill's profile paragraph is gone.** Step 0 now reads repo facts only from `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`, the manifest, and `.claude/settings.json`, and ignores any `.claude/skills/do/` left in a repo.
 
+### 2026-11-09: push before review
+
+Every run ended by asking whether to run `/deep-review`, push, or both. The owner's routine is to push to `dev` first, then review in a separate, fresh session: the build session carries a lot of context, and that context can bias the review. So the question offered a step the owner never takes in the build session.
+
+- **The report ends with one question:** "Do you want me to push this to `<branch>`?", naming the integration branch. It still names the review, as the one to run in a new session after the push, and no longer offers to run it.
+- **The progress bar puts `push` before `review`.** The report leaves the bar on `push needed`. A finished push marks `review` skipped and finishes the run, because the review happens in another session. A review the owner asks for in the build session still works as before.
+- **A review after a push asks whether to push its fixes.**
+
 ## The direction under consideration
 
 Decided on 2026-11-12, not before. The owner is leaning toward:

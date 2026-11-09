@@ -104,11 +104,11 @@ Then, for each issue, give:
 - the full paths of its screenshots
 - anything skipped, found, or still open
 
-Then list the dropped numbers and why. Say that no review has run on this work yet and name the review to run: `/deep-review` when the repo has `.claude/skills/deep-review/`, otherwise `/orc-review` or `/deep-review-generic`. Say the commits aren't pushed, and ask whether to review, push, or both. If this run started the dev server, stop it and confirm its port is free.
+Then list the dropped numbers and why. Say that no review has run on this work yet and name the review to run: `/deep-review` when the repo has `.claude/skills/deep-review/`, otherwise `/orc-review` or `/deep-review-generic`. Say the commits aren't pushed. End with one question, naming the integration branch: "Do you want me to push this to `<branch>`?" The owner pushes first, then reviews in a separate, fresh session so this build's context doesn't bias the review. So don't offer to run the review here or ask "review, push, or both"; name the review as the one to run in a new session after the push. If this run started the dev server, stop it and confirm its port is free.
 
 ## When the owner asks for a review
 
-This covers "review", and the owner running `/deep-review`, `/orc-review`, or `/deep-review-generic` right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, what you fixed, and what's still open.
+This covers "review", and the owner running `/deep-review`, `/orc-review`, or `/deep-review-generic` right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, what you fixed, and what's still open. When the reviewed commits are already pushed, end by asking whether to push the fixes to the integration branch.
 
 ## When the owner says push
 
@@ -135,12 +135,12 @@ Paceline only appends steps and never reshapes one, so start small and add the r
 - **After the go-ahead** (or once the plan is shown, when none is needed), mark `plan` done and append with `progress_add_steps`:
   - One step per approved issue, in build order: `id` `i356`; `label` `#356` plus a word or two of its title (for a text request's items, `id` `t1` and `label` `T1` plus a word or two); `weight` 1 for a small change, 3 for anything larger, 5 for a schema change or a change across several areas; `stages` `["test", "build", "look", "commit"]`, without `look` when the issue changes no UI.
   - `id` `ready`, `label` `ready check`, `weight` 1, `stages` `["check", "fix"]`.
-  - `id` `review`, `label` `review`, `weight` 2, `stages` `["round 1", "fix 1", "round 2"]`.
   - `id` `land`, `label` `push`, `weight` 1, `stages` `["push", "close"]`.
+  - `id` `review`, `label` `review`, `weight` 2, `stages` `["round 1", "fix 1", "round 2"]`.
   - Mark an issue the owner dropped, or one you stop on, `skipped` or `blocked`.
 - **Advance** with `progress_step` as the work moves: an issue's stages as you reach them, then `done` when it commits; `ready` through `check` and `fix`, then done.
-- **At the report**, if no review has run, leave `review` and `land` pending and set `progress_label` to `review needed`. Don't finish the run: the open bar is how the owner sees that the batch still needs its review.
+- **At the report**, leave `land` and `review` pending and set `progress_label` to `push needed`. Don't finish the run: the open bar is how the owner sees that the batch still needs its push and review.
+- **Push:** move `land` to `push` and `close`, then done. The review runs in another session, so mark `review` `skipped` and finish. If the owner asks for the review here instead, work `review` as below; when that comes before the push, leave `land` pending until the push.
 - **Review:** clear the label (`progress_label` with an empty string), then move `review` to `round 1` when the review starts, `fix 1` when you fix its findings, `round 2` for the re-review, and done. A review with nothing to fix goes from `round 1` to done.
-- **Push:** move `land` to `push` and `close`, then done. If the owner pushes without a review, mark `review` `skipped` first.
-- **Finish** with `progress_finish done` once `land` is done, or once the owner says they're finished without pushing (mark `review` and `land` `skipped` first). On a stop, mark the step in flight `blocked`, set `progress_label` to the reason in a few words, and call `progress_finish halted`.
-- **New issues mid-run** (the owner adds one): mark the current `ready`, `review`, and `land` steps `skipped`, then `progress_add_steps` with the new issue followed by fresh `ready-2`, `review-2`, and `land-2`.
+- **Finish** with `progress_finish done` once `land` and `review` are both done, or once the owner says they're finished (mark whichever of `land` and `review` is still pending `skipped` first). On a stop, mark the step in flight `blocked`, set `progress_label` to the reason in a few words, and call `progress_finish halted`.
+- **New issues mid-run** (the owner adds one): mark the current `ready`, `land`, and `review` steps `skipped`, then `progress_add_steps` with the new issue followed by fresh `ready-2`, `land-2`, and `review-2`.
