@@ -2,22 +2,13 @@
 
 **New in v2.0.0:** `/orc` now works your GitHub issues end to end in the main session, one at a time, with no builder or reviewer agents. Give it one issue, a list, a range, `next 10`, or a plain-text request. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what the review found. `/do` is the same skill under another name. `/orc-loop` and `/orc-rush` are gone, because one skill now handles single issues and batches. See [Why one session](#why-one-session) and the [changelog](CHANGELOG.md).
 
+![Diagram: from issue to reviewed commit. You hand orc an issue, a range, next 10, or a sentence. In your session, /orc plans, pins the behavior in tests, builds, screenshots every UI change at phone and desktop widths in light and dark, updates the docs, and commits one commit per issue, then asks before it pushes and closes each issue with a note. In a fresh session, /orc-review sizes the review to the change, runs only the specialist reviewers it needs, verifies each finding against the code, and gives a verdict; /orc warnings and nits fixes what it found.](docs/media/orc-2-workflow.png)
+
 ### 2.0.0 by the numbers
 
 ![Chart: per closed issue, 1.x against 2.0.0. Cost $35.63 against $27.33 (23% lower), uncached tokens 2.23M against 1.36M (39% fewer), active time 68 against 43 minutes (37% faster), build time 63 against 18 minutes (71% faster), and first-review findings 0.14 Blockers and 7.0 Warnings against 0.12 and 5.6 (on par)](docs/media/orc-2-results.png)
 
-We ran the new workflow for a week in place of the old one and measured each closed issue end to end, with the follow-up review and its fix-ups included, in the projects that used both:
-
-| Per issue                 | 1.x (`/orc`, `/orc-loop`, `/orc-rush`) | 2.0.0 (`/orc`, then `/orc-review`) | Change         |
-| ------------------------- | -------------------------------------- | ---------------------------------- | -------------- |
-| Cost                      | $35.63                                 | $27.33                             | **23% lower**  |
-| Uncached tokens           | 2.23M                                  | 1.36M                              | **39% fewer**  |
-| Active time               | 68 minutes                             | 43 minutes                         | **37% faster** |
-| Build time alone          | 63 minutes                             | 18 minutes                         | **71% faster** |
-| Blockers per first review | 0.14                                   | 0.12                               | On par         |
-| Warnings per first review | 7.0                                    | 5.6                                | On par         |
-
-The issues were the same size on both sides (about 1,690 changed lines on average). Cost uses Anthropic's per-token prices for the models each session ran; active time leaves out time spent waiting for you.
+Measured over a week of real work, per closed issue, with the follow-up review and its fix-ups included. The issues were the same size on both sides (about 1,690 changed lines on average). Cost uses Anthropic's per-token prices for the models each session ran; active time leaves out time spent waiting for you.
 
 `/orc` works GitHub issues for Claude Code. For each issue, it reads the issue and the code, plans the change, pins the behavior in tests, builds it, screenshots any UI change, updates the docs, and commits one commit per issue. When the batch is done, it asks whether to push to your integration branch, then closes each issue with a comment that says where it landed.
 

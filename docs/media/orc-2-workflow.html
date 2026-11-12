@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --line: #2a313b;
+        --step: #1c222b;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --build: #45c37e;
+        --review: #79a8ff;
+        --you: #e3b341;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        width: 1136px;
+        padding: 28px 28px 30px;
+      }
+      h1 {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 16.5px;
+        line-height: 1.5;
+        margin: 10px 0 22px;
+        max-width: 930px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 20px 22px 22px;
+      }
+      .lane + .lane {
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      .lanehead {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11.5px;
+        letter-spacing: 2px;
+        color: var(--muted);
+      }
+      .cmd {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        background: var(--step);
+        border: 1px solid var(--line);
+      }
+      .build .cmd {
+        color: var(--build);
+      }
+      .review .cmd {
+        color: var(--review);
+      }
+      .flow {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+      }
+      .step {
+        flex: 1;
+        background: var(--step);
+        border: 1px solid var(--line);
+        border-top: 3px solid var(--accent);
+        border-radius: 10px;
+        padding: 12px 12px 13px;
+        min-width: 0;
+      }
+      .build .step {
+        --accent: var(--build);
+      }
+      .review .step {
+        --accent: var(--review);
+      }
+      .step.you {
+        --accent: var(--you);
+      }
+      .n {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 1px;
+      }
+      .t {
+        font-size: 15.5px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .d {
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.4;
+        margin-top: 5px;
+      }
+      .arrow {
+        flex: 0 0 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .io {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .box {
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        padding: 11px 14px;
+      }
+      .box .t {
+        font-size: 14.5px;
+        margin-top: 4px;
+        font-weight: 400;
+        color: var(--text);
+      }
+      .box code {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12.5px;
+        color: var(--build);
+      }
+      .foot {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>From issue to reviewed commit</h1>
+    <p class="sub">
+      You hand orc your issues. It carries each one through every step a careful
+      developer would, in your session, one commit per issue. Then a fresh
+      session reviews the work with only the specialists the change needs.
+    </p>
+    <div class="card">
+      <div class="io">
+        <div class="box">
+          <div class="label">YOU HAND IT</div>
+          <div class="t">
+            <code>/orc 123</code> &middot; <code>/orc 350-360</code> &middot;
+            <code>/orc next 10</code> &middot; or a sentence describing the work
+          </div>
+        </div>
+        <div class="box">
+          <div class="label">YOU GET BACK</div>
+          <div class="t">
+            Tested, documented commits on your branch, each issue closed with a
+            note saying where it landed, and a review verdict
+          </div>
+        </div>
+      </div>
+
+      <div class="lane build">
+        <div class="lanehead">
+          <span class="label">IN YOUR SESSION</span
+          ><span class="cmd">/orc</span>
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="n">01</div>
+            <div class="t">Plan</div>
+            <div class="d">
+              Reads the issue, the docs, and the code. One go-ahead covers a
+              whole batch.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">02</div>
+            <div class="t">Pin it in tests</div>
+            <div class="d">
+              Tests first. A bug starts with a test that fails.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">03</div>
+            <div class="t">Build</div>
+            <div class="d">
+              Your repo's own rules, checks, and migration tools.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">04</div>
+            <div class="t">Look at it</div>
+            <div class="d">
+              Screenshots every UI change: phone and desktop, light and dark.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">05</div>
+            <div class="t">Docs and commit</div>
+            <div class="d">
+              Updates the docs it changed. One commit per issue.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step you">
+            <div class="n">YOU</div>
+            <div class="t">Push</div>
+            <div class="d">
+              It asks first, then closes each issue with a note.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane review">
+        <div class="lanehead">
+          <span class="label">IN A FRESH SESSION</span
+          ><span class="cmd">/orc-review</span>
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="n">01</div>
+            <div class="t">Size the review</div>
+            <div class="d">
+              A copy fix gets one reviewer. An upload handler wakes security.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">02</div>
+            <div class="t">Specialists review</div>
+            <div class="d">
+              Security, architecture, quality, UI, comments, and test coverage.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">03</div>
+            <div class="t">Verify</div>
+            <div class="d">
+              A skeptical verifier checks each finding against the code and
+              drops false alarms.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step">
+            <div class="n">04</div>
+            <div class="t">Verdict</div>
+            <div class="d">
+              Blockers, Warnings, and Nits, and whether it is ready to merge.
+            </div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="step you">
+            <div class="n">YOU</div>
+            <div class="t">Fix</div>
+            <div class="d">
+              <code style="font-family: &quot;IBM Plex Mono&quot;, monospace"
+                >/orc warnings and nits</code
+              >
+              fixes what it found.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="foot">
+      Works in any repo: orc reads your CLAUDE.md, rules, hooks, and manifest,
+      and your repo's conventions win over its defaults.
+    </p>
+  </body>
+</html>
