@@ -1,6 +1,6 @@
 ---
 name: tiedown
-pack: orc-pack@1.22.0
+pack: orc-pack@2.0.0
 description: End-of-session check in three stages. Stage 1 finds every open question and loose end, or says "We're done." when nothing is left. Stage 2 thinks through each open item (what to do, the best option, what an expert would do) with a right-sized subagent per item, and none for obvious ones. Stage 3 presents one final list with a firm recommendation per item, so the user can say "yes, do all of it". Read-only; it recommends but never fixes anything. Use only when the user types /tiedown or asks "are we done?", "any loose ends?", or "anything else you need from me?".
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(git branch:*), Bash(git worktree list:*), Bash(git stash list:*), Bash(git rev-list:*), Bash(git diff:*), Bash(gh issue list:*), Bash(gh issue view:*), Bash(gh pr list:*), Bash(netstat:*), Bash(tasklist:*), Bash(ls:*), Read, Grep, Glob, ListAgents, TaskList, Agent
@@ -37,8 +37,8 @@ Work through every check below. Skip a check only when it does not apply to this
 4. **Checks that did not pass or did not run.** List any test, lint, typecheck, build, or e2e run that
    failed, was skipped, or was never run on the final state. Say so plainly; do not call it green.
 5. **Running things.** Background tasks, subagents (`ListAgents`, `TaskList`), dev servers (check
-   port 3000 and any port you started), watchers, timers, scheduled wakeups, lock files such as
-   `.git/orc/checkout.lock`, and temp worktrees. Anything this session started that is still running
+   port 3000 and any port you started), watchers, timers, scheduled wakeups, lock files, and
+   temp worktrees. Anything this session started that is still running
    or left behind is a loose end, with how to stop it.
 6. **Issues and board.** Issues this session worked on: still open, closed, or commented? Follow-ups
    promised but not filed? Check with `gh issue view` when unsure. Note issues left open on purpose

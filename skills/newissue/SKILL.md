@@ -1,6 +1,6 @@
 ---
 name: newissue
-pack: orc-pack@1.22.0
+pack: orc-pack@2.0.0
 description: Turn a rough idea into a detailed, self-contained GitHub issue a fresh agent could execute with zero prior context. Use whenever the user says "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", or okays filing an issue you surfaced. Investigates the code, checks the board for duplicates and drift, sizes each issue (Small, Medium, Large, Huge), then files with `gh`. Do NOT invoke for an issue the user has not asked for or approved — surface the idea and ask first.
 ---
 
@@ -70,7 +70,7 @@ Two passes, both required.
 
 ### 4. Size the work, then decide the shape: one issue, several, or an epic
 
-Size for the executor: each filed issue should be a unit one autonomous agent run can carry to done. Size the whole idea first with these four bands — the same bands `/orc` uses for follow-up work and reads back from issue bodies to set its run budget. Size by scope, never by guessed hours. When in doubt between two bands, take the larger.
+Size for the executor: each filed issue should be a unit one autonomous agent run can carry to done. Size the whole idea first with these four bands — so whoever picks it up, `/orc` included, can tell at a glance how much work it is. Size by scope, never by guessed hours. When in doubt between two bands, take the larger.
 
 - **Small** — one focused task: a single fix or change with one or two "Done when" lines.
 - **Medium** — one dedicated agent run of 2 to 4 tasks.

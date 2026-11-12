@@ -1,10 +1,10 @@
 # The `/do` trial (2026-11-07 to 2026-11-12)
 
-Maintainer notes on a one-week trial of `/do` as the main build workflow, and the direction it may set for the pack. Nothing here ships. The evaluation is on Thursday 2026-11-12; until then, nothing in `skills/` or `agents/` changes because of this trial, and nothing from it goes to `main`.
+Maintainer notes on a one-week trial of `/do` as the main build workflow, and the direction it may set for the pack. Nothing here ships. The evaluation ran on 2026-11-12, and its result shipped as 2.0.0.
 
 ## What `/do` is
 
-`/do` is a personal skill at `~/.claude/skills/do/SKILL.md`, outside this repo. It was built from rogadispatch's repo-level `/do`, plus a paceline progress bar. A snapshot of the version under trial is in [`do-trial-skill.md`](do-trial-skill.md); the live file can change during the week, so compare against it.
+`/do` is a personal skill at `~/.claude/skills/do/SKILL.md`, outside this repo. It was built from rogadispatch's repo-level `/do`, plus a paceline progress bar. The version under trial is now `skills/orc/SKILL.md`; its history is in git.
 
 It works issues end to end in the main session, one at a time: read, plan, wait for one go-ahead, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue. It dispatches no builder or reviewer agents. Review happens afterward, when the owner runs `/deep-review`, `/orc-review`, or `/deep-review-generic` over the run's commits. It takes repo specifics only from the repo's `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`, and hooks, the same way orc's agents do.
 
@@ -60,21 +60,35 @@ The owner's routine after a deep review is `/do warnings and nits`, repeated unt
 - **The bold done line carries the fixed counts,** for example **Done: fixed 1 Blocker, 3 Warnings, and 2 Nits in 2 commits, pushed to `dev`. This run is complete.**
 - **A review run in the build session** reports with the same tally.
 
-## The direction under consideration
+## Evaluation (2026-11-12)
 
-Decided on 2026-11-12, not before. The owner is leaning toward:
+Measured from the session transcripts and the GitHub boards, per closed issue, with every review session and review-fix run charged to the workflow whose work it reviewed. The `/orc` family ran from 2026-10-15 to 2026-11-05 and `/do` from 2026-11-05 to 2026-11-12. Prices are the pack's model prices (Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per million input/output tokens, with cache reads and writes weighted). Active time leaves out time spent waiting for the owner.
 
-- **`/orc` becomes what `/do` is today:** the main path, high quality, single session, review afterward.
-- **A heavy variant** (working name `/orc-heavy`) keeps today's subagent-driven `/orc` and `/orc-loop` for work that needs it.
-- **`/orc-rush` and `/orc-loop` are dropped** as separate skills, along with their `-iter` companions.
-- **Efficiency mode goes away,** because the `/do`-style path is the cheap path.
+In the three repos that used both (techcentral, tctools, rogadispatch):
 
-Open questions for the evaluation are in the next section.
+| Per issue                        | `/orc` family (171 issues) | `/do` + deep review (49 issues) | Change      |
+| -------------------------------- | -------------------------- | ------------------------------- | ----------- |
+| Cost                             | $35.63                     | $27.33                          | 23% cheaper |
+| Uncached tokens                  | 2.23M                      | 1.36M                           | 39% fewer   |
+| All tokens, cache reads included | 62.6M                      | 55.9M                           | 11% fewer   |
+| Active minutes                   | 68                         | 43                              | 37% faster  |
+| Build minutes only               | 63                         | 18                              | 71% faster  |
+| Owner prompts                    | 3.9                        | 3.7                             | about equal |
+| Changed lines (mean / median)    | 1,694 / 814                | 1,693 / 632                     | similar     |
 
-## Questions for the evaluation
+- **By repo:** techcentral, the largest sample, went from $35 and 66 minutes to $21 and 33 minutes per issue; tctools from $68 to $28. rogadispatch went the other way ($31 to $41) on 11 `/do` issues, one of them a 10,000-line migration.
+- **Review is most of `/do`'s cost:** about 60% of it ($801 of $1,339) went to deep reviews and their fix runs.
+- **Quality:** first deep reviews averaged 0.14 Blockers and 7.0 Warnings on `/orc` work and 0.12 and 5.6 on `/do` work, so no measurable drop, on a small and uneven sample (seven `/orc` reviews). Three of `/do`'s four Blockers were checks that failed after commit (a format check or test run); `/orc`'s builders ran those before committing. Fix loops converged where the range stood still and didn't where new work landed between reviews. Missing tests, contrast and accessibility, and stale end-to-end tests recurred in both.
+- **Not measured:** whether text mode ever built the wrong scope.
 
-- Did `/do` plus a deep review catch what an `/orc` run would have caught? Compare the review findings per run with past `/orc-loop` reports (`<git-dir>/orc-loop/reviews/`).
-- Did text mode's brief match what the owner meant once it stopped waiting for a go-ahead, and did any run build the wrong scope?
-- Does the heavy variant cover both a single issue and a batch, or does batching move into the main `/orc` only?
-- What happens to the agents only the heavy path uses (the builders, `design-reviewer`, `scope-reviewer`), and to `/retro`, which reads `/orc` run artifacts?
-- Renaming `/orc` changes what installed users get, so it is a breaking release (2.0.0) and needs an `/update-orc` migration step in `CHANGELOG.md`.
+## Decision
+
+`/do` met the bar (cheaper and faster per issue, quality on par), so it became `/orc` in 2.0.0:
+
+- **`/orc` is what `/do` was,** with one addition from the evaluation: with no commit gate, it runs the repo's format check, type check, and covering tests before each commit.
+- **`/do` stays as another name** for the same skill.
+- **No heavy variant.** `/orc-loop`, `/orc-rush`, and their `-iter` skills are gone, along with efficiency mode, the builders, `design-reviewer`, `scope-reviewer`, `next-issue-finder`, `docs-writer`, `impact`, and the builder, work-contract, design-brief, and your-call references.
+- **The standards and playbooks** stay, read by `/orc-review`'s lanes only.
+- **`/retro`** now measures cost and active time per closed issue, as this evaluation did.
+
+The release notes are the `[2.0.0]` section of `CHANGELOG.md`.

@@ -1,6 +1,6 @@
 # Code standard
 
-Every builder writes to this standard and the reviewers check against it. It applies to every language the repo uses, with examples in TypeScript because that is where most of the pack's work lands.
+The reviewers check every change against this standard. It applies to every language the repo uses, with examples in TypeScript because that is where most of the pack's work lands.
 
 ## Precedence
 
@@ -8,7 +8,7 @@ When two sources disagree, the higher one wins:
 
 1. The repo's own docs (`CLAUDE.md`, `AGENTS.md`, contributing guides, ADRs).
 2. The repo's established patterns in the code around the change.
-3. The framework and platform playbooks orc loaded for this repo.
+3. The framework and platform playbooks the review loaded for this repo.
 4. This file.
 
 A client repo with its own structure and conventions is followed as it is. Never reshape a repo to match this file; raise the disagreement in the report instead.
@@ -91,7 +91,7 @@ A file the task modifies is in scope for cleanup, within limits:
 
 - **In scope:** slop in the functions and components the diff changes, and file-level slop anywhere in the file (unused imports, dead code, `console.log`, commented-out code, slop comments).
 - **Behavior-preserving only.** Cleanup never changes what the code does. A behavior bug found during cleanup is its own `fix:` change.
-- **Proportionate.** When a touched file needs a rewrite larger than the task itself, the reviewer marks it a **cleanup candidate** and orc runs it as a separate task, so the task's own diff stays reviewable. "Cleanup candidate" always means a file the task touches.
+- **Proportionate.** When a touched file needs a rewrite larger than the task itself, the reviewer marks it a **cleanup candidate** to be handled as separate work, so the task's own diff stays reviewable. "Cleanup candidate" always means a file the task touches.
 - **Untouched files are out of scope.** Quality debt elsewhere is a **cleanup target**: it goes in the report for a later cleanup run, not into this diff and not into a new task.
 
 ## What is not a finding

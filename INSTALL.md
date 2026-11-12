@@ -1,6 +1,6 @@
 # INSTALL — agent instructions for baking the orc pack into a repo
 
-**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder, or at its GitHub URL, and asked you to install it). Your job: copy this kit's skill and agents into **that** repo's `.claude/` directory (the repo the session is open in, never the kit's own checkout), adapt them to the repo, and verify the result — without breaking anything already there.
+**You are an agent reading this inside a Claude Code session that is already open in a target project** (the user pointed you at this folder, or at its GitHub URL, and asked you to install it). Your job: copy this kit's skills and agents into **that** repo's `.claude/` directory (the repo the session is open in, never the kit's own checkout), adapt them to the repo, and verify the result — without breaking anything already there.
 
 Work through the phases in order. Don't skip verification. When you're done, give the user the short summary at the end.
 
@@ -8,7 +8,7 @@ Work through the phases in order. Don't skip verification. When you're done, giv
 
 ## What this pack is
 
-`/orc` is an autonomous orchestrator skill: it picks (or is handed) a unit of work, plans it as a live task list, dispatches builder and reviewer subagents, loops review↔fix until only nitpicks remain, runs the repo's ready check, commits, and closes out. It depends on a set of subagents — a scout, builders, tooling runners, a panel of code reviewers, and a verifier. **The skill and the agents are one system; install them together** or `/orc` will dispatch agents that don't exist.
+`/orc` is a skill that works GitHub issues end to end in the main session, one at a time: it reads each issue, plans it, pins the behavior in tests, builds it, screenshots UI changes, updates the docs, and commits one commit per issue, then pushes and closes the issues when the user says so. It dispatches no builder or reviewer agents. `/do` is the same skill under another name. Review happens afterward, when the user runs `/orc-review` (or the project's `/deep-review`), which dispatches the pack's reviewer lanes, gate runners, and verifier. **Install the skills and agents together**, or `/orc-review` will dispatch agents that don't exist.
 
 Kit layout:
 
@@ -20,27 +20,16 @@ orc-pack/
 ├── skills/
 │   ├── orc/
 │   │   ├── SKILL.md
-│   │   └── references/     ← standards and playbooks orc passes to its agents
-│   │       ├── builder-contract.md
-│   │       ├── design-brief.md
-│   │       ├── work-contract.md
-│   │       ├── your-call.md
+│   │   └── references/     ← the standards and playbooks /orc-review's lanes check against, and the release check
 │   │       ├── update-check.md
 │   │       ├── standards/  (code, comments, structure, ui, data)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
-│   ├── orc-loop/
-│   │   └── SKILL.md
-│   ├── orc-loop-iter/
-│   │   └── SKILL.md
-│   ├── orc-rush/
-│   │   ├── SKILL.md
-│   │   └── references/     ← briefs.md, the briefs its ranker, sweep, triage, and blocker agents get
-│   ├── orc-rush-iter/
-│   │   └── SKILL.md
+│   ├── do/
+│   │   └── SKILL.md        ← /do, which reads and follows ../orc/SKILL.md
 │   ├── orc-review/
 │   │   ├── SKILL.md
-│   │   └── references/     ← profile-template.md (the project profile /orc-review setup fills in) lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
+│   │   └── references/     ← profile-template.md (the project profile /orc-review setup fills in), lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
 │   ├── newissue/
 │   │   └── SKILL.md
 │   ├── retro/
@@ -54,28 +43,19 @@ orc-pack/
 │   └── update-orc/
 │       └── SKILL.md
 └── agents/
-    ├── api-implementer.md
     ├── architecture-reviewer.md
     ├── comment-reviewer.md
-    ├── data-implementer.md
     ├── dependency-vetter.md
-    ├── design-reviewer.md
-    ├── docs-writer.md
     ├── fallow.md
-    ├── impact.md
-    ├── implementer.md
     ├── lint.md
-    ├── next-issue-finder.md
     ├── orc-updater.md
     ├── quality-reviewer.md
-    ├── scope-reviewer.md
     ├── security-reviewer.md
     ├── setup-auditor.md
     ├── skill-vetter.md
     ├── test-coverage-reviewer.md
     ├── test.md
     ├── typecheck.md
-    ├── ui-implementer.md
     ├── ui-reviewer.md
     ├── usages.md
     └── verifier.md
@@ -110,7 +90,7 @@ Two valid targets. **Default to project scope** unless the user says otherwise.
 
 The destination root for project scope is the **target** you resolved in Phase 0 — the session's repo, not the kit. Everything below is relative to the destination root you chose.
 
-> Note on committing: some repos intentionally gitignore `.claude/` (keep it local); others commit it to share with the team. Check the repo's `.gitignore` and existing `.claude/` tracking before assuming. Don't change that policy as a side effect of installing — match what the repo already does.
+**Note on committing:** some repos intentionally gitignore `.claude/` (keep it local); others commit it to share with the team. Check the repo's `.gitignore` and existing `.claude/` tracking before assuming. Don't change that policy as a side effect of installing — match what the repo already does.
 
 ---
 
@@ -122,11 +102,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | ------------------------------------- | ---------------------------------------------------- |
 | `skills/orc/SKILL.md`                 | `<root>/.claude/skills/orc/SKILL.md`                 |
 | `skills/orc/references/` (all)        | `<root>/.claude/skills/orc/references/` (all)        |
-| `skills/orc-loop/SKILL.md`            | `<root>/.claude/skills/orc-loop/SKILL.md`            |
-| `skills/orc-loop-iter/SKILL.md`       | `<root>/.claude/skills/orc-loop-iter/SKILL.md`       |
-| `skills/orc-rush/SKILL.md`            | `<root>/.claude/skills/orc-rush/SKILL.md`            |
-| `skills/orc-rush/references/` (all)   | `<root>/.claude/skills/orc-rush/references/` (all)   |
-| `skills/orc-rush-iter/SKILL.md`       | `<root>/.claude/skills/orc-rush-iter/SKILL.md`       |
+| `skills/do/SKILL.md`                  | `<root>/.claude/skills/do/SKILL.md`                  |
 | `skills/retro/SKILL.md`               | `<root>/.claude/skills/retro/SKILL.md`               |
 | `skills/retro/references/` (all)      | `<root>/.claude/skills/retro/references/` (all)      |
 | `skills/orc-review/SKILL.md`          | `<root>/.claude/skills/orc-review/SKILL.md`          |
@@ -140,7 +116,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 
 **Copy nothing else.** `INSTALL.md`, `UPDATE.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `LICENSE`, `docs/`, `.claude-plugin/`, and `.github/` are kit docs and kit CI, not runtime files. The kit's own `.claude/` holds this repo's `required-secrets.md` and `smoke-checklist.md`, which are repo-owned: never copy them over the target's. It also holds `skills/condense/`, a maintainer skill for this repo only: never copy it. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
 
-**Copy `skills/orc/references/` as a whole directory, keeping its subfolders.** Orc hands those files to its agents by path; without them the agents fall back to their generic rubrics and the pack's standards are lost.
+**Copy `skills/orc/references/` as a whole directory, keeping its subfolders.** `/orc-review` finds the standards and playbooks at `skills/orc/references/` and hands them to its lanes by path; without them the lanes fall back to their generic rubrics and the pack's standards are lost. `/orc` and `/orc-review` also read `update-check.md` there. Keep `skills/orc/` and `skills/do/` side by side under the same `skills/` directory, because `/do` reads `../orc/SKILL.md`.
 
 Every kit skill and agent file carries `pack: orc-pack@<version>` in its frontmatter (the reference files do not; they belong to the pack-owned `skills/orc/` directory). Leave it in place when copying — it's how a future install recognizes a file as the pack's rather than the repo's own (Phase 3). After copying, write `<root>/.claude/orc-pack.provenance.md` recording the pack version, the source repo (`owner/repo`) and URL, the install date, and any files you overwrote or renamed. Recording the source repo is what lets `/update-orc` find future releases later.
 
@@ -150,14 +126,15 @@ Create `<root>/.claude/skills/orc/` and `<root>/.claude/agents/` if they don't e
 
 ## Phase 3 — Handle conflicts (check BEFORE copying)
 
-**Whole-system check first.** Before comparing individual files, look at what already lives in `.claude/`. If the repo has its own orchestration system — an orchestrator skill, an agent team, or agents doing the pack's jobs under different names (its own code reviewer, issue picker, implementer) — the decision is system-level, not per-file. Stop and ask the user **once**, offering: keep the repo's system and install nothing; install only the pack pieces with no counterpart in the repo (complements only); replace the repo's system with the pack; or install under suffixed names side by side (last resort — two orchestrators answering near-identical invocations). Don't ask file by file when the real conflict is between two systems. A repo's own `.claude/skills/deep-review/` is not a competing system: it is the project reviewer `orc-review` is built to work with. Leave it in place, and tell the user that `/orc-review setup` can convert it into a profile.
+**Whole-system check first.** Before comparing individual files, look at what already lives in `.claude/`. If the repo has its own issue workflow or review system (a skill that works issues end to end, an agent team, or agents doing the pack's jobs under different names, such as its own code reviewer or verifier), the decision is system-level, not per-file. Stop and ask the user **once**, offering: keep the repo's system and install nothing; install only the pack pieces with no counterpart in the repo (complements only); replace the repo's system with the pack; or install under suffixed names side by side (last resort: two workflows answering near-identical invocations). Don't ask file by file when the real conflict is between two systems. A repo's own `.claude/skills/deep-review/` is not a competing system: it is the project reviewer `orc-review` is built to work with. Leave it in place, and tell the user that `/orc-review setup` can convert it into a profile.
 
 Then, for every destination path, check whether a file already exists. **Never blind-overwrite.**
 
 - **No file there** → copy it in. Done.
 - **A file with the same name exists** → check its frontmatter for a `pack:` marker.
   - **`pack: orc-pack@<version>` present** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits made since (the repo's git history for that file shows them).
-  - **No `pack:` marker, under the `references/` directory of a pack skill (`orc`, `orc-review`, `orc-rush`, `retro`, or `shipcheck`)** → pack-owned. The reference files carry no marker but belong to the pack whenever the skill's own `SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never treat them as repo-owned.
+  - **No `pack:` marker, under the `references/` directory of a pack skill (`orc`, `orc-review`, `retro`, or `shipcheck`)** → pack-owned. The reference files carry no marker but belong to the pack whenever the skill's own `SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never treat them as repo-owned.
+  - **A skill named `do` with no `pack:` marker** (`<root>/.claude/skills/do/SKILL.md`) → the repo's own `/do` skill, and the common case of this conflict, because `do` is a short, generic name. Never overwrite it; handle it as the next bullet says. `/orc` works without `/do`, so skipping the kit's `do` is a safe default.
   - **Any other file with no `pack:` marker** → the repo's own artifact. Do **not** clobber it. If it's richer or repo-tuned than the kit's, prefer the repo's and note it — the kit's agents are deliberately generic starting points. Otherwise ask the user: keep the repo's, take the kit's, or install the kit's under a suffixed name (for example `security-reviewer-orc`) with the orc skill's references updated — a last resort, because it desyncs the skill's agent names.
 - **A skill is its whole directory, not just `SKILL.md`.** When replacing one, decide the fate of every file in the destination directory: remove support files the new version doesn't reference — they're orphans — and say so in the report.
 
@@ -171,19 +148,18 @@ The `skill-vetter` agent in this pack is exactly the tool for a cautious install
 
 The kit's agents and skill are written to be **project-agnostic**: they discover the repo's stack, commands, and conventions at runtime by reading `CLAUDE.md`/`AGENTS.md`, the manifest, and neighbouring code. So a bare copy already works. But a few quick adaptations make them sharper — do these when the information is readily available:
 
-1. **Confirm the ready command and working branch.** The orc skill runs "the repo's aggregate check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them — no edit needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every agent benefits. Ask the user before creating or editing repo docs.
+1. **Confirm the ready command and working branch.** `/orc` runs "the repo's ready check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them, so no edit is needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every session benefits. Ask the user before creating or editing repo docs.
 2. **Prune what the repo can't use.**
-   - `impact` is optional metrics; keep or drop per the user's preference.
-   - Keep `agents/usages.md`: orc, the loops, and `/orc-review` dispatch it before every review panel with two or more lanes that read it.
+   - Keep `skills/orc/` and its whole `references/` directory whenever any pack skill is installed: `/orc-review` reads the standards there, and `/do` reads orc's `SKILL.md`.
+   - `skills/do/` is optional; keep it unless the user declines or the repo has its own `do` skill (Phase 3). It adds nothing but the second name.
+   - Keep `agents/usages.md`: `/orc-review` dispatches it before every review with two or more lanes that read it, and `/retro` uses it too.
    - Keep `agents/fallow.md` even on a non-JS/TS repo: it self-skips, and dropping it desyncs the kit. Phase 4.5 installs the CLI.
-   - `skills/newissue/` is optional but recommended (orc's Discoveries step files follow-up work with it). Drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3) or the repo doesn't track work as GitHub issues. Tell the user it reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
-   - `skills/orc-loop/` is optional; keep it unless the user declines. It runs `/orc` over a batch of issues unattended, so it needs GitHub issues and an integration branch, the same as `/orc`. On its first run in a repo it asks once whether the agents' notes in `.claude/agent-memory/` go in `.gitignore`, so don't decide that during the install. `skills/orc-loop-iter/` belongs to it: `/orc-loop` runs every `/orc` through it, and it is hidden from the `/` menu. Keep or drop the two together.
-   - `skills/orc-rush/` is optional; keep it unless the user declines. It is the speed-first loop: it builds the board one issue at a time with a fast review, pushes each issue, and reviews in depth at its sweeps and through `/orc-review` before promotion. It needs GitHub issues and an integration branch, like `/orc-loop`. `skills/orc-rush-iter/` belongs to it: `/orc-rush` runs every `/orc` through it, and it is hidden from the `/` menu. `/orc-rush` also follows sections of `skills/orc-loop/SKILL.md` (agent notes, standards, the progress bar, filing), so keep `orc-loop` and `orc-loop-iter` whenever `orc-rush` is kept.
-   - `skills/retro/` is optional; keep it unless the user declines. It is the read-only retrospective on past runs, and its `references/usage.mjs` needs Node to measure tokens.
-   - `skills/orc-review/` is optional; keep it unless the user declines. It is the read-only deep review of a branch before a merge, and `/orc-review setup` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its risk map, architecture, and known non-issues), so don't create that file during the install.
+   - `skills/newissue/` is optional but recommended (`/orc` files a plain-text request with it when the user asks it to). Drop it only if the user has their own issue-filing skill (a same-name conflict routes through Phase 3) or the repo doesn't track work as GitHub issues. Tell the user it reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
+   - `skills/orc-review/` is optional but recommended: it is how `/orc`'s work gets reviewed. Drop it only if the user declines, and then the reviewer agents, `verifier`, `setup-auditor`, `usages`, `lint`, `typecheck`, and `test` have no pack skill that dispatches them (they still work standalone). `/orc-review setup` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its risk map, architecture, and known non-issues), so don't create that file during the install.
+   - `skills/retro/` is optional; keep it unless the user declines. It is the read-only retrospective on past `/orc` runs and the reviews after them, and its `references/usage.mjs` needs Node to measure tokens.
    - `skills/shipcheck/` is optional; keep it unless the user declines. It drafts `.claude/required-secrets.md` and `.claude/smoke-checklist.md` from the code on first use, so don't create them during the install.
    - `skills/tiedown/` is optional; keep it unless the user declines. It is the read-only end-of-session check, has no references or setup files, and runs only when the user types `/tiedown`.
-3. **Leave the reviewers and the standards generic unless asked.** They adapt per-repo at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when orc detects that stack, so keep them all even if the repo uses one. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version — that's a bigger, opt-in step, not part of a basic install.
+3. **Leave the reviewers and the standards generic unless asked.** They adapt per-repo at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when `/orc-review` detects that stack, so keep them all even if the repo uses one. Only hand-tune a reviewer (hardcoding a repo's trust boundary or stack rules) if the user explicitly wants the sharper, repo-specific version; that's a bigger, opt-in step, not part of a basic install. A project's own reviewer specialists belong in repo lanes, which `/orc-review setup` builds.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
 
@@ -191,7 +167,7 @@ Don't over-engineer this phase. The pack is designed to work as-copied; adaptati
 
 ## Phase 4.5 — Fallow (installed by default, gated by a security vet)
 
-Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shells out to its CLI to give orc dead-code, duplication, complexity, and circular-dependency signals instead of inferred structure, and it self-skips on a non-JS/TS project. The user never interacts with it directly. Install it by default; skip it only if the user explicitly declines.
+Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shells out to its CLI to give `/orc-review` (and `/orc`, after a run that removed or moved code) dead-code, duplication, complexity, and circular-dependency signals instead of inferred structure, and it self-skips on a non-JS/TS project. The user never interacts with it directly. Install it by default; skip it only if the user explicitly declines.
 
 **Do not install it without vetting first.** The policy is **install-latest-after-vet**: get the newest version so users get current fixes, but only after it passes the security vet. A package can change upstream at any time, so the vet is the gate — not a one-time pin.
 
@@ -204,10 +180,10 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 
 ## Phase 5 — Verify
 
-1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review` with its `references/profile-template.md`, `references/lane-template.md`, and `references/template-changes.md`, `orc-rush` with its `references/briefs.md` and `orc-rush-iter`, `retro` with its `references/usage.mjs`, `newissue`, `shipcheck`, and `tiedown` unless pruned), the `skills/orc/references/` directory with `builder-contract.md`, `design-brief.md`, `work-contract.md`, `your-call.md`, `update-check.md`, and its `standards/`, `frameworks/`, and `platforms/` files, and up to 23 agent files are present.
-2. **Frontmatter parses.** Each agent `.md` and the `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
-3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. If Phase 3 forced you to rename any agent, update the matching reference inside `skills/orc/SKILL.md` so the skill dispatches a name that exists.
-4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc` and the new agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
+1. **Files are in place.** List `<root>/.claude/skills/` and `<root>/.claude/agents/` and confirm the skills (`orc` and `update-orc`, plus `do`, `orc-review` with its `references/profile-template.md`, `references/lane-template.md`, and `references/template-changes.md`, `retro` with its `references/usage.mjs`, `shipcheck` with its `references/smoke-runner.mjs`, `newissue`, and `tiedown` unless pruned), the `skills/orc/references/` directory with `update-check.md` and its `standards/`, `frameworks/`, and `platforms/` files, and up to 16 agent files are present.
+2. **Frontmatter parses.** Each agent `.md` and each `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
+3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. If Phase 3 forced you to rename any agent, update the matching reference inside the skill that dispatches it (usually `skills/orc-review/SKILL.md`) so it dispatches a name that exists.
+4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc`, `/do`, `/orc-review`, and the agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
 5. **Provenance.** `<root>/.claude/orc-pack.provenance.md` exists and names the installed pack version (Phase 2).
 
 ---
@@ -217,12 +193,12 @@ Fallow is a standard under-the-hood tool, not an opt-in. The `fallow` agent shel
 Give them a short, human summary:
 
 - Where you installed (project or global, and the path).
-- The count: N skills (`orc` and `update-orc`, plus `orc-loop` with `orc-loop-iter`, `orc-review`, `orc-rush` with `orc-rush-iter`, `retro`, `newissue`, `shipcheck`, and `tiedown` unless pruned) and N agents.
+- The count: N skills (`orc` and `update-orc`, plus `do`, `orc-review`, `retro`, `newissue`, `shipcheck`, and `tiedown` unless pruned) and N agents.
 - Any conflicts you hit and how you resolved them (especially anything you renamed or skipped).
 - Fallow status (Phase 4.5): installed at the vetted version, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
-- The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5 and Sonnet 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
-- The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The pack is calibrated for Opus 5.5, and Opus 5 drives it poorly. (The skill refuses to start on Opus 5, but the session model is the user's to set.) Starting orc on Sonnet 5.5 (`claude-sonnet-5-5`) runs it in efficiency mode after the user confirms: a lower token bill for slightly lower quality. The README's "Pick a model" section explains it.
-- That `/orc` is available in a new session.
+- The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
+- The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The skill refuses to start on Opus 5, but the session model is the user's to set.
+- How the workflow runs: `/orc` (or `/do`) builds and commits the issues in the session, then the user runs `/orc-review` in a fresh session and `/orc warnings and nits` to fix what it found. Both `/orc` and `/do` are user-invoked only and become available in a new session.
 - When you installed `orc-review`, whether the repo has a project review profile. With no `<root>/.claude/skills/deep-review/SKILL.md`, tell them to run `/orc-review setup` once in a new session: it drafts the profile that tailors the review to this project's stack and architecture. When that file exists without a `based-on: orc-review@` line, it is a hand-written reviewer: tell them `/orc-review setup` converts it into a profile and keeps its project-specific parts.
 
-Do **not** run `/orc` yourself to "test" it unless the user asks — it's an autonomous run that commits code. Installation is done when the files are in place and verified.
+Do **not** run `/orc` yourself to "test" it unless the user asks: it commits code, and it is user-invoked only. Installation is done when the files are in place and verified.

@@ -1,5 +1,5 @@
 {
   "name": "orc-pack",
-  "description": "Autonomous orchestrator skill (/orc), its unattended batch loop (/orc-loop), plus its subagent team: code reviewers, a finding verifier, an issue scout, and tooling runners.",
-  "version": "1.22.0"
+  "description": "Works GitHub issues end to end in your session (/orc, also /do), then reviews the work with /orc-review's bench of reviewer subagents and a finding verifier, plus ship checks, retros, and issue writing.",
+  "version": "2.0.0"
 }

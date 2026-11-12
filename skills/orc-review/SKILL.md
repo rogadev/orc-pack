@@ -1,6 +1,6 @@
 ---
 name: orc-review
-pack: orc-pack@1.22.0
+pack: orc-pack@2.0.0
 description: Read-only deep review of a branch, range, pull request, or uncommitted work, sized to the change. Runs only the reviewer lanes whose surface the change touches, verifies the findings, and returns a plain-language report with a verdict. Reads the repo's project profile (risk map, architecture, known non-issues) from .claude/skills/deep-review/SKILL.md; `/orc-review setup` drafts it. Use when the user says "/orc-review", "review my branch", "review dev before the PR", "is this ready to merge", or "set up deep review for this project".
 argument-hint: "[setup [skip]] | [ref | a..b | #PR | working] [quick | full] [auto]"
 ---
@@ -61,7 +61,7 @@ git diff <range> --stat -- . <excludes> > "$D/stat.txt"
 
 **Intent.** Collect the issue numbers in the range's commit messages (`git log <range> --format=%B`) and, for a PR target, its body. For each, `gh issue view <n> --json number,title,body` (about 150 lines per body) into `$D/intent.md`, plus the commit messages, bodies included, because `Closes #N` and `Refs #N` sit in the bodies. If `gh` fails, write what you have and continue.
 
-**Standards.** Orc's reference files are the shared bar. When Claude Code names this skill's base directory, they are in `<base>/../orc/references/`; otherwise glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Note the absolute paths of `standards/code.md`, `comments.md`, `structure.md`, `ui.md`, and `data.md`. Take the framework and platform playbooks from the profile's **Stack**; with no profile, detect them as orc's step 1 does: `frameworks/next.md` (`next`), `nuxt.md` (`nuxt`), `sveltekit.md` (`@sveltejs/kit`), or `astro.md` (`astro`); `platforms/cloudflare.md` (a `wrangler.*` config or Cloudflare adapter) or `vercel.md` (`vercel.json`, `.vercel/`, `@vercel/*`, or a Vercel adapter). If no references are found, run anyway and say so.
+**Standards.** The reference files in the `orc` skill's directory are the shared bar. When Claude Code names this skill's base directory, they are in `<base>/../orc/references/`; otherwise glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Note the absolute paths of `standards/code.md`, `standards/comments.md`, `standards/structure.md`, `standards/ui.md`, and `standards/data.md`. Take the framework and platform playbooks from the profile's **Stack**; with no profile, detect them from the manifest and config files: `frameworks/next.md` (`next`), `frameworks/nuxt.md` (`nuxt`), `frameworks/sveltekit.md` (`@sveltejs/kit`), or `frameworks/astro.md` (`astro`); `platforms/cloudflare.md` (a `wrangler.*` config or Cloudflare adapter) or `platforms/vercel.md` (`vercel.json`, `.vercel/`, `@vercel/*`, or a Vercel adapter). If no references are found, run anyway and say so.
 
 ## 2. Choose the lanes
 
@@ -156,7 +156,7 @@ A finding is introduced by this change only on a line the diff adds; on other co
 Write each finding to Report with file, line (in the file at the range's end, never a line of diff.patch), severity (Blocker, Warning, or Nit), the problem, and the fix. A rule in Project marked Blocker: or Warning: sets that severity. Then reply with one line: your counts, any files under "Not read:", and the path.
 ```
 
-**Findings travel as files,** as orc's step 5 says: the verifier reads the lanes' reports and writes its own, and until step 5 you read only the replies, except `$D/verified.md` for the `quick` escalation in step 4. A lane that replies with its findings instead of a path, such as a repo lane built before review template 4, still counts: step 4 passes its reply on.
+**Findings travel as files:** each lane writes its findings to the file on its `Report:` line and replies with one line, the verifier reads the lanes' reports and writes its own, and until step 5 you read only the replies, except `$D/verified.md` for the `quick` escalation in step 4. A lane that replies with its findings instead of a path, such as a repo lane built before review template 4, still counts: step 4 passes its reply on.
 
 Only the five lanes that read the map and the repo lanes get the `Usages:` line, and it is omitted with no map. **Platform constraints** go only to `security-reviewer`, `quality-reviewer`, `architecture-reviewer`, and the repo lanes. Never tell a reviewer what not to flag.
 
@@ -216,11 +216,11 @@ Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' r
 
 **Report destination.** When the profile names one and `git check-ignore -q <folder>/x` succeeds, copy `$D/report.md` to `<folder>/<yyyy-mm-dd>-<branch, slashes as dashes>.md` (add `-pr-<n>` for a PR target, and `-<HHMM>` when that file exists), and run its record command, if it names one, as the profile writes it, with the verdict, counts, and saved path filled in and under the conditions it gives. A gate failure counts as one Blocker. If either fails, say so in one line and carry on. A folder git doesn't ignore is a profile defect: keep the report in `$D` and say so.
 
-**Update check.** Unless the arguments contain `auto`, run the check in orc's `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
+**Update check.** Unless the arguments contain `auto`, run the check in `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
 
 Return the report in chat (drop empty sections) and end with a bold action line, for example `**Fix the 2 Warnings, then re-run the review.**` or `**Ready to merge.**` Give the full report's path (the saved copy when there is one) just above it.
 
-**Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so `/orc-loop` can read it:
+**Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so a calling skill or script can read it:
 
 ```
 [AUTO-MODE REVIEW - orchestrator input, NOT a stopping point]

@@ -18,29 +18,71 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
-## [1.22.1] - 2026-11-07
+## [2.0.0] - 2026-11-12
 
-**Summary.** A new optional skill, `/tiedown`, answers one question at the end of a session: can this session end now? It checks the whole conversation and the real state of the repo and machine for unanswered questions, unfinished requests, uncommitted or unpushed work, failed or skipped checks, things still running, open issues, promised follow-ups, and surprises. When nothing is open it replies "We're done." Otherwise it thinks through each open item before it reports: an obvious item gets its answer written directly, and every other item goes to a read-only subagent sized to it (Haiku for a single factual lookup, Sonnet for a routine call, Opus for a real judgment call or real risk), with a result that comes back hedged re-run one tier up. It then presents one decided list, each item with the exact action, a one-sentence reason, and who does it, so the user can approve all of it with one reply. It is user-invoked only and read-only: it recommends and never changes anything.
+**Summary.** `/orc` is rebuilt as a single-session workflow, and one skill now does what `/orc`, `/orc-loop`, and `/orc-rush` did. It works one issue, a list, a range, the next N from the board, or a plain-text request, one issue at a time in your session: plan, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue, then push and close the issues when you say so. It dispatches no builder or reviewer agents. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what that review found. `/do` is the same skill under another name.
 
-Separately, `/orc-review setup` now ends with a blind audit. After it writes and verifies the project profile, it dispatches a new read-only agent, `setup-auditor` (Opus 5.5, medium effort), that reads the finished profile, its references, and any repo lanes with none of setup's notes or the user's answers, and checks them against the repo. Facts the repo settles (a glob that matches no tracked file, a missing symbol or script, a wrong count, a write-capable script missing from **Never run**, a claim a repo doc contradicts, a secret, a profile that copies the review workflow) are re-checked and fixed by setup. Judgment calls (a risk-map row that looks too broad or narrow, a surface with no owner, an **Extra focus** bullet a diff can't check) are never applied; setup lists them in its report with the auditor's evidence for the user to decide, because the agent that built the profile had the project's context and the auditor does not. Finding nothing is a valid result. The review template number does not change: existing profiles and lanes read the same. Nothing else in the pack changes.
+**Why: it's cheaper and faster per issue, at the same quality.** For a week the new workflow (trialled as `/do`) replaced the old subagent-driven one. Measured per closed issue, with every follow-up review and review fix-up included, in the three projects that used both:
+
+| Per issue                        | Before (1.x `/orc`, `/orc-loop`, `/orc-rush`) | 2.0.0 `/orc` plus `/orc-review` | Change     |
+| -------------------------------- | --------------------------------------------- | ------------------------------- | ---------- |
+| Cost                             | $35.63                                        | $27.33                          | 23% lower  |
+| Uncached tokens                  | 2.23M                                         | 1.36M                           | 39% fewer  |
+| All tokens, cache reads included | 62.6M                                         | 55.9M                           | 11% fewer  |
+| Active time                      | 68 minutes                                    | 43 minutes                      | 37% faster |
+| Build time alone                 | 63 minutes                                    | 18 minutes                      | 71% faster |
+
+The issues were the same size on both sides (about 1,690 changed lines on average), and the first deep review of each run found about as much: 0.14 Blockers and 7.0 Warnings per review before, 0.12 and 5.6 after. The trial's one clear gap, commits that failed the repo's own format check or tests, is closed in this release: with no commit gate, `/orc` now runs the format check, type check, and covering tests before every commit. Costs use the pack's model prices; active time leaves out time spent waiting for you.
+
+This release also carries the work queued for 1.22.1, which was never released: `/tiedown`, the end-of-session check; a blind audit at the end of `/orc-review setup`; severity dots in review reports; and `/deep-review dev` reviewing dev's unreleased work.
 
 **Changed areas.**
 
-- **`skills/tiedown/SKILL.md`** (new): the skill, with no references or setup files. Add it. It is optional, so skip it if the user declines.
-- **`README.md`**, **`INSTALL.md`**, **`CLAUDE.md`**: list the new skill, its install-table row, its optional-pruning note, and the Phase 5 and Phase 6 skill lists. Kit docs only.
-- **`agents/setup-auditor.md`** (new): the blind-audit agent. Tools are Read, Grep, Glob, read-only Bash, and Write for the one report file a dispatch names. Add it to `.claude/agents/` with its `pack:` marker set to the release version.
-- **`skills/orc-review/SKILL.md`** (**Setup**): new step 9, **Blind audit**, dispatches `setup-auditor` once after step 8 passes, with only the repo root, the profile path, the review references, and a `Report:` path under `$D`. Facts are fixed after a re-check; suggestions are left for the user. **Report** is now step 10 and also lists what the audit fixed and the suggestions it left. Refresh.
-- **`skills/orc-review/SKILL.md`** (step 1, target): an argument that names the integration branch, such as `/deep-review dev`, now reviews that branch's unreleased work, the same range as no arguments on it. Before, it resolved as the ref `dev...HEAD`, which is empty when you're on `dev`. No profile change.
-- **`skills/orc-review/SKILL.md`** (step 5, report): every finding now carries a severity dot, 🔴 Blocker, 🟡 Warning, or 🔵 Nit, on its line and its section heading, and the verdict is followed by a dot count line, so the reds and yellows can be counted at a glance. The `auto` block `/orc-loop` reads is unchanged. No profile change.
-- **`skills/orc-review/SKILL.md`** (**Repo lanes**): the summary of the lane contract now says findings go to the brief's `Report` file with a one-line reply, matching `lane-template.md` since template 4. Wording only; no profile change.
-- **`skills/tiedown/SKILL.md`**: condensed (its tier table is now a list). No behavior change, and no update step beyond copying the file.
-- **`README.md`**, **`INSTALL.md`**, **`CLAUDE.md`** also list `setup-auditor` (agent table, install tree, Opus 5.5 medium tier) and describe the audit. Kit docs only.
+- **`skills/orc/SKILL.md`** (rewritten): the new workflow. Steps: learn the repo (its `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`, manifest, and commit hooks); resolve the list (issues, ranges, `next N`, or a text request worked through a scratchpad brief, `orc-brief.md`); plan, with one go-ahead for a list; build each issue (tests first, UI screenshots at 390 and 1440 pixels in light and dark, docs, one commit per issue); run the ready check and report; push, comment, and close at the owner's word. It refuses to run on Opus 5, ends every report with one bold done line, runs the update check (its line sits just above that closing line), and shows a paceline progress bar when the tools are available. It is now user-invoked only (`disable-model-invocation: true`): phrases like "pick up the next issue" no longer start it. Refresh.
+- **`skills/do/SKILL.md`** (new): `/do`, which reads and follows `../orc/SKILL.md` with the same arguments. Add it.
+- **Removed skills:** `skills/orc-loop/`, `skills/orc-loop-iter/`, `skills/orc-rush/` (with `references/briefs.md`), and `skills/orc-rush-iter/`. Batching is `/orc 350-360` or `/orc next 10`. Delete them.
+- **Removed agents:** `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `scope-reviewer`, `next-issue-finder`, `docs-writer`, and `impact`. Nothing dispatches them. Delete them.
+- **Removed references:** `skills/orc/references/builder-contract.md`, `design-brief.md`, `work-contract.md`, and `your-call.md`. Delete them. The standards (`standards/`), playbooks (`frameworks/`, `platforms/`), and `update-check.md` stay. Only `/orc-review`'s lanes read the standards and playbooks now. Their opening lines no longer mention builders. Refresh.
+- **Removed features:** efficiency mode, the walk-away run and its `FINISHED` and `NOT FINISHED` status lines, `contract first`, `in a worktree` and the checkout lock (`.git/orc/checkout.lock`), work contracts, design briefs, per-task review panels and fix rounds, the round-three move to Fable 5.1, **Your call** cards, and the `.git/orc-loop/` and `.git/orc-rush/` run folders. Old run folders in `.git/` are inert. Delete them or leave them.
+- **`skills/orc-review/SKILL.md`**:
+  - Detects the stack's playbooks itself and names every standard and playbook by its full path.
+  - **Findings travel as files** now stands on its own instead of pointing at orc's step 5.
+  - `auto` mode stays, as a block any calling skill or script can read.
+  - Carried from 1.22.1:
+    - **Setup** gains step 9, **Blind audit**, which dispatches the new `setup-auditor` once after step 8 passes. Facts it finds are fixed after a re-check; judgement calls are listed for the user. **Report** is now step 10.
+    - An argument that names the integration branch, such as `/deep-review dev`, reviews that branch's unreleased work.
+    - Every finding carries a severity dot (🔴 Blocker, 🟡 Warning, 🔵 Nit), and the verdict is followed by a dot count line.
+    - The repo-lane contract summary matches `lane-template.md`.
+  - Refresh. The review template stays at 4, so project profiles and repo lanes need no change.
+- **`agents/setup-auditor.md`** (new, from 1.22.1): the blind-audit agent, Opus 5.5 at medium effort, read-only except the one report file a dispatch names. Add it.
+- **`skills/tiedown/SKILL.md`** (new, from 1.22.1): the end-of-session check. It finds every open question and loose end, or replies "We're done.", thinks each item through with a subagent sized to it, and presents one decided list to approve in a single reply. Read-only and optional. Add it, or skip it if the user declines.
+- **`skills/shipcheck/SKILL.md`**: fixes a red CI run, or writes the reproducing test and fix for a regression, in the main session instead of dispatching a builder. Refresh.
+- **`skills/retro/SKILL.md`** and **`skills/retro/references/usage.mjs`** (reworked): `/retro` measures cost, tokens, and active minutes per closed issue for `/orc` runs and the reviews and fix runs after them. Each session gets a role (build, review, fix, or setup). The script takes `--closed <file>`, the output of `gh issue list --state closed --json number,stateReason`, and `usage.md` opens with a **Per issue** section. It still reads pre-2.0.0 sessions. Refresh both.
+- **Agents with wording fixes:** `verifier` (no contract or `scope-reviewer` rule; sizes no longer mention orc's tasks), `test-coverage-reviewer` (cleanup dispatches no longer name orc), and `usages` (dispatched by `orc-review` and `retro`). Refresh.
+- **`skills/update-orc/SKILL.md`**, **`skills/newissue/SKILL.md`**, **`skills/tiedown/SKILL.md`**, **`skills/orc/references/update-check.md`**: references to the removed skills, `your-call.md`, and the checkout lock are gone. Refresh.
+- **`README.md`**, **`INSTALL.md`**, **`UPDATE.md`**, **`CLAUDE.md`**, **`.claude-plugin/plugin.json`**, **`.claude-plugin/marketplace.json`**: describe the new skill set. Kit docs only.
+- **`.github/workflows/pack-integrity.yml`**: check 2 reads the 2.0.0 skills and agent names, and check 4 verifies the standards and playbooks `skills/orc-review/SKILL.md` names, plus `update-check.md`. Kit CI only.
 
-**Update steps.** Copy `skills/tiedown/SKILL.md` to `.claude/skills/tiedown/SKILL.md` and set its `pack:` marker to the release version, as for any other skill. If the project already has a `tiedown` skill of its own, treat it as a same-name conflict and route it through conflict handling; do not overwrite it. Copy `agents/setup-auditor.md` to `.claude/agents/setup-auditor.md` with the same marker, and refresh `skills/orc-review/SKILL.md`. A project's existing `deep-review` profile needs no change, and `/orc-review setup skip` is not needed. Nothing else needs migrating.
+**Update steps.**
 
-**Breaking changes.** None.
+1. **Delete what's gone.** Remove `.claude/skills/orc-loop/`, `.claude/skills/orc-loop-iter/`, `.claude/skills/orc-rush/`, and `.claude/skills/orc-rush-iter/`. Remove the nine agents listed above from `.claude/agents/`, and the four references from `.claude/skills/orc/references/`. These files carry `pack:` markers (the references sit in the pack's skill directory), so they are pack-owned. If one has recorded local edits in `.claude/orc-pack.provenance.md`, keep a copy in the update report before deleting it, and say so. Record each removal in provenance.
+2. **Add `/do`.** Copy `skills/do/SKILL.md` to `.claude/skills/do/SKILL.md`. If the project already has a `.claude/skills/do/` with no `pack: orc-pack@` marker, it is the project's own skill: a same-name conflict. Never overwrite it. Route it through conflict handling and tell the user that `/do` will keep running their skill until they remove or rename it.
+3. **Add `/tiedown` and `setup-auditor`** as for any new pack file, handling a same-name `tiedown` the same way.
+4. **Refresh everything else** from the kit, and set every `pack:` marker to `2.0.0`.
+5. **Check the project's own docs.** If its `CLAUDE.md`, `AGENTS.md`, or `.claude/rules/` tell agents to run `/orc-loop`, `/orc-rush`, or `efficiency mode`, list those lines in the report for the user. Never edit the project's docs.
 
-**Files to read.** `skills/tiedown/SKILL.md`, `agents/setup-auditor.md`, and the **Setup** section of `skills/orc-review/SKILL.md`.
+A project's `deep-review` profile needs no change, and `/orc-review setup` is not needed for this release. Plugin users get the release through `/plugin update orc-pack@orc-pack`.
+
+**Breaking changes.**
+
+- `/orc-loop` and `/orc-rush` no longer exist. Use `/orc <issues>`, `/orc <first>-<last>`, or `/orc next N`.
+- `/orc` no longer runs unattended and no longer reviews its own work. It waits for one go-ahead on a multi-issue plan, asks before pushing unless the request said to push, and leaves review to `/orc-review`. Plan for a review session after each batch.
+- `/orc` is user-invoked only. A model can no longer start it from a phrase like "work the board".
+- `/orc efficiency mode`, `/orc contract first`, and `/orc in a worktree` are now plain text requests: `/orc` reads them as work to do, not as options.
+- Nine agents and four reference files are removed. Anything in a project that dispatches `implementer`, `ui-implementer`, `api-implementer`, `data-implementer`, `design-reviewer`, `scope-reviewer`, `next-issue-finder`, `docs-writer`, or `impact` by name stops resolving.
+- `/retro` reports cost and time per closed issue instead of per dispatch. Retros from earlier versions aren't directly comparable.
+
+**Files to read.** `skills/orc/SKILL.md`, `skills/do/SKILL.md`, `UPDATE.md`, the **Standards** paragraph and **Setup** section of `skills/orc-review/SKILL.md`, `skills/retro/SKILL.md`, `skills/tiedown/SKILL.md`, and `agents/setup-auditor.md`.
 
 ## [1.22.0] - 2026-11-04
 

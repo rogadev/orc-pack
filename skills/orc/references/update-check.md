@@ -1,6 +1,6 @@
 # Update check
 
-Tells the user, in one report line, when a newer orc-pack release exists. It runs once per report, never updates anything, never asks, and never blocks or fails a run. `/orc`, `/orc-loop`, `/orc-rush`, and `/orc-review` run it just before their report; the per-issue `/orc` runs inside a loop skip it, so a batch reports it once.
+Tells the user, in one report line, when a newer orc-pack release exists. It runs once per report, never updates anything, never asks, and never blocks or fails a run. `/orc` (and `/do`, which is the same skill) and `/orc-review` run it just before their report.
 
 ## Steps
 
@@ -14,7 +14,7 @@ If any step fails (offline, rate-limited, no `gh` or `curl`, no marker, no git d
 
 ## The report line
 
-Put it last under the report's **Heads-up** (for `/orc-rush`, last under `## Next`; for `/orc-review`, last under **Needs your attention**), filling in the versions and the release URL `https://github.com/<owner/repo>/releases/tag/<tag>`:
+For `/orc`, put it on its own line just above the closing bold line; for `/orc-review`, put it last under **Needs your attention**. Fill in the versions and the release URL `https://github.com/<owner/repo>/releases/tag/<tag>`:
 
 - **Copied install:** `orc-pack <latest> is out; this run used <installed> (<release URL>). Run /update-orc in a new session to update.`
 - **Plugin install:** `orc-pack <latest> is out; this run used <installed> (<release URL>). Run /plugin update orc-pack@orc-pack, or turn on auto-update for the orc-pack marketplace under Marketplaces in /plugin.`
