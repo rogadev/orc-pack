@@ -2,6 +2,21 @@
 
 **New in v2.0.0:** `/orc` now works your GitHub issues end to end in the main session, one at a time, with no builder or reviewer agents. Give it one issue, a list, a range, `next 10`, or a plain-text request. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what the review found. `/do` is the same skill under another name. `/orc-loop` and `/orc-rush` are gone, because one skill now handles single issues and batches. See [Why one session](#why-one-session) and the [changelog](CHANGELOG.md).
 
+### 2.0.0 by the numbers
+
+We ran the new workflow for a week in place of the old one and measured each closed issue end to end, with the follow-up review and its fix-ups included, in the projects that used both:
+
+| Per issue                 | 1.x (`/orc`, `/orc-loop`, `/orc-rush`) | 2.0.0 (`/orc`, then `/orc-review`) | Change         |
+| ------------------------- | -------------------------------------- | ---------------------------------- | -------------- |
+| Cost                      | $35.63                                 | $27.33                             | **23% lower**  |
+| Uncached tokens           | 2.23M                                  | 1.36M                              | **39% fewer**  |
+| Active time               | 68 minutes                             | 43 minutes                         | **37% faster** |
+| Build time alone          | 63 minutes                             | 18 minutes                         | **71% faster** |
+| Blockers per first review | 0.14                                   | 0.12                               | On par         |
+| Warnings per first review | 7.0                                    | 5.6                                | On par         |
+
+The issues were the same size on both sides (about 1,690 changed lines on average). Cost uses Anthropic's per-token prices for the models each session ran; active time leaves out time spent waiting for you.
+
 `/orc` works GitHub issues for Claude Code. For each issue, it reads the issue and the code, plans the change, pins the behavior in tests, builds it, screenshots any UI change, updates the docs, and commits one commit per issue. When the batch is done, it asks whether to push to your integration branch, then closes each issue with a comment that says where it landed.
 
 The review is a separate step that you start. Run `/orc-review` (or your project's `/deep-review`) in a fresh session over what orc committed. It runs only the reviewer agents the change calls for, filters their findings through a skeptical verifier, and gives you a verdict. Then run `/orc warnings and nits` to fix what it found.
@@ -12,7 +27,7 @@ This pack contains `/orc`, `/do`, `/orc-review`, the reviewer agents the review 
 
 Up to 1.x, orc was an orchestrator: it handed each task to builder subagents and ran a panel of reviewers on every task before it committed. In 2.0.0, the main session builds, and the review runs once afterward.
 
-A week-long trial compared the two workflows in the repos that used both, measured per closed issue with the reviews and fix-ups included. The single-session workflow cost about 23% less per issue ($27 against $36), used 39% fewer uncached tokens, and took 37% less active time (43 minutes against 68), at the same issue size and with deep-review findings on par.
+Building in one session, which already holds the context, and reviewing once at the end turned out cheaper and faster per issue, with no measurable loss in review quality. See [2.0.0 by the numbers](#200-by-the-numbers).
 
 ---
 
