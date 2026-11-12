@@ -4,6 +4,8 @@
 
 ### 2.0.0 by the numbers
 
+![Chart: per closed issue, 1.x against 2.0.0. Cost $35.63 against $27.33 (23% lower), uncached tokens 2.23M against 1.36M (39% fewer), active time 68 against 43 minutes (37% faster), build time 63 against 18 minutes (71% faster), and first-review findings 0.14 Blockers and 7.0 Warnings against 0.12 and 5.6 (on par)](docs/media/orc-2-results.png)
+
 We ran the new workflow for a week in place of the old one and measured each closed issue end to end, with the follow-up review and its fix-ups included, in the projects that used both:
 
 | Per issue                 | 1.x (`/orc`, `/orc-loop`, `/orc-rush`) | 2.0.0 (`/orc`, then `/orc-review`) | Change         |

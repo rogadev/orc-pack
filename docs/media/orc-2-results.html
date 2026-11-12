@@ -1,0 +1,279 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --line: #2a313b;
+        --track: #1e242c;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --old: #6b7280;
+        --new: #45c37e;
+        --accent: #79a8ff;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        width: 1136px;
+        padding: 28px 28px 30px;
+      }
+      h1 {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 16.5px;
+        line-height: 1.5;
+        margin: 10px 0 22px;
+        max-width: 900px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 8px 20px 6px;
+      }
+      .head,
+      .row {
+        display: grid;
+        grid-template-columns: 200px 1fr 130px;
+        gap: 24px;
+        align-items: center;
+      }
+      .head {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11.5px;
+        letter-spacing: 2px;
+        color: var(--muted);
+        padding: 14px 0 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .row {
+        padding: 15px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .name {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 13.5px;
+        margin-top: 4px;
+      }
+      .bars {
+        display: grid;
+        gap: 7px;
+      }
+      .bar {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        align-items: center;
+        gap: 10px;
+      }
+      .tag {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11.5px;
+        color: var(--muted);
+        text-align: right;
+      }
+      .track {
+        background: var(--track);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        height: 22px;
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        border-radius: 5px 0 0 5px;
+        display: flex;
+        align-items: center;
+        padding-left: 9px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        color: #0d1117;
+        white-space: nowrap;
+      }
+      .old .fill {
+        background: var(--old);
+      }
+      .new .fill {
+        background: var(--new);
+      }
+      .change {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--new);
+      }
+      .change small {
+        display: block;
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .par {
+        color: var(--accent);
+      }
+      .foot {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>One session beats a team of subagents</h1>
+    <p class="sub">
+      orc-pack 1.x handed each task to builder and reviewer subagents. 2.0.0
+      builds in one session and reviews once at the end. Measured per closed
+      issue over a week of real work, follow-up review and fixes included.
+    </p>
+    <div class="card">
+      <div class="head">
+        <div>PER ISSUE</div>
+        <div>1.X AGAINST 2.0.0</div>
+        <div>CHANGE</div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="name">Cost</div>
+          <div class="note">all models, reviews included</div>
+        </div>
+        <div class="bars">
+          <div class="bar old">
+            <span class="tag">1.x</span>
+            <div class="track">
+              <div class="fill" style="width: 100%">$35.63</div>
+            </div>
+          </div>
+          <div class="bar new">
+            <span class="tag">2.0.0</span>
+            <div class="track">
+              <div class="fill" style="width: 76.7%">$27.33</div>
+            </div>
+          </div>
+        </div>
+        <div class="change">&minus;23%<small>lower cost</small></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="name">Uncached tokens</div>
+          <div class="note">input, cache writes, output</div>
+        </div>
+        <div class="bars">
+          <div class="bar old">
+            <span class="tag">1.x</span>
+            <div class="track">
+              <div class="fill" style="width: 100%">2.23M</div>
+            </div>
+          </div>
+          <div class="bar new">
+            <span class="tag">2.0.0</span>
+            <div class="track">
+              <div class="fill" style="width: 61%">1.36M</div>
+            </div>
+          </div>
+        </div>
+        <div class="change">&minus;39%<small>fewer tokens</small></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="name">Active time</div>
+          <div class="note">build, review, and fixes</div>
+        </div>
+        <div class="bars">
+          <div class="bar old">
+            <span class="tag">1.x</span>
+            <div class="track">
+              <div class="fill" style="width: 100%">68 min</div>
+            </div>
+          </div>
+          <div class="bar new">
+            <span class="tag">2.0.0</span>
+            <div class="track">
+              <div class="fill" style="width: 63.2%">43 min</div>
+            </div>
+          </div>
+        </div>
+        <div class="change">&minus;37%<small>faster per issue</small></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="name">Build time</div>
+          <div class="note">before any review</div>
+        </div>
+        <div class="bars">
+          <div class="bar old">
+            <span class="tag">1.x</span>
+            <div class="track">
+              <div class="fill" style="width: 100%">63 min</div>
+            </div>
+          </div>
+          <div class="bar new">
+            <span class="tag">2.0.0</span>
+            <div class="track">
+              <div class="fill" style="width: 28.6%">18 min</div>
+            </div>
+          </div>
+        </div>
+        <div class="change">&minus;71%<small>faster build</small></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="name">Review findings</div>
+          <div class="note">per first deep review</div>
+        </div>
+        <div class="bars">
+          <div class="bar old">
+            <span class="tag">1.x</span>
+            <div class="track">
+              <div class="fill" style="width: 100%">
+                0.14 Blockers &middot; 7.0 Warnings
+              </div>
+            </div>
+          </div>
+          <div class="bar new">
+            <span class="tag">2.0.0</span>
+            <div class="track">
+              <div class="fill" style="width: 80%">
+                0.12 Blockers &middot; 5.6 Warnings
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="change par">On par<small>no quality drop</small></div>
+      </div>
+    </div>
+    <p class="foot">
+      171 issues on 1.x and 49 on 2.0.0, in the three projects that used both,
+      at the same issue size (about 1,690 changed lines on average). Active time
+      leaves out time spent waiting for the user.
+    </p>
+  </body>
+</html>
