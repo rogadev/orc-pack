@@ -1,7 +1,7 @@
 ---
 name: usages
-pack: orc-pack@1.22.0
-description: Map where a change's code is used before the review panel reads it - the symbols a diff adds, changes, or removes, every place outside the diff that references them, the tests that touch them, and removed names still referenced. Writes one file every reviewer reads, so the panel searches the change's surroundings once instead of once per lane. Mechanical; makes no judgement calls. Dispatched by orc, orc-loop, orc-rush, and orc-review.
+pack: orc-pack@2.0.0
+description: Map where a change's code is used before the review panel reads it - the symbols a diff adds, changes, or removes, every place outside the diff that references them, the tests that touch them, and removed names still referenced. Writes one file every reviewer reads, so the panel searches the change's surroundings once instead of once per lane. Mechanical; makes no judgement calls. Dispatched by orc-review and retro.
 tools:
   - Bash
   - Read

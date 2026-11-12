@@ -1,9 +1,14 @@
 #!/usr/bin/env node
-// Summarizes the Claude Code transcripts of orc-pack runs for /retro: token usage per session
-// and per agent type, the costliest dispatches, tool errors, likely retries, and a compact
-// timeline of each session's tool calls. It reads transcripts only and writes to <outDir>.
+// Summarizes the Claude Code transcripts of orc-pack runs for /retro: cost, tokens, and active
+// time per session and per closed issue, token usage per agent type, the costliest dispatches,
+// tool errors, likely retries, and a compact timeline of each session's tool calls. It reads
+// transcripts (and the optional closed-issue list) only and writes to <outDir>.
 //
 // Usage: node usage.mjs <repoRoot> <outDir> [--since <ISO date>] [--session <id>]...
+//          [--closed <file>]
+//
+// --closed names a JSON file from `gh issue list --state closed --json number,stateReason`.
+// With it, an issue counts toward the per-issue figures only when it closed as completed.
 //
 // Transcripts live in ~/.claude/projects/<slug>/, where <slug> is the session's working
 // directory with every character outside [A-Za-z0-9] replaced by "-". Worktree sessions
@@ -14,8 +19,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+// `do` is orc under another name. The loop and rush names are kept so a retro can still read
+// runs from before 2.0.0.
 const ORC_SKILLS = [
   "orc",
+  "do",
   "orc-loop",
   "orc-loop-iter",
   "orc-rush",
@@ -35,6 +43,7 @@ if (!repoRoot || !outDir) {
   process.exit(2);
 }
 let since = null;
+let closedFile = null;
 const onlySessions = [];
 for (let i = 2; i < args.length; i++) {
   if (args[i] === "--since") {
@@ -45,6 +54,7 @@ for (let i = 2; i < args.length; i++) {
       process.exit(2);
     }
   } else if (args[i] === "--session") onlySessions.push(args[++i]);
+  else if (args[i] === "--closed") closedFile = args[++i];
 }
 
 // A session belongs to this repo only when it ran in the repo or one of its orc worktrees.
@@ -129,6 +139,133 @@ function weighted(u) {
       0.1 * u.cacheRead +
       5 * u.output,
   );
+}
+
+// Dollars per million tokens [input, output], from the pack's model tiers. Cache writes cost
+// 1.25x (5 minutes) or 2x (1 hour) the input price and cache reads 0.1x.
+const PRICES = [
+  [/fable/i, [10, 50]],
+  [/sonnet/i, [2, 10]],
+  [/haiku/i, [0.1, 0.5]],
+  [/./, [4, 20]],
+];
+
+function costOf(lines) {
+  const seen = new Set();
+  let cost = 0;
+  for (const o of lines) {
+    if (o.type !== "assistant" || !o.message?.usage) continue;
+    const id = o.message.id ?? o.requestId ?? o.uuid;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const u = o.message.usage;
+    const [pin, pout] = PRICES.find(([re]) =>
+      re.test(o.message.model ?? ""),
+    )[1];
+    const write1h = u.cache_creation?.ephemeral_1h_input_tokens ?? 0;
+    const write5m = Math.max(0, (u.cache_creation_input_tokens ?? 0) - write1h);
+    const input =
+      (u.input_tokens ?? 0) +
+      1.25 * write5m +
+      2 * write1h +
+      0.1 * (u.cache_read_input_tokens ?? 0);
+    cost += (pin * input + pout * (u.output_tokens ?? 0)) / 1e6;
+  }
+  return cost;
+}
+
+// A prompt the user typed, as opposed to a tool result, a background-task notice, or a reminder.
+function isHumanPrompt(o) {
+  if (o.type !== "user" || o.isMeta || o.isSidechain) return false;
+  const c = o.message?.content;
+  if (
+    typeof c !== "string" &&
+    !(Array.isArray(c) && c.some((x) => x.type === "text"))
+  )
+    return false;
+  return !/^\s*(<(task-notification|system-reminder|local-command|bash-)|\[Request interrupted)/.test(
+    textOf(c),
+  );
+}
+
+// Minutes the session spent working: the span between transcript lines, less the time spent
+// waiting for the user's next prompt. A scheduled wakeup's wait still counts as working.
+function activeMinutes(lines) {
+  let prev = null;
+  let wakeupPending = false;
+  let ms = 0;
+  for (const o of lines) {
+    if (o.isSidechain || !o.timestamp) continue;
+    const t = new Date(o.timestamp);
+    const human = isHumanPrompt(o);
+    if (prev && !(human && !wakeupPending)) ms += t - prev;
+    if (human) wakeupPending = false;
+    for (const c of contentBlocks(o))
+      if (c.type === "tool_use" && c.name === "ScheduleWakeup")
+        wakeupPending = !c.input?.stop;
+    prev = t;
+  }
+  return Math.round(ms / 60000);
+}
+
+// The pack skill a user message invoked, with its arguments, or null.
+function invocation(o) {
+  if (o.type !== "user") return null;
+  const t = textOf(o.message?.content);
+  const m = t.match(/<command-name>\/?(?:[\w-]+:)?([\w-]+)<\/command-name>/);
+  if (!m || !ORC_SKILLS.includes(m[1])) return null;
+  const args = t.match(/<command-args>([\s\S]*?)<\/command-args>/)?.[1] ?? "";
+  return { skill: m[1], args: args.trim() };
+}
+
+// The issues a session worked: numbers on its commit commands' Closes, Fixes, and Refs lines and
+// its `gh issue close` calls, plus the issue list an orc or do invocation was given.
+function issuesWorked(lines) {
+  const nums = new Set();
+  for (const o of lines) {
+    const inv = invocation(o);
+    if (
+      inv &&
+      ["orc", "do"].includes(inv.skill) &&
+      /^[\s#\d,-]+$/.test(inv.args)
+    )
+      for (const r of inv.args.matchAll(/(\d+)(?:-(\d+))?/g)) {
+        const a = Number(r[1]);
+        const b = r[2] ? Number(r[2]) : a;
+        for (let n = a; n <= b && n - a < 200; n++) nums.add(n);
+      }
+    for (const c of contentBlocks(o)) {
+      if (c.type !== "tool_use" || !["Bash", "PowerShell"].includes(c.name))
+        continue;
+      const cmd = String(c.input?.command ?? "");
+      if (/git\s+commit/.test(cmd))
+        for (const m of cmd.matchAll(
+          /\b(?:closes|fixes|resolves|refs?)[: ]+#(\d+)/gi,
+        ))
+          nums.add(Number(m[1]));
+      for (const m of cmd.matchAll(/gh\s+issue\s+close\s+#?(\d+)/g))
+        nums.add(Number(m[1]));
+    }
+  }
+  return [...nums].sort((a, b) => a - b);
+}
+
+// What a session was for, from the first pack skill it ran: a review (or a review's setup), a
+// fix run scoped to a review's findings, or a build.
+function roleOf(lines) {
+  for (const o of lines) {
+    const inv = invocation(o);
+    if (!inv) continue;
+    if (["orc-review", "deep-review"].includes(inv.skill))
+      return /^setup\b/.test(inv.args) ? "setup" : "review";
+    if (
+      /\b(nits?|warnings?|blockers?|findings?|should.?fix)\b/i.test(inv.args) &&
+      !/#?\d{2,}/.test(inv.args)
+    )
+      return "fix";
+    return "build";
+  }
+  return "build";
 }
 
 function addUsage(total, lines) {
@@ -277,6 +414,7 @@ function summarizeSubagents(sessionDir) {
       : {};
     const lines = readLines(path.join(dir, f));
     const usage = addUsage(emptyUsage(), lines);
+    const cost = costOf(lines);
     const times = lines
       .map((o) => o.timestamp)
       .filter(Boolean)
@@ -297,6 +435,7 @@ function summarizeSubagents(sessionDir) {
       description: meta.description ?? "",
       model,
       usage,
+      cost,
       weighted: weighted(usage),
       seconds:
         times.length > 1
@@ -374,6 +513,7 @@ function summarizeSession(file) {
           effortOverride: c.input?.effort ?? null,
           ...(sub ?? {
             usage: emptyUsage(),
+            cost: 0,
             weighted: 0,
             seconds: 0,
             toolCalls: 0,
@@ -410,6 +550,12 @@ function summarizeSession(file) {
     start: times[0],
     end: times.at(-1),
     minutes: Math.round((new Date(times.at(-1)) - new Date(times[0])) / 60000),
+    activeMinutes: activeMinutes(lines),
+    humanPrompts: lines.filter(isHumanPrompt).length,
+    role: roleOf(lines),
+    issues: issuesWorked(lines),
+    cost:
+      costOf(lines) + [...subagents.values()].reduce((n, d) => n + d.cost, 0),
     skills,
     models: [...models],
     status: statusLines(lines),
@@ -436,6 +582,19 @@ for (const dir of projectDirs) {
 }
 sessions.sort((a, b) => a.start.localeCompare(b.start));
 
+let closed = null;
+if (closedFile) {
+  closed = new Set(
+    JSON.parse(fs.readFileSync(closedFile, "utf8"))
+      .filter((i) => !i.stateReason || i.stateReason === "COMPLETED")
+      .map((i) => i.number),
+  );
+}
+const builds = sessions.filter((s) => s.role === "build");
+const issuesDone = new Set(
+  builds.flatMap((s) => s.issues).filter((n) => !closed || closed.has(n)),
+);
+
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   path.join(outDir, "usage.json"),
@@ -449,14 +608,41 @@ md.push(
   "Weighted tokens (wtok) are input-token units: cache writes 1.25x or 2x, cache reads 0.1x, output 5x. Compare within one model.",
   "",
 );
+const money = (n) => `$${n.toFixed(2)}`;
+const total = (arr, k) => arr.reduce((n, s) => n + s[k], 0);
+md.push("## Per issue", "");
+md.push(
+  `Cost is dollars at the pack's model prices, main session plus subagents. Active minutes leave out time spent waiting for the user. Issues are the ones a build session worked${closed ? " that closed as completed" : " (pass --closed to count only closed ones)"}; review and fix sessions count as overhead on them.`,
+  "",
+);
+md.push("| Role | Sessions | Cost | Active minutes | Prompts |");
+md.push("| --- | --- | --- | --- | --- |");
+for (const role of ["build", "review", "fix", "setup"]) {
+  const r = sessions.filter((s) => s.role === role);
+  if (r.length)
+    md.push(
+      `| ${role} | ${r.length} | ${money(total(r, "cost"))} | ${total(r, "activeMinutes")} | ${total(r, "humanPrompts")} |`,
+    );
+}
+const work = sessions.filter((s) => s.role !== "setup");
+const done = issuesDone.size;
+md.push(
+  "",
+  done
+    ? `**${done} issue(s): ${money(total(work, "cost") / done)} and ${Math.round(total(work, "activeMinutes") / done)} active minutes per issue, reviews and fixes included** (builds alone: ${money(total(builds, "cost") / done)} and ${Math.round(total(builds, "activeMinutes") / done)} minutes). Issues: ${[...issuesDone].map((i) => `#${i}`).join(", ")}.`
+    : "No build session worked an issue in this window.",
+  "",
+);
 md.push("## Sessions", "");
 md.push(
-  "| Session | Start | Minutes | Skills | Main wtok | Peak context | Subagent wtok | Dispatches | Wakeups | Compactions | Tool errors |",
+  "| Session | Start | Role | Active min | Cost | Issues | Skills | Main wtok | Peak context | Subagent wtok | Dispatches | Wakeups | Compactions | Tool errors |",
 );
-md.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+md.push(
+  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+);
 for (const s of sessions) {
   md.push(
-    `| ${s.id.slice(0, 8)} | ${s.start.slice(0, 16)} | ${s.minutes} | ${s.skills.join(", ")} | ${fmt(s.main.weighted)} | ${fmt(s.main.usage.peakContext)} | ${fmt(s.subagentWeighted)} | ${s.dispatchCount} | ${s.wakeups} | ${s.compactions} | ${s.toolErrorCount} |`,
+    `| ${s.id.slice(0, 8)} | ${s.start.slice(0, 16)} | ${s.role} | ${s.activeMinutes} | ${money(s.cost)} | ${s.issues.map((i) => `#${i}`).join(" ")} | ${s.skills.join(", ")} | ${fmt(s.main.weighted)} | ${fmt(s.main.usage.peakContext)} | ${fmt(s.subagentWeighted)} | ${s.dispatchCount} | ${s.wakeups} | ${s.compactions} | ${s.toolErrorCount} |`,
   );
 }
 

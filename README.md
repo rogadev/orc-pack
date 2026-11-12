@@ -1,76 +1,57 @@
 # The orc pack
 
-> **New in v1.21.0:** `/orc-review` fixes from its first real runs. A range or pull-request review installs dependencies inside its worktree so the gate runs there, and cleans it up safely on Windows. Reviewers read the range's own code, cite real file lines, and tell new code from old. Flaky or unrelated test failures no longer block a merge. v1.20.0 added project repo lanes and `/orc-review #123`. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review) and the [changelog](CHANGELOG.md#1210---2026-10-29).
+**New in v2.0.0:** `/orc` now works your GitHub issues end to end in the main session, one at a time, with no builder or reviewer agents. Give it one issue, a list, a range, `next 10`, or a plain-text request. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what the review found. `/do` is the same skill under another name. `/orc-loop` and `/orc-rush` are gone, because one skill now handles single issues and batches. See [Why one session](#why-one-session) and the [changelog](CHANGELOG.md).
 
-`/orc` is an autonomous orchestrator for Claude Code. You point it at work — or let it pick the work — and it carries that work all the way to committed, reviewed, green code without you babysitting it. It's built for "yolo" runs: kick it off (on Opus 5.5 by default, or on Sonnet 5.5 in efficiency mode after one confirmation), walk away, come back to a finished issue and a written summary of what it did and why.
+`/orc` works GitHub issues for Claude Code. For each issue, it reads the issue and the code, plans the change, pins the behavior in tests, builds it, screenshots any UI change, updates the docs, and commits one commit per issue. When the batch is done, it asks whether to push to your integration branch, then closes each issue with a comment that says where it landed.
 
-Under the hood it runs **subagent-driven development**. The orchestrator keeps its own context clean and dispatches the actual work to a team of specialized subagents — a scout that picks the next issue, specialist builders that write the code (UI, API, data, and a general builder for everything else), a panel of reviewers that check it, and a skeptical verifier that filters out the reviewers' false positives. It loops between reviewing and fixing until only nitpicks are left, then runs your repo's checks, commits, and closes the issue.
+The review is a separate step that you start. Run `/orc-review` (or your project's `/deep-review`) in a fresh session over what orc committed. It runs only the reviewer agents the change calls for, filters their findings through a skeptical verifier, and gives you a verdict. Then run `/orc warnings and nits` to fix what it found.
 
-![Animation: one AI agent's context window fills and it starts cutting corners, then an orchestrator splits the same job across specialist subagents](docs/media/orchestrator-explainer.gif)
+This pack contains `/orc`, `/do`, `/orc-review`, the reviewer agents the review relies on, and a few supporting skills, written to work in **any** repo.
 
-_An illustration of the idea; the figures are illustrative, not benchmarks. In orc, specialist builders take UI, API, and data tasks one at a time, and specialist reviewers check every diff._ [Watch in higher quality (MP4)](docs/media/orchestrator-explainer.mp4)
+### Why one session
 
-### Why an orchestrator?
+Up to 1.x, orc was an orchestrator: it handed each task to builder subagents and ran a panel of reviewers on every task before it committed. In 2.0.0, the main session builds, and the review runs once afterward.
 
-An agent does its most careful work while its context window has room to spare. As one window fills past about three-quarters, it starts skimming files, assuming interfaces, and deferring tests. Orc keeps every window small by giving each subagent one focused brief, so even the busiest window in a run stays well under that line.
-
-![Chart: the busiest context window and an illustrative quality score for four runs. One tight task, 20% full, scores 96; a bigger job, 51%, scores 84; a rabbit hole, 85%, scores 55; the same job with an orchestrator, 34% in its busiest window, scores 94](docs/media/orchestrator-four-runs.png)
-
-This pack contains the `/orc` skill plus all the agents it relies on, written to work in **any** repo.
+A week-long trial compared the two workflows in the repos that used both, measured per closed issue with the reviews and fix-ups included. The single-session workflow cost about 23% less per issue ($27 against $36), used 39% fewer uncached tokens, and took 37% less active time (43 minutes against 68), at the same issue size and with deep-review findings on par.
 
 ---
 
-## The three ways to run it
-
-**1. Undirected — "just pick something and go."**
+## Ways to run it
 
 ```
-/orc
+/orc 123                 # one issue
+/orc 123 125 130         # a list
+/orc 350-360             # a range
+/orc next 10             # the 10 most important open issues on the board
+/orc add a CSV export to the reports page
 ```
 
-With no argument, orc dispatches a lightweight scout agent (`next-issue-finder`, on Opus 5.5 at low effort, or Sonnet 5.5 in [efficiency mode](#pick-a-model-default-or-efficiency-mode)) that reads your GitHub issue board and picks the single highest-value issue to work on next, using a four-signal ruleset: does it unblock other work, how severe/impactful is it, how ready is it to execute, and how old is it. Then it runs the whole build-review-commit-close cycle on that issue.
+- **Issues, lists, and ranges.** Give it issue numbers, separated by spaces or commas, with or without `#`, inclusive ranges, or issue URLs. Orc fetches each one, drops pull requests, closed issues, and numbers that don't exist, and checks the code to confirm each issue isn't already fixed. An issue that is already fixed gets a comment naming the commit, and orc closes it.
+- **`next N`.** Orc ranks the open board itself and takes the top N. It follows the ranking rule your repo documents, if it has one. Otherwise it puts urgent and security issues first, then works by priority label and milestone, then bugs, then issues that unblock others, then the oldest. It skips issues another session has claimed and issues blocked by open work, and it takes an epic's open children instead of the epic.
+- **A plain-text request.** Orc treats your text as the issue. It checks that the work isn't already tracked or done, writes a brief with a scope and testable acceptance criteria to the session scratchpad, and splits the text into separate items when it holds several changes. It files nothing unless you tell it to (for example, "file it"). Text that refers to this conversation, such as `warnings and nits` right after a review, is scoped to exactly those items.
 
-**2. Directed at an issue — "do this specific one."**
+`/do` takes the same arguments and runs the same skill.
 
-```
-/orc 123
-```
+### The plan and the go-ahead
 
-Give it an issue number (or "finish the epic", "do #18") and it skips the scouting and goes straight to work on that issue.
+For each issue, orc reads the issue, the docs that cover its area, and the code, then writes a plan: one line for a small change, or the files, approach, risks, tests, screenshots, migration, and docs for anything larger. For a list, it shows every plan in one message and waits for one go-ahead that covers the whole list. You can approve, edit, or drop items. A single small issue and a plain-text request skip the wait: orc states the plan and starts building.
 
-**3. Free-text task — "here's what I want, figure it out."**
+### How each issue gets built
 
-```
-/orc add rate limiting to the upload endpoint
-/orc the date picker breaks on Safari, track it down and fix it
-```
+1. **Pin the behavior.** Orc writes the tests for new logic first, and a failing test that reproduces a bug before it fixes the bug.
+2. **Build it** at the scope the plan set. A small problem next to the change gets fixed and mentioned; anything larger goes in the report.
+3. **Schema changes** use your repo's migration tool, stay additive, and run only against a local or test database.
+4. **Look at UI changes.** Orc screenshots each changed route at 390 and 1440 pixels wide, in light and dark, and looks at every shot before it moves on. It uses your repo's verification recipe when it has one.
+5. **Update the docs** that describe the changed behavior.
+6. **Commit** one commit per issue, with a subject that names the change and a `Closes #<n>` line. When your repo has hooks that gate `git commit`, orc relies on them; otherwise it runs the format check, type check, and covering tests before each commit.
 
-Describe the work in plain language and orc treats your sentence as the spec. It reads the relevant code, turns your one-liner into a concrete, testable definition of done, and builds it — no issue required.
+Orc stops partway through a list only for a contradiction with a doc, spec, or ADR, a decision only you can make, a plan that turns out to be wrong, or a failure it can't fix. It tells you which issues are done and which remain.
 
-The same mode runs **cleanups**. Point orc at existing code and it improves it to the pack's standards without changing what it does:
+### The report and the push
 
-```
-/orc clean up the slop in src/lib/billing
-/orc tidy the comments in the dashboard components
-```
+Before it reports, orc runs your repo's ready check once over the whole run, plus the `fallow` agent when the run removed or moved code. Then it reports each issue with its commit, the gate result, the paths of its screenshots, and anything skipped or still open.
 
-Orc audits the target with its reviewers, pins today's behavior with characterization tests where coverage is thin, then refactors in small, reviewed `refactor:` and `docs:` commits. If the audit finds nothing worth changing, it says so and stops.
-
-In every mode, orc ends with one explicit line so you know the outcome at a glance:
-
-- **`FINISHED`** — work landed, green, pushed, issue closed.
-- **`FINISHED (no build)`** — there was genuinely nothing to build (empty board, or every issue was blocked), so it did board work instead — filed evidence, labels, new issues.
-- **`NOT FINISHED`** — a real human-only blocker (dirty tree, missing credential, a decision only you can make). It tells you exactly what to do to unblock it.
-
-### Run a batch unattended: `/orc-loop`
-
-```
-/orc-loop          # about 5 issues from the board
-/orc-loop 3        # a smaller batch
-/orc-loop #41      # an epic's open sub-issues
-```
-
-`/orc-loop` plans a batch of issues, commits each one locally with `/orc`, then reviews the batch as a whole for what a per-issue review can't see: changes that contradict each other, logic written twice, and drift in how the issues solved similar problems. It fixes what that review finds and rechecks the fix, up to three rounds, and files whatever survives as issues. Then it triages everything the runs and reviews left open, so you hear only about what truly needs you: it fixes what is clear and small, files what is real and bigger as issues, drops what is not worth acting on, and makes the calls an expert on the project would make without asking, including real toss-ups a senior engineer could defend either way: it reports each with the reason and how to reverse it, and a second agent checks the choice independently. Only calls reserved for you reach you (a legal or policy statement, a security boundary, an external API contract, spending money, an action that cannot be undone without losing data, or anything you or the repo's docs say is yours to make), each as a card with a recommendation. Steps only a person can take, such as a migration to apply or a secret to set, are listed apart from decisions, and opening the release PR is never listed as one. To save tokens, each `/orc` run in the batch uses a lighter review: it keeps every reviewer that stops a problem spreading to the next issue and checks comments only on the lines it changed. After the reviews, a fallow pass checks everything the batch changed for dead code and for code it duplicated, then a final comment cleanup reads every file the batch changed, once. Only then does it push the batch to the integration branch, in one push, and close its issues, so your CI runs once per batch instead of once per issue; until then, each run's local ready check (lint, typecheck, format, tests) is the gate. It watches that one CI run and reports the result without trying to fix it. In a batch of independent issues, picked to avoid sharing files, the runs also leave test coverage on standard tasks to one check over the whole batch. `/orc` on its own keeps its full review. It runs under `/loop`, keeps its state in `.git/orc-loop/`, and picks up where it left off if you stop and restart it. The first time it runs in a repo it asks one question, whether the agents' notes in `.claude/agent-memory/` go in `.gitignore`, then runs without asking anything else. When the batch is done, it reports what you missed while it ran: a short summary, then each issue with what it asked, how orc built it and why, what the code showed, and what its review found; then each batch review round, with every Blocker and Warning and whether it was fixed, filed, or left open; totals across all the reviews; what triage handled on its own; and last, what needs you and the calls reserved for you. Each run saves its full report under `.git/orc-loop/runs/`, so the final report survives a long batch. It ends with `LOOP FINISHED`, `LOOP FINISHED (no build)`, `LOOP NOT FINISHED`, or `LOOP NOT STARTED` when something stopped it before it planned anything.
+When your request already said to push (for example, `/orc 350-360 and push to dev`), orc pushes without asking. Otherwise it ends with one question: "Do you want me to push this to `dev`?" After the push, it comments on and closes each issue that is fully resolved. It never opens the promotion PR unless you ask.
 
 ### Review a branch before you merge: `/orc-review`
 
@@ -86,62 +67,24 @@ In every mode, orc ends with one explicit line so you know the outcome at a glan
 
 `/orc-review` reviews a branch, a range, a pull request (`/orc-review #123`), or uncommitted work, and changes nothing. It sorts each changed file by risk surface and runs only the reviewers those surfaces call for: `security-reviewer` only when the change touches a trust boundary such as auth, input handling, or secrets; only the UI lanes for a change to markup and styles; nothing for a change to docs and comments. There is no cap on the number of reviewers, so a change that crosses several risk surfaces gets every lane it needs. The `verifier` filters the findings (it skips a run with only Nits), and the report ends with a verdict: not ready, ready after small fixes, ready to merge, or incomplete.
 
+Run it in a fresh session after an `/orc` run, so the review doesn't read the build's reasoning. Then run `/orc warnings and nits` (or `/orc fix the Blocker and the Warnings`) to fix what it found. Orc reports how many Blockers, Warnings, and Nits it fixed and which it left open.
+
 Run `/orc-review setup` once per project. It writes `.claude/skills/deep-review/SKILL.md`, a short profile with that project's stack, a risk map of real paths (which files sit on the trust boundary, which are server, data, and UI), what to leave out of the diff, the architecture, and the patterns that look wrong but are deliberate. From then on, `/deep-review` runs the same workflow with the profile, so the choice of reviewers is exact for that app. Each risk-map row says which surface a path is, and an optional **Extra lanes** column adds reviewers on top, for example `security-reviewer` on a billing folder.
 
-The pack's reviewers are the base, and a project can layer its own specialists on top where that base is thin, for example an accessibility lane far deeper than the one bullet `ui-reviewer` gives it. These **repo lanes** are agents in your `.claude/agents/` that follow the contract in `skills/orc-review/references/lane-template.md`, and the profile says what each one owns and when it runs. When `setup` converts a hand-written reviewer suite, it inventories every agent, reference, and script the suite used, shows you which pack lane covers each old lane and how deeply, keeps the specialists the pack can't replace, rewrites them to the contract, and checks every path and fact it carries over against the code. The profile can also hold the project's check commands, its platform constraints (timeouts, replicas, gateway behaviour), a step that runs after verification, and a folder to save each report in. The profile belongs to your repo: a pack update never overwrites it, and improvements to the workflow reach it without copying anything. If you already wrote your own `deep-review` skill, `setup` converts it and keeps its project-specific parts. `/orc-loop` already uses a repo's `/deep-review` for work no per-issue review has seen.
+When setup has written the profile, a separate `setup-auditor` agent reads it cold, with none of setup's notes or your answers, and checks it against the repo: that every path and symbol exists, the counts are right, the checks table's commands are real, **Never run** names every script that writes, and the profile doesn't copy the review workflow. Facts the repo settles are fixed. Judgment calls, such as a risk-map row that looks too broad, are listed for you to decide, because the agent that built the profile knew the project and the auditor doesn't. It often finds nothing.
+
+The pack's reviewers are the base, and a project can layer its own specialists on top where that base is thin, for example an accessibility lane far deeper than the one bullet `ui-reviewer` gives it. These **repo lanes** are agents in your `.claude/agents/` that follow the contract in `skills/orc-review/references/lane-template.md`, and the profile says what each one owns and when it runs. When `setup` converts a hand-written reviewer suite, it inventories every agent, reference, and script the suite used, shows you which pack lane covers each old lane and how deeply, keeps the specialists the pack can't replace, rewrites them to the contract, and checks every path and fact it carries over against the code. The profile can also hold the project's check commands, its platform constraints (timeouts, replicas, gateway behavior), a step that runs after verification, and a folder to save each report in. The profile belongs to your repo: a pack update never overwrites it, and improvements to the workflow reach it without copying anything. If you already wrote your own `deep-review` skill, `setup` converts it and keeps its project-specific parts.
 
 When the pack changes the shape of the profile or the repo-lane contract, which is rare, it bumps a **review template** number of its own, separate from the pack version, and records what changed in `skills/orc-review/references/template-changes.md`. Your profile records the template number it was built for. When a newer one ships, `/deep-review` ends its report with one line naming what changed. Run `/orc-review setup` to apply the changes you want, and any you turn down are recorded in the profile and never offered again. Or run `/orc-review setup skip` to keep the profile as it is. Either way the reminder stops until the template changes again, and pack releases that don't touch the template never raise it.
-
-### Build fast, review later: `/orc-rush`
-
-```
-/orc-rush          # the whole open board, highest priority first
-/orc-rush #41      # an epic's open sub-issues
-/orc-rush status   # where it is; also stop and reset
-```
-
-`/orc-rush` lands as many issues as it can, as fast as it can. It ranks the open board (priority, then bugs first, with dependencies respected), then builds one issue at a time with `/orc`, pushes it, closes it, and takes the next. Each issue gets a fast review: quality, scope, and security when it touches a trust boundary. Everything else is deferred, not dropped: every three to five issues a sweep reviews how they fit together, adds the architecture lane and, when the issues touched UI, the UI lane, fixes what it finds, and marks a promotion point. Test coverage, comments, and dead code wait for `/orc-review`, which the final report tells you to run over the swept range before you promote it. A failed issue gets one fresh retry; a second failure parks the work and files a blocker issue. It runs under `/loop` until the board is empty or your session or weekly limit runs low (with paceline, it pauses for a session reset), and it resumes from `.git/orc-rush/`. Use `/orc-loop` instead when you want each batch reviewed before it is pushed. If your CI runs on every push, it asks once whether to push each issue or to push at each sweep. `/orc-rush status` shows where it is, `/orc-rush stop` finishes the issue in flight, runs a final sweep, and reports, and `/orc-rush reset` clears its state and claims. Every `/orc` run it starts goes through a hidden `orc-rush-iter` skill that holds the fast-review rules, so they survive a long session being summarized. It follows parts of `/orc-loop`, so install the two together.
 
 ### Look back at a run: `/retro`
 
 ```
-/retro             # the most recent run
-/retro 7d          # every run in the last week
+/retro             # the last 7 days
+/retro 14d         # every session in the last 14 days
 ```
 
-`/retro` reads the session transcripts of your `/orc`, `/orc-loop`, and `/orc-rush` runs in this repo, with their saved reports and commits, and tells you what to improve. It measures where the tokens went (each session, each agent type, the costliest dispatches) and looks for spend that bought nothing, such as a review lane whose findings the verifier kept rejecting, fix rounds on Nits, retries, or a main session whose context kept growing. It also lists the problems the run hit and what worked well. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
-
-### Run two sessions in one project
-
-You can start a second `/orc` while another orc run, or an `/orc-loop` batch, is still working in the same checkout. The first run holds a lock inside `.git`; the second sees it and moves into its own git worktree under `.claude/worktrees/`, on an `orc/<slug>` branch, so neither run sweeps the other's changes into its commits. Start with `/orc in a worktree …` to isolate a run even when nothing else is running. Orc keeps the worktree out of `git status` and removes it when the run ends, unless it still holds uncommitted work.
-
-The dirty-tree rule still applies to your own edits: a dirty tree with no other orc run behind it stops the run, as before. When the other run pushed first, orc rebases its own unpushed commits onto the new integration branch, re-runs the ready check, and then pushes. A run that started with unpushed commits already on the branch doesn't rebase them; it stops `NOT FINISHED` instead. If that rebase conflicts, it never resolves the conflict itself: it pushes its work to the `orc/<slug>` branch and ends `NOT FINISHED`, naming the branch and the conflicting files for you to merge.
-
----
-
-## Pick a model: default or efficiency mode
-
-The model you start orc on sets how it spends tokens.
-
-- **Opus 5.5 (`claude-opus-5-5`) — the default.** Orc starts right away and runs with its full quality settings. Use this when quality matters most.
-- **Sonnet 5.5 (`claude-sonnet-5-5`) — efficiency mode.** Orc first asks you to confirm, then runs just as autonomously. Expect a lower token bill and slightly lower quality.
-
-In efficiency mode, orc itself runs on Sonnet 5.5, the model you started it on. It also moves two smaller jobs from Opus 5.5 to Sonnet 5.5:
-
-- **Picking the next issue.** Orc still checks the pick before building.
-- **A first round of fixes for minor review findings,** run at high effort. Anything blocking, or anything from the security reviewer, stays on Opus 5.5, and an Opus 5.5 reviewer re-checks the fix.
-
-Everything else keeps its usual model: every reviewer and the verifier, data and migration work, and every build. A trivial task, such as a typo, a constant, or a copy change, stays on Opus 5.5 at low effort, which costs less than Sonnet 5.5 at high. To offset running the coordinator on a cheaper model, orc also leaves more decisions to its Opus agents: it doesn't edit code itself, and it defers to the design reviewer on a disputed design.
-
-Run Sonnet 5.5 at high effort (`/effort high`) for this mode; Claude Code's default is medium. If you can, also add an Opus advisor with `/advisor opus` before you start: orc consults it on its own decisions when it's available, and runs the same without it.
-
-To skip the confirmation, for example in a non-interactive run, start the invocation with `efficiency mode`:
-
-```
-/orc efficiency mode 123
-```
-
-The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus 5 (`claude-opus-5`); it refuses to start there.
+`/retro` reads the session transcripts of your `/orc` and `/do` runs in this repo, and the reviews and fix runs that followed them, and tells you what an issue costs and what to improve. It measures cost, tokens, and active time per closed issue, how much of that went to review and fix-up, and what the reviews found. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
 
 ---
 
@@ -149,73 +92,58 @@ The words count only at the start, and only on Sonnet 5.5. Don't run orc on Opus
 
 **The skills:**
 
-- `skills/orc/` — the orchestrator itself, plus `references/`: the shared standards its agents write and review against (see [The standards](#the-standards)).
-- `skills/orc-loop/` — runs `/orc` over a batch of issues unattended, then reviews the batch as a whole. See [Run a batch unattended](#run-a-batch-unattended-orc-loop).
-- `skills/orc-loop-iter/` — the lighter-review `/orc` run that `/orc-loop` uses for each issue and fix. Hidden from the `/` menu; it ships with `orc-loop`.
+- `skills/orc/` — the issue workflow itself, plus `references/`: the shared standards and stack playbooks the review lanes check against (see [The standards](#the-standards)), and `update-check.md`, the once-a-day release check.
+- `skills/do/` — `/do`, the same skill as `/orc` under another name. It reads and follows `skills/orc/SKILL.md`.
 - `skills/orc-review/` — the read-only deep review of a branch before a merge, plus `references/profile-template.md`, the project profile `/orc-review setup` fills in as the repo's own `/deep-review`, `references/lane-template.md`, the contract a project's own reviewer lanes follow, and `references/template-changes.md`, the review template's version and what each version changed. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review).
-- `skills/orc-rush-iter/` — the fast-review `/orc` run that `/orc-rush` uses for each issue and fix. Hidden from the `/` menu; it ships with `orc-rush`.
-- `skills/orc-rush/` — the speed-first loop: builds the board one issue at a time with a fast review and pushes each issue, deferring the deeper review to its sweeps and `/orc-review`. See [Build fast, review later](#build-fast-review-later-orc-rush).
-- `skills/retro/` — a retrospective on past runs: where the tokens went, the problems they hit, and what to improve. See [Look back at a run](#look-back-at-a-run-retro).
-- `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See ["Updating the pack"](#updating-the-pack) below.
-- `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, sized so one orc run can carry one issue to done, with a `**Size band:**` line (Small, Medium, Large, or Huge) that orc reads to budget the run and that is copied onto the project's own size labels when it has them — splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of sized children, when the work is too big for one. It's how orc's Discoveries step files follow-up work, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
-- `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` at 390px and 1440px in light and dark mode, in Playwright by default (exact viewports and a clean browser profile) with Claude in Chrome as the fallback. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test or an issue with screenshots. It drafts both files from your code the first time.
+- `skills/retro/` — a retrospective on past runs: what an issue costs, where the tokens and time went, and what to improve. See [Look back at a run](#look-back-at-a-run-retro).
+- `skills/tiedown/` — run `/tiedown` when you think a session is finished. It checks the whole session and the real state of the repo and machine for unanswered questions, unfinished requests, unpushed or uncommitted work, failed or skipped checks, things still running, open issues, and promises not yet kept. It replies "We're done." when nothing is left. Otherwise it thinks through each open item, with no subagent for an obvious one and a Haiku, Sonnet, or Opus subagent sized to the rest, and gives you one final list: the exact action, a one-sentence reason, and who does it. Reply "do all of it" to approve. It never changes anything itself. Optional.
+- `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See [Updating the pack](#updating-the-pack) below.
+- `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, with a `**Size band:**` line (Small, Medium, Large, or Huge) that is copied onto the project's own size labels when it has them, splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of sized children, when the work is too big for one. Orc uses it when you ask it to file a plain-text request, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
+- `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run in the session (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` at 390px and 1440px in light and dark mode, in Playwright by default (exact viewports and a clean browser profile) with Claude in Chrome as the fallback. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test, built in the session, or an issue with screenshots. It drafts both files from your code the first time.
 
 **The agents** (`agents/`):
 
-| Agent                    | Role                                                                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `next-issue-finder`      | Scout — picks the next issue from the board (used only in undirected runs)                                                |
-| `implementer`            | General builder: tooling, config, scripts, cross-cutting changes, and cleanup runs, plus any task no specialist fits      |
-| `ui-implementer`         | Builds components, pages, styles, and copy on the repo's design system, with every state, keyboard support, and themes    |
-| `api-implementer`        | Builds endpoints, services, integrations, and jobs: boundary validation, error contracts, authorization, bounded retries  |
-| `data-implementer`       | Writes schema changes, migrations, backfills, and indexes; runs them only against a local or test database                |
-| `orc-updater`            | Applies an orc-pack release to an installed copy, converging it on the target kit (runs on Opus 5.5; used by /update-orc) |
-| `lint`                   | Runs the repo's lint/format chain, reports raw results                                                                    |
-| `typecheck`              | Runs the repo's type checker                                                                                              |
-| `test`                   | Runs the repo's test suite(s)                                                                                             |
-| `impact`                 | Diff stats for a change                                                                                                   |
-| `usages`                 | Maps where a diff's code is used (callers, importers, tests) once, so the review lanes don't each search for it           |
-| `fallow`                 | Codebase-intelligence audit on JS/TS repos — dead code, duplication, complexity, circular deps (self-skips when absent)   |
-| `scope-reviewer`         | Holds each diff to the run's work contract: out-of-scope changes, unproven criteria, unwanted mocks                       |
-| `security-reviewer`      | Input validation, secrets, XSS, SSRF, injection, path traversal                                                           |
-| `design-reviewer`        | Approves a design brief before code is written, for structural tasks                                                      |
-| `architecture-reviewer`  | Separation of concerns, module boundaries, file and folder structure, framework conventions                               |
-| `quality-reviewer`       | Readability, AI slop code, type safety, error handling, async and state, reuse, performance                               |
-| `comment-reviewer`       | Cold-read test on every comment in touched files; JSDoc on exports; slop comments                                         |
-| `ui-reviewer`            | Design system and theme, states, interaction, responsive, accessibility, copy; screenshots when the app runs locally      |
-| `test-coverage-reviewer` | Depth and meaningfulness of test coverage                                                                                 |
-| `verifier`               | Skeptical second pass that filters reviewer false positives                                                               |
-| `docs-writer`            | Project documentation                                                                                                     |
-| `skill-vetter`           | Static security audit of untrusted skills/plugins before you install them                                                 |
-| `dependency-vetter`      | Supply-chain security vet of a package version (fallow) before install/update                                             |
+| Agent                    | Model and effort | Role                                                                                                                   |
+| ------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `quality-reviewer`       | Opus 5.5, medium | Readability, AI slop code, type safety, error handling, async and state, reuse, performance                            |
+| `architecture-reviewer`  | Opus 5.5, medium | Separation of concerns, module boundaries, file and folder structure, framework conventions                            |
+| `ui-reviewer`            | Opus 5.5, medium | Design system and theme, states, interaction, responsive, accessibility, copy; screenshots when the app runs locally   |
+| `security-reviewer`      | Opus 5.5, high   | Input validation, secrets, XSS, SSRF, injection, path traversal                                                        |
+| `comment-reviewer`       | Opus 5.5, low    | Cold-read test on every comment in touched files; JSDoc on exports; slop comments                                      |
+| `test-coverage-reviewer` | Sonnet 5.5, high | Depth and meaningfulness of test coverage                                                                              |
+| `verifier`               | Opus 5.5, medium | Skeptical second pass that filters reviewer false positives                                                            |
+| `setup-auditor`          | Opus 5.5, medium | Blind audit of a freshly written deep-review profile: checks its facts against the repo (used by /orc-review setup)    |
+| `usages`                 | Haiku            | Maps where a diff's code is used (callers, importers, tests) once, so the review lanes don't each search for it        |
+| `fallow`                 | Haiku            | Codebase-intelligence audit on JS/TS repos: dead code, duplication, complexity, circular deps (self-skips when absent) |
+| `lint`                   | Haiku            | Runs the repo's lint and format chain, reports raw results                                                             |
+| `typecheck`              | Haiku            | Runs the repo's type checker                                                                                           |
+| `test`                   | Haiku            | Runs the repo's test suites                                                                                            |
+| `dependency-vetter`      | Opus 5.5, high   | Supply-chain security vet of a package version (fallow) before install or update                                       |
+| `skill-vetter`           | Opus 5.5, high   | Static security audit of untrusted skills and plugins before you install them                                          |
+| `orc-updater`            | Opus 5.5, high   | Applies an orc-pack release to an installed copy, converging it on the target kit (used by /update-orc)                |
 
-Every builder writes code and tests together and never commits; orc owns the history. Orc assigns each task the builder for its main surface and runs builders one at a time, because concurrent writers conflict. The read-only agents run side by side instead: a task's review lanes go out together, and so do the lint, type-check, and test runners. There is no security or architecture builder on purpose: security is a lens on code written in some other domain, and architecture is checked before building (the design review of the brief) and after (the architecture review of the diff).
-
-Orc doesn't run every reviewer on every change. It **sizes each task** — trivial, standard, or structural — and dispatches only the reviewers that the size and the diff's surfaces call for. A one-line copy fix gets a single reviewer; a change to an upload handler wakes the security reviewer; a new screen gets a design review before any code is written and a UI review after. The verifier drops findings that are only a matter of taste, so no fix round is spent on preference.
-
-The reviewers, tooling runners, and the scout are all also useful on their own, outside of orc — for example during a manual code review.
+`/orc` itself dispatches only `fallow`, and only at the end of a run that removed or moved code; it sends wide code searches to the built-in Explore agent. The reviewers, the verifier, `usages`, and the gate runners (`lint`, `typecheck`, `test`) are `/orc-review`'s lanes. They are also useful on their own, for example during a manual code review.
 
 ---
 
 ## The standards
 
-The quality bar lives in `skills/orc/references/`, and the builders write to the same files the reviewers check against, so most problems never reach a review:
+The quality bar lives in `skills/orc/references/`, and `/orc-review`'s reviewer lanes check against it. The review detects your stack from your profile or your manifest and hands each lane the files it needs:
 
 - **`standards/code.md`** — readability, types, errors, async, state, reuse, and a named list of AI slop code patterns (defensive noise, pass-through layers, reinvented utilities, synced state, and more).
 - **`standards/comments.md`** — the cold-read test (every comment must make sense to someone who sees only the file), JSDoc on exports following Google's style guides, and the slop comments to remove.
 - **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
 - **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
 - **`standards/data.md`** — migrations, expand/contract changes, locks, backfills, indexes, and query safety.
-- **`builder-contract.md`** — the rules every builder shares: the dispatch, brief and build modes, scope, no commits, suppressions only as `code.md` allows, fix rounds, and the report.
-- **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when orc detects that stack, and tells the agents to trust the installed version's docs over the playbook.
+- **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when the review detects that stack, and tells the lanes to trust the installed version's docs over the playbook.
 
-Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, and orc follows an existing project structure rather than reshaping it. Files the diff touches get cleaned up as part of the task; messy files it doesn't touch come back in the report as cleanup cards, not rewritten on the side.
+Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, so the review never pushes a project structure onto your code that it doesn't already follow.
 
 ---
 
 ## Fallow
 
-Fallow is a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. It runs as a standard part of orc's review loop on JS/TS repos — the `fallow` agent scopes `fallow audit` to the task diff and reports the findings, and it self-skips on a non-JS/TS project. It is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
+Fallow is a static codebase-intelligence pass that finds dead code, code duplication, complexity hotspots, circular dependencies, and unused or unlisted dependencies. `/orc-review` runs it as a lane on JS/TS changes, and `/orc` runs it before its report when the run removed or moved code. The `fallow` agent scopes `fallow audit` to the change and reports the findings, and it self-skips on a non-JS/TS project. It is installed by default after it passes the same supply-chain vet. The pack only reads: it never runs `fallow fix`, which would rewrite source.
 
 ---
 
@@ -224,10 +152,10 @@ Fallow is a static codebase-intelligence pass that finds dead code, code duplica
 Install [paceline](https://github.com/rogadev/paceline), a Claude Code status line, and register its `paceline-mcp` server to watch a run's progress without reading the transcript:
 
 ```
-orc #42 ▰▰▰▰▱▱ t2 upload limit review 62%
+orc ▰▰▰▰▱▱ #356 upload limit build 62%
 ```
 
-Orc starts the bar as soon as it has oriented, with an `investigate` cell for picking and sharpening the work and a `plan` cell for the contract and task list. Once the plan exists, it adds one cell per task, then a `ready check` cell and a `push` cell, so a two-task run shows six cells and the highlighted cell is the one in progress. A task's label names what it builds and the stage it is in: design on structural tasks, then build, review, and any fix rounds (`fix 1` to `fix 3`). Each task is weighted by size, so the percentage tracks the real work rather than a step count. A task added mid-run gets its own cell, and the ready check and push cells move to stay last. A run with nothing to build shows its real steps, such as a verification or an issue comment, instead. `/orc-loop` draws its own bar, with one cell per issue, then cells for the batch review, triage, the fallow pass, and the comment cleanup (`loop ▰▰▱▱ #41 upload limit build`), and the `/orc` runs it starts leave the bar to it. Without paceline, both skip this silently. The updates ride along with calls orc already makes, so they add no turns and cost a few hundred tokens per task.
+Orc starts the bar with a `plan` cell as soon as it reads your arguments. Once the plan is approved, it adds one cell per issue, weighted by size, with the stages `test`, `build`, `look` (for a UI change), and `commit`, then a `ready check` cell, a `push` cell, and a `review` cell. When the push is waiting on you, the bar stays open with the label `push needed`. The review runs in another session, so orc marks that cell skipped when it pushes. Without paceline, orc skips the bar silently. The updates ride along with calls orc already makes, so they add no turns.
 
 ---
 
@@ -240,7 +168,7 @@ Orc starts the bar as soon as it has oriented, with an `investigate` cell for pi
 /plugin install orc-pack@orc-pack
 ```
 
-The skill and all agents load automatically after install; the skill is invoked as `/orc-pack:orc`. The plugin version is pinned in `.claude-plugin/plugin.json`, so you receive updates when a new version is released, not on every commit.
+The skills and agents load automatically after install; the skills are invoked as `/orc-pack:orc`, `/orc-pack:do`, `/orc-pack:orc-review`, and so on. The plugin version is pinned in `.claude-plugin/plugin.json`, so you receive updates when a new version is released, not on every commit.
 
 **Into a repo — committable and tunable.** Copy the pack into one repo's `.claude/` so it ships with the repo, can be committed for a team, and can be tuned to that repo's stack (a repo-specific security reviewer, for example). Plugin files live in a read-only cache; repo copies are yours to edit. This is the path described in the next section, and it's the right one for team repos or customized installs.
 
@@ -250,25 +178,25 @@ The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
 1. Open a Claude Code session in the repo you want orc in — that repo is the install target.
 2. Point Claude at this repo's URL, for example: _"Install https://github.com/rogadev/orc-pack into this repo."_ Claude clones the kit into a scratch location and follows `INSTALL.md`. If you already have a clone somewhere outside the target project, you can point at that instead: _"Read the INSTALL.md in `~/orc-pack` and install this pack into this repo."_
-3. Claude copies the skill to `.claude/skills/orc/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
+3. Claude copies the skills to `.claude/skills/` and the agents to `.claude/agents/`, checks for conflicts with anything already there, adapts to your repo, and verifies the result.
 
-If you'd rather do it by hand, it's just a copy:
+If you'd rather do it by hand, it's a copy:
 
-- `skills/orc/` (the whole directory, including `references/`) → `<repo>/.claude/skills/orc/`
+- each directory in `skills/` (the whole directory, including its `references/`) → `<repo>/.claude/skills/<same-name>/`. `skills/orc/` and `skills/do/` go together, because `/do` reads orc's skill file, and `/orc-review` reads `skills/orc/references/`.
 - every file in `agents/` → `<repo>/.claude/agents/<same-name>.md`
 
 Use `~/.claude/` instead of `<repo>/.claude/` if you want orc available in every project on your machine rather than just one. Either way the pack goes into the repo your session is open in, never into a checkout of `orc-pack` itself; if Claude starts "installing" into an `orc-pack` folder it found on your machine, stop it and open the session in the target repo. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
 
-> The pack's agents are written to be generic — they discover your repo's stack, commands, and conventions at runtime by reading your `CLAUDE.md`/`AGENTS.md`, your manifest, and the surrounding code. They work as-copied. If your repo has a `CLAUDE.md` that documents your ready command (like `pnpm ready`) and your working branch (like `dev`), orc picks those up automatically.
+The pack is written to be generic: orc and the agents discover your repo's stack, commands, and conventions at runtime by reading your `CLAUDE.md`/`AGENTS.md`, your manifest, and the surrounding code. They work as copied. If your repo has a `CLAUDE.md` that documents your ready command (like `pnpm ready`) and your working branch (like `dev`), orc picks those up automatically.
 
 ---
 
 ## Updating the pack
 
 - **Plugin install** — run `/plugin update orc-pack@orc-pack`, which picks up a new version once `plugin.json`'s version changes. To get releases without asking, turn on auto-update: in `/plugin`, open **Marketplaces**, select `orc-pack`, and choose **Enable auto-update**. Claude Code leaves it off for third-party marketplaces, and a marketplace can't turn it on for you.
-- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. It does not commit — review the changes, then commit and push them yourself.
+- **Copied-into-`.claude/` install** — run `/update-orc`. It reads your installed version, finds the latest GitHub release, fetches the pack at that tag, and dispatches an Opus 5.5 updater that converges your copy on the release. It works from **any** older version in one pass, so you don't step through releases one at a time; it reads every changelog entry in the gap plus the release's update notes as its map (falling back to the tag diff when notes are thin), preserves your repo-local edits, and never clobbers a file the repo owns. Coming from 1.x, it removes the skills, agents, and references that 2.0.0 dropped and adds `skills/do/`. It does not commit — review the changes, then commit and push them yourself.
 
-You don't have to watch for releases. `/orc`, `/orc-loop`, `/orc-rush`, and `/orc-review` check the latest GitHub release at most once a day, and when it's newer than your install, the report ends with one line naming the new version and the command for your install kind. The check never updates anything, and it stays silent when you're offline.
+You don't have to watch for releases. `/orc` (and `/do`) and `/orc-review` check the latest GitHub release at most once a day, and when it's newer than your install, the report ends with one line naming the new version and the command for your install kind. The check never updates anything, and it stays silent when you're offline.
 
 Every release's notes come from `CHANGELOG.md`, and the release guard refuses to publish a version without a section there. That's what keeps future update agents oriented.
 
@@ -276,9 +204,9 @@ Every release's notes come from `CHANGELOG.md`, and the release guard refuses to
 
 ## Turn on the to-do list (newer models)
 
-Orc runs best when it can build its plan as a **live task list** and work it top to bottom — that's how an unsupervised run never drops a step. The task list is orc's spine.
+Orc tracks each issue in a run as a **live task**, marking it in progress and completed as it goes, so a long list never drops an issue.
 
-Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8**, **Sonnet 5**, and Fable 5, and likely the models released since, such as Opus 5.5 and Sonnet 5.5. The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
+Recent Claude Code versions (v2.1.233+) **turn the to-do / Task tools off by default on newer models** — including **Opus 4.8**, **Sonnet 5**, and Fable 5, and likely the models released since, such as Opus 5.5. The reasoning from the docs: these models track multi-step work internally, and the tool definitions take up context, so Claude Code omits them unless you opt in. Since orc runs on those newer models, you'll want to switch the tools back on.
 
 **The fix — set one environment variable before launching Claude Code:**
 
@@ -302,30 +230,27 @@ To make it permanent, add `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` to your shell profil
 claude --allowedTools TaskCreate TaskGet TaskList TaskUpdate
 ```
 
-Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList`) and orc uses them to track its plan as it works.
+Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList`) and orc uses them to track the issues in a run.
 
-> **If you don't turn them on**, orc still runs — the skill tells it to fall back to an inline checklist in its reasoning. But the built-in task list is a much better experience, and it's what the "adds to-dos as it builds its plan" behavior depends on.
-
-> **Which tools, exactly?** `TaskCreate/TaskGet/TaskUpdate/TaskList` are the current, persistent task system (stored under `~/.claude/tasks/`). The older `TodoWrite` was an ephemeral, in-context-only checklist and is deprecated. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` turns the current Task tools on.
->
-> Setting names and defaults can shift between Claude Code releases — if the variable above doesn't take effect, check your version's tools reference (`code.claude.com/docs`) for the current knob.
+**Which tools, exactly?** `TaskCreate/TaskGet/TaskUpdate/TaskList` are the current, persistent task system (stored under `~/.claude/tasks/`). The older `TodoWrite` was an ephemeral, in-context-only checklist and is deprecated. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` turns the current Task tools on. Setting names and defaults can shift between Claude Code releases; if the variable above doesn't take effect, check your version's tools reference (`code.claude.com/docs`) for the current knob.
 
 ---
 
 ## How a run actually flows
 
-1. **Orient & guard.** Orc reads your repo conventions and refuses to start on a dirty working tree or a protected branch (`main`/`master`) — those are yours to clear first.
-2. **Get the work.** Scout picks an issue (undirected), or it takes your issue number / free-text task.
-3. **Make it buildable.** Most work isn't perfectly spec'd. Orc sharpens it — splitting off the executable part, shipping a defensible default for a missing tuning value, or writing down a decision — rather than stopping because the issue was vague. Then it writes a **work contract**: one sentence naming the exact files it believes you mean, what's in and out of scope, every integration marked real or mocked, its assumptions, and three to six acceptance criteria that each name a test. It states that sentence in chat as it starts and posts the contract on the issue. Start with `/orc contract first …` to approve the contract before anything is built.
-4. **Plan as tasks.** It decomposes the contract's criteria into a task list and works it in order. Builders write each acceptance test first and show it failing before they write the change, and a scope reviewer holds every diff to the contract.
-5. **Design → build → review → fix, looping.** Per task: orc assigns the builder for the task's surface (UI, API, data, or general); for structural work, that builder writes a short design brief and the design reviewer approves it first; then the builder writes code and tests to the shared standards; the reviewers that apply check the diff; `fallow` scans JS/TS diffs for dead code and duplication; the verifier filters false positives and matters of taste; real defects and warnings go back for a fix. Bounded at three rounds so it can't loop forever.
-6. **Small discoveries get done; bigger ones get filed.** Orc sizes everything it finds along the way as Small (one task), Medium (one run), Large (several runs), or Huge (an epic). Small work gets built this run, through the same review loop as the rest. Medium and larger work is filed as an issue with its size band, after a check for duplicates, so the run never grows silently and the work is waiting on the board at a known size. Quality debt in files the run doesn't touch is filed too, one issue per area with the `/orc clean up …` command to run, so a small issue never turns into a sweep of the codebase. Choices with a clear better answer, or a cheap way back, orc makes itself and reports with how to reverse them.
-7. **Ready & land.** It runs your repo's aggregate check, and only if that's green does it push and close the issue.
-8. **Report.** A tight, point-first summary in the Google developer-documentation voice — what it picked and why, what landed and where, what changed on the board, heads-ups you don't need to act on, steps only you can take, and a card for each call reserved for you, with its options and a recommendation (every other call is decided and reported with how to reverse it) — capped by the one literal status line (`FINISHED` / `FINISHED (no build)` / `NOT FINISHED`).
+1. **Learn the repo.** Orc reads your `CLAUDE.md` or `AGENTS.md`, `.claude/rules/`, `.claude/settings.json`, and manifest for the integration branch, the check and test commands, the ready check, the dev server, and any UI verification recipe. Your repo's docs and hooks win over the skill's general steps.
+2. **Resolve the list.** It parses your issues, range, `next N`, or text request, fetches each issue, drops what is closed or already fixed, and orders the rest by number (or by rank for `next N`), with blockers first. It stays on the integration branch in your checkout and never stages files another session left uncommitted.
+3. **Plan.** It reads each issue's docs and code and writes a plan, then waits for one go-ahead on a list. A single small issue or a text request starts at once.
+4. **Build each issue in order.** Tests first, then the change, screenshots of any UI change at 390 and 1440 pixels in light and dark, the docs, and one commit per issue.
+5. **Report.** It runs the ready check once over the whole run, reports each issue, and asks whether to push (or pushes when you already said to).
+6. **Push and close.** After the push, it comments on and closes each fully resolved issue. A partly resolved issue gets a comment and stays open.
+7. **Review, in a fresh session.** You run `/orc-review` over what orc committed, then `/orc warnings and nits` to fix what it found.
 
 ## Good to know
 
-- **It commits and pushes to your working branch** (typically `dev`) but **never opens a PR, never touches `main`, and never force-pushes.** Promoting to your release branch stays your decision.
-- **It won't fake a finish.** It won't suppress a failing check, silence a real defect, or close an issue it didn't actually resolve. A `NOT FINISHED` is honest.
-- **It's for repos that track work as issues** (for the undirected and issue modes) and use `gh`. The free-text mode works without an issue board.
-- **Watch the first few runs.** "Autonomous" doesn't mean "unsupervised forever" — get a feel for how it picks and scopes work in your repo before you truly walk away.
+- **Run it on Opus 5.5 (`claude-opus-5-5`).** `/orc` refuses to start on Opus 5 (`claude-opus-5`, the 5.0 release), which hallucinates, drifts off task, and reports problems that aren't there.
+- **You start it; it doesn't start itself.** `/orc` and `/do` are user-invoked only, so Claude never runs them on its own.
+- **It commits to your working branch** (typically `dev`) and pushes only when you say so. It **never opens a PR, never touches `main`, and never force-pushes.** Promoting to your release branch stays your decision.
+- **It won't fake a pass.** It fixes the cause of a failing check and never weakens, skips, or deletes a test to get green. A failure it can't fix stops the run and comes back to you.
+- **It's for repos that track work as GitHub issues** and use `gh`. A plain-text request works without an issue board.
+- **When you correct it** on something it should have known, it proposes the check that would have caught it: a lint rule, a test, or a hook first, and a line in `CLAUDE.md` only when nothing deterministic fits.

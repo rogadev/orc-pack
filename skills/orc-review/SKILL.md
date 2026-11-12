@@ -1,6 +1,6 @@
 ---
 name: orc-review
-pack: orc-pack@1.22.0
+pack: orc-pack@2.0.0
 description: Read-only deep review of a branch, range, pull request, or uncommitted work, sized to the change. Runs only the reviewer lanes whose surface the change touches, verifies the findings, and returns a plain-language report with a verdict. Reads the repo's project profile (risk map, architecture, known non-issues) from .claude/skills/deep-review/SKILL.md; `/orc-review setup` drafts it. Use when the user says "/orc-review", "review my branch", "review dev before the PR", "is this ready to merge", or "set up deep review for this project".
 argument-hint: "[setup [skip]] | [ref | a..b | #PR | working] [quick | full] [auto]"
 ---
@@ -23,7 +23,7 @@ The profile outranks this file's heuristics wherever they differ: its risk map d
 
 **Template check.** Read the current review template number at the top of `<base>/references/template-changes.md`, and the profile's `template` and `template-reviewed` numbers (inferred from `based-on` when absent, as that file says). When the current number is greater than both, and the arguments don't contain `auto`, end the report with exactly one line: `Profile built for review template <n>; template <current> changes <the summaries of the newer versions, joined>. Run /orc-review setup to refresh it, or /orc-review setup skip to keep it as it is.` Otherwise say nothing: the user has decided on every newer change, or there is none. A pack update alone never raises this line; only a newer review template does.
 
-**Repo lanes** are project-owned agents in `.claude/agents/` that review a surface in more depth than the generic lanes, following the contract in `<base>/references/lane-template.md`: the step 3 brief in, findings in the reply out, read-only. The generic lanes stay the base; a repo lane adds to them and never replaces `security-reviewer` or the `verifier`.
+**Repo lanes** are project-owned agents in `.claude/agents/` that review a surface in more depth than the generic lanes, following the contract in `<base>/references/lane-template.md`: the step 3 brief in, findings written to the brief's `Report` file and a one-line reply out, read-only otherwise. The generic lanes stay the base; a repo lane adds to them and never replaces `security-reviewer` or the `verifier`.
 
 **Extra focus** is one block per lane or group of lanes, headed `### <lane>[, <lane>]: <topic>`. An optional `Paths:` line limits the block to changes that touch those globs, and an optional `Reference:` line names a file the lane reads first. A bullet that starts with `Blocker:` or `Warning:` fixes the severity of a finding that breaks that rule. An older profile may lead each block with the lane names in bold instead; read it the same way. A block that names no lane by its agent name, or a lane that doesn't exist, is a profile defect: say so under **Needs your attention**.
 
@@ -44,7 +44,8 @@ Make a scratch folder `$D` (the session scratchpad if one is named, else `mktemp
 - **No arguments, on any other branch:** `origin/<integration>...HEAD` if the integration branch exists, else `origin/<release>...HEAD`.
 - **`working`:** uncommitted changes against `HEAD`.
 - **`#<n>` or `pr <n>`:** that pull request, without checking it out. Read its base with `gh pr view <n> --json number,title,body,baseRefName`, run `git fetch --quiet origin "pull/<n>/head:refs/remotes/origin/pr/<n>" <base>`, and review `$(git merge-base origin/<base> origin/pr/<n>)..origin/pr/<n>` as an `a..b` range. Add `(PR #<n>)` to every brief's `Goal:` line, and put the PR's title and body at the top of `$D/intent.md`.
-- **A ref:** `<ref>...HEAD`.
+- **The integration branch's name** (for example `dev`): the integration branch's unreleased work, never `<ref>...HEAD`, which is empty on that branch. On it, this is the no-arguments target. On another branch, review `$(git merge-base origin/<release> <integration>)..<integration>` as an `a..b` range.
+- **Any other ref:** `<ref>...HEAD`.
 - **`a..b`:** that range. When `b` is not `HEAD`, check it out with `git worktree add --detach "$D/tree" <b>`, and run the gate and point every reviewer at that tree (step 3's `Tree:` line), so no lane judges code from after the range. **Install its dependencies inside the tree** with the profile's `install` check, else the lockfile's frozen install (`pnpm install --frozen-lockfile --prefer-offline`, `npm ci --prefer-offline`, `yarn install --immutable`, `bun install --frozen-lockfile`, or the stack's equivalent; none when the repo installs nothing). Never link `node_modules` or any install from another checkout: the package manager can rewrite the linked install, downgrading the main checkout. If the install fails, the gate doesn't run (say so under **Gate** with the error), and the lanes still do. Note the end commit's date (`git log -1 --format=%cs <b>`). Step 5 removes the tree.
 
 ```bash
@@ -60,7 +61,7 @@ git diff <range> --stat -- . <excludes> > "$D/stat.txt"
 
 **Intent.** Collect the issue numbers in the range's commit messages (`git log <range> --format=%B`) and, for a PR target, its body. For each, `gh issue view <n> --json number,title,body` (about 150 lines per body) into `$D/intent.md`, plus the commit messages, bodies included, because `Closes #N` and `Refs #N` sit in the bodies. If `gh` fails, write what you have and continue.
 
-**Standards.** Orc's reference files are the shared bar. When Claude Code names this skill's base directory, they are in `<base>/../orc/references/`; otherwise glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Note the absolute paths of `standards/code.md`, `comments.md`, `structure.md`, `ui.md`, and `data.md`. Take the framework and platform playbooks from the profile's **Stack**; with no profile, detect them as orc's step 1 does: `frameworks/next.md` (`next`), `nuxt.md` (`nuxt`), `sveltekit.md` (`@sveltejs/kit`), or `astro.md` (`astro`); `platforms/cloudflare.md` (a `wrangler.*` config or Cloudflare adapter) or `vercel.md` (`vercel.json`, `.vercel/`, `@vercel/*`, or a Vercel adapter). If no references are found, run anyway and say so.
+**Standards.** The reference files in the `orc` skill's directory are the shared bar. When Claude Code names this skill's base directory, they are in `<base>/../orc/references/`; otherwise glob for `skills/orc/references/standards/code.md` under the repo's `.claude/`, then `~/.claude/`, then `~/.claude/plugins/`. Note the absolute paths of `standards/code.md`, `standards/comments.md`, `standards/structure.md`, `standards/ui.md`, and `standards/data.md`. Take the framework and platform playbooks from the profile's **Stack**; with no profile, detect them from the manifest and config files: `frameworks/next.md` (`next`), `frameworks/nuxt.md` (`nuxt`), `frameworks/sveltekit.md` (`@sveltejs/kit`), or `frameworks/astro.md` (`astro`); `platforms/cloudflare.md` (a `wrangler.*` config or Cloudflare adapter) or `platforms/vercel.md` (`vercel.json`, `.vercel/`, `@vercel/*`, or a Vercel adapter). If no references are found, run anyway and say so.
 
 ## 2. Choose the lanes
 
@@ -155,7 +156,7 @@ A finding is introduced by this change only on a line the diff adds; on other co
 Write each finding to Report with file, line (in the file at the range's end, never a line of diff.patch), severity (Blocker, Warning, or Nit), the problem, and the fix. A rule in Project marked Blocker: or Warning: sets that severity. Then reply with one line: your counts, any files under "Not read:", and the path.
 ```
 
-**Findings travel as files,** as orc's step 5 says: the verifier reads the lanes' reports and writes its own, and until step 5 you read only the replies, except `$D/verified.md` for the `quick` escalation in step 4. A lane that replies with its findings instead of a path, such as a repo lane built before review template 4, still counts: step 4 passes its reply on.
+**Findings travel as files:** each lane writes its findings to the file on its `Report:` line and replies with one line, the verifier reads the lanes' reports and writes its own, and until step 5 you read only the replies, except `$D/verified.md` for the `quick` escalation in step 4. A lane that replies with its findings instead of a path, such as a repo lane built before review template 4, still counts: step 4 passes its reply on.
 
 Only the five lanes that read the map and the repo lanes get the `Usages:` line, and it is omitted with no map. **Platform constraints** go only to `security-reviewer`, `quality-reviewer`, `architecture-reviewer`, and the repo lanes. Never tell a reviewer what not to flag.
 
@@ -182,23 +183,27 @@ Only the five lanes that read the map and the repo lanes get the `Usages:` line,
 - **Ready to merge:** only Nits, or nothing.
 - **Review incomplete:** a lane or gate runner that was dispatched did not return a result. A lane `quick` left out is listed in the plan as `skipped (quick)`, not as incomplete.
 
+**Mark every finding with its severity dot:** 🔴 Blocker, 🟡 Warning, 🔵 Nit, on its heading or list line and on its section heading, so the user can count the reds and yellows at a glance. A gate failure listed as a Blocker gets 🔴 too. Any recap of the findings in chat keeps the same dots. The auto-mode block below stays plain text.
+
 Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' reports for Nits the verifier never saw). **Each lane that ran gets its counts on its plan line,** from the verifier's **By lane** line: `quality: ran (new endpoint logic): 4 raised, 2 kept`, or `3 raised, unverified (Nits only)` when the verifier was skipped. A finding two lanes raised counts once, under the lane that kept it. These counts are what `/retro` measures each lane by.
 
 ```
 # Review: <range> (<n> files)
 
 **Verdict:** <verdict>
+🔴 <n> Blockers · 🟡 <n> Warnings · 🔵 <n> Nits
 <the plan from step 2, with the counts>
 
-## Blockers
-### <plain-language title>
+## 🔴 Blockers
+### 🔴 <plain-language title>
 `path:line` - <problem, in user terms>. **Fix:** <the change to make>. (<lane>)
 
-## Warnings
+## 🟡 Warnings
+### 🟡 <plain-language title>
 ...
 
-## Nits
-- `path:line` - <one line>
+## 🔵 Nits
+- 🔵 `path:line` - <one line>
 
 ## Gate
 <lint / typecheck / test: pass, fail with the first lines of output, or did not run>
@@ -211,11 +216,11 @@ Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' r
 
 **Report destination.** When the profile names one and `git check-ignore -q <folder>/x` succeeds, copy `$D/report.md` to `<folder>/<yyyy-mm-dd>-<branch, slashes as dashes>.md` (add `-pr-<n>` for a PR target, and `-<HHMM>` when that file exists), and run its record command, if it names one, as the profile writes it, with the verdict, counts, and saved path filled in and under the conditions it gives. A gate failure counts as one Blocker. If either fails, say so in one line and carry on. A folder git doesn't ignore is a profile defect: keep the report in `$D` and say so.
 
-**Update check.** Unless the arguments contain `auto`, run the check in orc's `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
+**Update check.** Unless the arguments contain `auto`, run the check in `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
 
 Return the report in chat (drop empty sections) and end with a bold action line, for example `**Fix the 2 Warnings, then re-run the review.**` or `**Ready to merge.**` Give the full report's path (the saved copy when there is one) just above it.
 
-**Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so `/orc-loop` can read it:
+**Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so a calling skill or script can read it:
 
 ```
 [AUTO-MODE REVIEW - orchestrator input, NOT a stopping point]
@@ -227,7 +232,7 @@ NOT READY or READY AFTER SMALL FIXES: fix the listed items, then re-run the revi
 
 ## Setup
 
-`/orc-review setup` drafts, refreshes, or converts the project profile at `.claude/skills/deep-review/SKILL.md` from `<base>/references/profile-template.md`. The model it builds: the pack's generic lanes are the base, and repo lanes add depth only where that base is thin for this project. It writes review files only (the profile, its `references/`, repo lanes in `.claude/agents/`, and agent-memory notes about them) and never commits; step 9 hands the result to the user. Make a scratch folder `$D` as step 1 of the review does.
+`/orc-review setup` drafts, refreshes, or converts the project profile at `.claude/skills/deep-review/SKILL.md` from `<base>/references/profile-template.md`. The model it builds: the pack's generic lanes are the base, and repo lanes add depth only where that base is thin for this project. It writes review files only (the profile, its `references/`, repo lanes in `.claude/agents/`, and agent-memory notes about them) and never commits; step 10 hands the result to the user. Make a scratch folder `$D` as step 1 of the review does.
 
 1. **Check the target.**
    - **No file:** draft a new profile.
@@ -238,9 +243,13 @@ NOT READY or READY AFTER SMALL FIXES: fix the listed items, then re-run the revi
 4. **Decide the lanes.** When converting a suite, or when the user wants specialists, build a table of each old lane (or each surface the user cares about) and its new owner: a generic lane, a repo lane, or nothing. Judge each generic lane by reading its agent file, not its name: quote the section that would own the surface and give both sizes, because accessibility or performance can be one bullet in a generic lane and two hundred lines in the old one. When saved reports exist, count the verified Blockers and Warnings each old lane found. A surface the generic bench covers in one bullet or less is a repo lane by default. Every lane marked "nothing" needs the user's explicit confirmation, and a surface the user cares about with no owner keeps setup from finishing. Give each topic one owner: when a repo lane owns it, don't also hand its rules to a generic lane in **Extra focus**, because both would report the same defect. Write each repo lane's **Owns**, **Runs when**, and **Standards** into **Repo lanes**, and attach it to risk-map rows, with a label in parentheses when it covers only part of a surface.
 5. **Architecture, non-issues, and overrides.** Write the layers and boundaries in a few lines. Take intentional non-issues from the repo's docs and from the `verifier`'s notes in `.claude/agent-memory/verifier/` when they exist. Never invent one. Then check every playbook and standard the profile hands to a lane against the installed major version, the repo's tooling, and `CLAUDE.md`, and write each conflict into **Architecture** as what the repo does instead, because **Architecture** reaches every lane and **Intentional non-issues** reaches only the `verifier`. Add a non-issue as well only when a lane would still flag the pattern.
 6. **Reference files.** When a lane's project knowledge outgrows a few lines (most often `security-reviewer`'s trust model: the attacker model, the trust boundary, the canonical controls, the sanctioned exposures), put it in `.claude/skills/deep-review/references/<lane>.md` and name it on that lane's Extra focus `Reference:` line.
-7. **Write and verify.** Fill the template, set `based-on: orc-review@<this skill's pack version>` and both `template` and `template-reviewed` to the current review template number, and write the file. Then check every fact in the profile, its references, the repo lanes, and agent-memory notes about the review, whether carried over or written new, prose claims as well as paths ("there is no markdown renderer", "about 50 files use raw colours"): each glob matches `git ls-files`, except a glob for a framework file convention the repo hasn't used yet (route files, hooks, middleware), which stays marked `(none yet)`; each symbol, export, env var, script, and count is found with `git grep`; no deprecated API of the installed framework major appears as current; each known pre-existing gap still exists in the code and names a path or symbol a later refresh can grep for; no known gap is also an intentional non-issue or an accepted decision; and each fact about a sibling repo is checked with `git -C <sibling> grep <term> origin/<integration>`, or marked unverified when the sibling isn't checked out. For a cross-repo contract table, list the sibling's callers from its code rather than only re-checking the rows already written, so a missing endpoint shows. Fix or drop what fails. Keep the list of each known gap you compared with a non-issue or decision on the same code, and how you resolved it, for step 9.
+7. **Write and verify.** Fill the template, set `based-on: orc-review@<this skill's pack version>` and both `template` and `template-reviewed` to the current review template number, and write the file. Then check every fact in the profile, its references, the repo lanes, and agent-memory notes about the review, whether carried over or written new, prose claims as well as paths ("there is no markdown renderer", "about 50 files use raw colours"): each glob matches `git ls-files`, except a glob for a framework file convention the repo hasn't used yet (route files, hooks, middleware), which stays marked `(none yet)`; each symbol, export, env var, script, and count is found with `git grep`; no deprecated API of the installed framework major appears as current; each known pre-existing gap still exists in the code and names a path or symbol a later refresh can grep for; no known gap is also an intentional non-issue or an accepted decision; and each fact about a sibling repo is checked with `git -C <sibling> grep <term> origin/<integration>`, or marked unverified when the sibling isn't checked out. For a cross-repo contract table, list the sibling's callers from its code rather than only re-checking the rows already written, so a missing endpoint shows. Fix or drop what fails. Keep the list of each known gap you compared with a non-issue or decision on the same code, and how you resolved it, for step 10.
 8. **The other files.** When step 4 keeps, adds, or drops repo lanes, write a plan for every file beyond the profile: each repo lane to write or rewrite from `<base>/references/lane-template.md` (rewrite a kept lane, which also fixes its stale facts, rather than prepending an adapter), each old file to delete, and each agent-memory note that describes a removed file. Carry it out when the user approves, or at once when they already approved that plan in this session. Then check: every lane the profile names exists in `.claude/agents/` and contains none of an old brief's markers (`Report file:`, `App profile`, `Change map`, `Lanes running`, `done <`), limits its Write tool to the brief's `Report` file (and, with `memory: project`, Write and Edit to its memory folder) rather than claiming it never writes, and replies with one line, never its findings, unless the profile's **Declined template changes** lists 4.1; and no file references a removed lane or path (grep the profile, its references, the repo lanes, `CLAUDE.md`, `AGENTS.md`, `docs/`, and `.claude/agent-memory/`). A failure means setup isn't finished.
-9. **Report.** Give the profile's path, the risk map and the lane table in brief, every file written or deleted, for a refresh the template items applied, declined, and skipped by id and the surface changes, the gap and non-issue pairs from step 7, and what you couldn't determine. **Estimate the cost:** run step 2's plan on the last five merged commits and give the lane count for each; when a typical change runs more than eight lanes, suggest a **Default mode** such as `quick below 5 files`, and leave the choice to the user. Name any note in the user's own memory that still describes the old reviewer, for them to update. Tell them to review the files, edit what's wrong, and commit them. `/deep-review` uses them from the next session. When setup created, renamed, deleted, or edited any agent file, frontmatter included, say a new session is required before the first `/deep-review`: Claude Code loads agent definitions at session start, so a review in this session would run the old lanes and wouldn't test what setup wrote.
+9. **Blind audit.** Once step 8 passes, dispatch the `setup-auditor` once, read-only, with only the repo root, the profile path, `<base>/references/`, and `Report: $D/setup-audit.md`. Give it none of steps 1 to 8: not your notes, the lane table, the lists from step 7, or the conversation. It reads the finished files cold, which is how it catches what you can no longer see. A refresh that changed nothing skips this step. Sort what it returns by kind, and apply the settled kinds yourself:
+   - **Facts** (a path, symbol, command, count, template shape, a script missing from **Never run**, a claim a repo doc contradicts, a secret): the repo settles these. Re-check each against the repo with the command it quotes, fix the ones that hold, and re-run step 7's check on what you changed. When your re-check contradicts the auditor, keep the file as it is and say so in one line.
+   - **Suggestions** (a risk-map row too broad or narrow, a surface with no owner, an **Extra focus** bullet that can't be checked from a diff): never apply these. You wrote the file with this project's context and the user's answers, and the auditor has neither, so neither of you is the authority. List each one in step 10 with the auditor's evidence and, where you disagree, why, and let the user decide.
+   - **Could not check:** pass it on. Run the audit once, and don't dispatch it again after your fixes.
+10. **Report.** Give the profile's path, the risk map and the lane table in brief, every file written or deleted, for a refresh the template items applied, declined, and skipped by id and the surface changes, the gap and non-issue pairs from step 7, what the audit fixed, every suggestion it left for the user, and what you couldn't determine. When the audit found nothing, say "The audit found nothing." in one line. **Estimate the cost:** run step 2's plan on the last five merged commits and give the lane count for each; when a typical change runs more than eight lanes, suggest a **Default mode** such as `quick below 5 files`, and leave the choice to the user. Name any note in the user's own memory that still describes the old reviewer, for them to update. Tell them to review the files, edit what's wrong, and commit them. `/deep-review` uses them from the next session. When setup created, renamed, deleted, or edited any agent file, frontmatter included, say a new session is required before the first `/deep-review`: Claude Code loads agent definitions at session start, so a review in this session would run the old lanes and wouldn't test what setup wrote.
 
 ## Setup skip
 

@@ -1,6 +1,8 @@
 # Model tiers: the evidence
 
-Read this when you re-tier the pack's agents, for example when a new Opus, Sonnet, or Fable release lands. The everyday rules live in `CLAUDE.md` under **Model assignments are intentional**, and orc's runtime rules live in `skills/orc/SKILL.md` under **Model selection** and **Efficiency mode**.
+Read this when you re-tier the pack's agents, for example when a new Opus, Sonnet, or Fable release lands. The everyday rules live in `CLAUDE.md` under **Model assignments are intentional**.
+
+**Since 2.0.0, `/orc` builds in the main session on the session's own model and dispatches no builders.** The evidence for the reviewer, verifier, and runner tiers below still applies. The parts about builders, efficiency mode, the round-three Fable 5.1 move, effort by role, and review lanes on small standard tasks describe the pre-2.0.0 workflow and are kept as history: they explain decisions a future heavier path might revisit.
 
 ## Why Sonnet 5.5 holds only one default lane
 

@@ -7,7 +7,7 @@
     {
       "name": "orc-pack",
       "source": "./",
-      "description": "Autonomous orchestrator skill (/orc) plus its subagent team: code reviewers, a finding verifier, an issue scout, and tooling runners."
+      "description": "Works GitHub issues end to end in your session (/orc, also /do), then reviews the work with /orc-review's bench of reviewer subagents and a finding verifier, plus ship checks, retros, and issue writing."
     }
   ]
 }

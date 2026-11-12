@@ -11,8 +11,8 @@ name: Pack integrity
 #   3. Every skill and agent has parseable frontmatter with `name` and
 #      `description` (a malformed block makes Claude Code skip the file in
 #      silence), and each agent's `name` matches its filename.
-#   4. Every standards file and playbook the orc skill names exists under
-#      skills/orc/references/ (orc passes these paths to its agents).
+#   4. Every standards file and playbook orc-review names exists under
+#      skills/orc/references/ (orc-review passes these paths to its lanes).
 #
 # Failures are hard: this is cheap to fix locally and expensive to ship.
 
@@ -82,10 +82,10 @@ jobs:
 
           # 2. Every agent a skill names resolves to a file. Agent-looking
           # backticked tokens end in a known role suffix or are a known role word.
-          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/orc-loop/SKILL.md skills/orc-loop-iter/SKILL.md skills/update-orc/SKILL.md skills/shipcheck/SKILL.md skills/orc-review/SKILL.md skills/orc-rush/SKILL.md skills/orc-rush-iter/SKILL.md skills/retro/SKILL.md | tr -d '`' | sort -u)
+          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/do/SKILL.md skills/update-orc/SKILL.md skills/shipcheck/SKILL.md skills/orc-review/SKILL.md skills/retro/SKILL.md skills/tiedown/SKILL.md | tr -d '`' | sort -u)
           for name in $refs; do
             case "$name" in
-              *-reviewer | *-finder | *-vetter | *-writer | *-updater | *-implementer | implementer | verifier | fallow | lint | typecheck | test | impact | usages) ;;
+              *-reviewer | *-auditor | *-vetter | *-updater | verifier | fallow | lint | typecheck | test | usages) ;;
               *) continue ;;
             esac
             if [ ! -f "agents/$name.md" ]; then
@@ -94,13 +94,14 @@ jobs:
             fi
           done
 
-          # 4. Every reference file the orc skill names exists. Orc hands these
-          # paths to its agents; a missing one silently drops a standard.
+          # 4. Every reference file orc-review names exists, and orc's update check.
+          # orc-review hands these paths to its lanes; a missing one silently drops
+          # a standard.
           REF_ROOT=skills/orc/references
-          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`|`(design-brief|builder-contract|work-contract|your-call|update-check)\.md`' skills/orc/SKILL.md | tr -d '`' | sort -u)
-          for ref in $prefs; do
+          prefs=$(grep -hoE '`(standards|frameworks|platforms)/[a-z0-9-]+\.md`' skills/orc-review/SKILL.md | tr -d '`' | sort -u)
+          for ref in $prefs update-check.md; do
             if [ ! -f "$REF_ROOT/$ref" ]; then
-              echo "::error file=skills/orc/SKILL.md::names reference '$ref' but $REF_ROOT/$ref does not exist"
+              echo "::error file=skills/orc-review/SKILL.md::names reference '$ref' but $REF_ROOT/$ref does not exist"
               fail=1
             fi
           done

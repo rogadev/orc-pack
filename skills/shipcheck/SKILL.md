@@ -1,6 +1,6 @@
 ---
 name: shipcheck
-pack: orc-pack@1.22.0
+pack: orc-pack@2.0.0
 description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md (Playwright by default, Claude in Chrome as the fallback) at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
 ---
 
@@ -25,7 +25,7 @@ State your verification limits in one line before you start: what you can reach 
 3. On a red run, diagnose before you touch anything:
    - `gh run view <id> --log-failed` for the failing job and step.
    - Read the workflow file to get the exact command the step ran, and run that command locally. A local reproduction is the evidence; a log alone is a hypothesis.
-   - **Reproduces locally** → fix it. Dispatch the builder that fits the failure (`implementer` for tooling, config, and lint; `api-implementer` or `ui-implementer` when the failure is in that code), passing it the failing command, the log excerpt, and the builder contract at `.claude/skills/orc/references/builder-contract.md` (or the plugin copy under `skills/orc/references/`). Re-run the command locally until it passes, commit with a subject that names the fix, and push.
+   - **Reproduces locally** → fix it in this session, at its root cause: never weaken, skip, or delete a test to get green. Re-run the command locally until it passes, commit with a subject that names the fix, and push.
    - **Passes locally and the log points at infrastructure** (runner outage, network timeout, rate limit) → `gh run rerun <id> --failed`.
    - **A missing secret or permission** → that is step 2's failure. Stop and report it; code can't fix it.
 4. Each fix push or rerun is one attempt. **At most 2.** After the second red run, stop `NOT SHIPPED` with the failing job, the log excerpt, what you tried, and your best hypothesis.
@@ -102,7 +102,7 @@ A regression is a failed **Expect** line or an always-a-finding defect from step
 
 For each confirmed regression, pick one:
 
-- **Fix branch**, when the cause is in the `BASELINE..SHA` diff (`git diff BASELINE..SHA`) and the repo has tests that can express it. Branch `fix/<slug>` from `SHA`. Dispatch the builder that owns the code (`ui-implementer` for visual and interaction, `api-implementer` for server, `data-implementer` for data, `implementer` otherwise) with the builder contract, the screenshot paths, the failing step, and this instruction: write a test that reproduces the regression and fails on `SHA` first, then fix it. Run the repo's ready check, commit with a subject naming the fix, and push the branch. Never merge it and never deploy it.
+- **Fix branch**, when the cause is in the `BASELINE..SHA` diff (`git diff BASELINE..SHA`) and the repo has tests that can express it. Branch `fix/<slug>` from `SHA`. In this session, using the screenshot paths and the failing step, write a test that reproduces the regression and fails on `SHA` first, then fix it. Run the repo's ready check, commit with a subject naming the fix, and push the branch. Never merge it and never deploy it.
 - **Issue**, when the cause is unclear, outside the diff, or not testable here. Use the `newissue` skill if it is installed, else `gh issue create --body-file`. The body carries the flow, step, width, and theme; the expected and actual result; the screenshot paths; the deployed URL and `SHA`; and a root-cause hypothesis that names the suspect file and the commit in `BASELINE..SHA`, marked as a hypothesis. Search open and closed issues for a duplicate first.
 
 **Attaching screenshots.** `gh` can't upload images. Collect every image you want attached and ask the user once, at the end, before attaching them, because it posts a comment from their account. On a yes: open the issue in Chrome, reproduce the state in another tab, take a fresh screenshot (the IDs expire in minutes), and `upload_image` it into the comment box. Until then, the issue lists the saved paths.

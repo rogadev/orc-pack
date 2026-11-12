@@ -1,6 +1,6 @@
 # Data standard
 
-Schema changes, migrations, backfills, indexes, and the queries that run against them. The `data-implementer` writes to this standard, as does any other builder whose task touches schema, migrations, or queries; the `design-reviewer` checks data briefs against it, and the `architecture-reviewer` checks diffs that touch schema or migrations.
+Schema changes, migrations, backfills, indexes, and the queries that run against them. The `architecture-reviewer` checks every diff that touches schema, migrations, or queries against this standard.
 
 ## Precedence
 
@@ -9,7 +9,7 @@ When two sources disagree, the higher one wins:
 1. The repo's own docs (`CLAUDE.md`, `AGENTS.md`, contributing guides, ADRs, runbooks).
 2. The conventions of the repo's migration tool and data layer: file naming, generation workflow, how it expresses up and down steps.
 3. The repo's established patterns in existing migrations, schema files, and queries.
-4. The framework and platform playbooks orc loaded for this repo.
+4. The framework and platform playbooks the review loaded for this repo.
 5. This file.
 
 Never reshape a repo's data layer to match this file; raise the disagreement in the report instead. Engine behavior (locking, online operations, transactional DDL) differs by engine and version, so every rule here that depends on it means "check your engine's docs for the installed version", not one engine's rules.

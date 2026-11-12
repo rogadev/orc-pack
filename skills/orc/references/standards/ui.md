@@ -1,6 +1,6 @@
 # UI and UX standard
 
-What a well-made interface needs: it looks right, works well, and makes sense. The `ui-implementer` writes to this standard, as does any other builder whose task touches UI; the `design-reviewer` checks UI design briefs against it, and the `ui-reviewer` checks the built result, rendered where possible.
+What a well-made interface needs: it looks right, works well, and makes sense. The `ui-reviewer` checks every UI change against this standard, rendered where possible.
 
 ## Precedence
 
