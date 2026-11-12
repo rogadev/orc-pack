@@ -45,15 +45,15 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 ## Model assignments are intentional
 
-`/orc` runs on the session's own model and dispatches no subagents of its own (it may send a wide search to Claude Code's built-in Explore agent, and runs the `fallow` agent once before its report when the run removed or moved code). Every other agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter:
+`/orc` runs on the session's own model and dispatches no subagents of its own (it may send a wide search to Claude Code's built-in Explore agent, pinned to Haiku in the dispatch because Explore otherwise runs on the session's model, and runs the `fallow` agent once before its report when the run removed or moved code). Every other agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter:
 
-- **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `usages`, `fallow`. Haiku doesn't support `effort`, so these carry no `effort:` line. The alias follows new Haiku releases.
+- **Haiku** (`haiku` alias) — command runners that relay output and make no judgement calls: `lint`, `typecheck`, `test`, `usages`, `fallow`. They carry no `effort:` line: Haiku 4.5 didn't support it, and Haiku 5.5's default (`medium`) is enough for relaying output. The alias follows new Haiku releases.
 - **Sonnet 5.5** (`claude-sonnet-5-5`, `effort: high`) — `test-coverage-reviewer` only. Whether logic is tested is a mechanical, recall-heavy question, and the Opus 5.5 verifier filters its false positives.
 - **Opus 5.5** (`claude-opus-5-5`) — every other agent, with `effort` as the cost control:
   - `high` — `security-reviewer`, `skill-vetter`, `dependency-vetter`, `orc-updater`: security work, plus jobs that run too rarely for effort to matter to cost.
   - `medium` (Opus 5.5's default) — `verifier`, `setup-auditor`, `quality-reviewer`, `architecture-reviewer`, `ui-reviewer`: the review judgement that decides code quality and design, which is the pack's top priority.
   - `low` — `comment-reviewer`: a narrow rubric.
-- **Fable 5.1** — not used. Opus 5.5 matches or beats it on coding and review for well under half the cost.
+- **Fable 5.2** — not used. At $8 and $40 per million tokens it costs twice as much as Opus 5.5, and Anthropic's guide reserves it for work Opus 5.5 at `high` still gets wrong. No lane here needs effort past `high`.
 
 Security review and verification stay on Opus 5.5 regardless of cost. Sonnet is pinned to the explicit id `claude-sonnet-5-5` so that moving to a later Sonnet is a decision, not a silent change; Haiku stays on the `haiku` alias because its runners make no judgement calls. Revisit the tiers when the next Opus, Sonnet, or Fable ships, and read `docs/model-tiers.md` first: it holds the evidence, including the pre-2.0.0 builder tiers kept as history. To check a review tier, compare each lane's raised and kept counts in `/orc-review`'s plan lines and saved reports, and `/retro`'s per-issue figures.
 

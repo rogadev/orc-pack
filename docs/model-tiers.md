@@ -62,6 +62,30 @@ Sources:
 - [Anthropic: Choosing a Claude model and effort level in Claude Code](https://claude.com/blog/claude-model-and-effort-level-in-claude-code)
 - [Haiku 5.5 benchmarks (third-party summary of Anthropic's launch table)](https://apidog.com/blog/claude-haiku-5-5-benchmarks/)
 
+## What Anthropic's November 2026 model guide changes
+
+Researched on 2026-11-12, from Anthropic's "Which Claude model should you build with?" (2026-11-09). The guide confirms most of the tiers: start on Opus 5.5 at `medium`, put Haiku on side tasks where "a mistake is cheap to spot", keep "code edits and judgment calls on the main model", raise effort before changing models, and skip orchestration for "one chain of dependent steps", which is how `/orc` builds. It changes four things:
+
+- **Explore now runs on the session's model.** The built-in Explore subagent used to run on Haiku. On an Opus session, every wide search `/orc` sends to it was billed at Opus prices. Since 2.0.1, `/orc` passes `model: "haiku"` when it dispatches Explore. The pack doesn't ship an agent named `Explore`, which the guide suggests, because an installed one would replace Explore for every other use in the target repo.
+- **Fable 5.2 replaces Fable 5.1.** It costs $8 and $40 per million input and output tokens (Fable 5.1 was $10 and $50), twice Opus 5.5's $4 and $20. On FrontierCode 2.0, Fable 5.2 at `high` (45.3%) roughly tied Opus 5.5 at `max` (45.5%) for about half the cost. That makes Fable 5.2 the next step if a lane ever needs more than Opus 5.5 at `high`, instead of Opus 5.5 at `max`. No lane needs it today, so nothing moves.
+- **Haiku 5.5 takes an `effort` setting**, with `medium` as its default. The runners keep no `effort:` line, because relaying output needs no more than the default. Haiku 5.5 also has prompt-length pricing: $0.10 and $0.50 up to 100K tokens, $0.50 and $2.50 above that. The runners' contexts are small, so they stay in the cheap band.
+- **Flagged security requests fall back to Opus 4.8.** If Anthropic's classifiers flag a request as cybersecurity work, it runs on Opus 4.8 instead of the pinned model. That can affect `security-reviewer`, `skill-vetter`, and `dependency-vetter`. The pack can't prevent it. If one of those reports reads weaker than usual, check the transcript's model before re-tiering anything.
+
+Sources:
+
+- [Anthropic: Which Claude model should you build with?](https://claude.dev/blog/which-claude-model-should-you-build-with/)
+
+## Trial: review lanes on Sonnet 5.5
+
+Opened on 2026-11-12. The guide puts "repeated agent tasks (investigation, review, drafting)" on Sonnet 5.5 at `medium`, at half Opus 5.5's per-token price. The first section's evidence points the other way: Opus 5.5 at `low` outscores Sonnet 5.5 at `medium` for about the same cost. That evidence is a general index, not a review measure, and the guide's last advice is to measure on your own work. This trial does that before any lane moves.
+
+**How to run it.** In a target repo, run `/orc-review` twice on the same branch in separate sessions: once as installed, and once with `quality-reviewer` and `architecture-reviewer` set to `model: claude-sonnet-5-5` and `effort: medium` in that repo's `.claude/agents/`. Restore both files afterward. The verifier stays on Opus 5.5 at `medium` in both runs. Record each lane's raised and kept counts from the plan lines or saved reports, and the review's cost from `/retro`. Note any finding that only one run kept, and whether it was real.
+
+| Branch and repo | Lane | Opus 5.5 raised / kept | Sonnet 5.5 raised / kept | Kept only by one run | Review cost (Opus / Sonnet) |
+| --------------- | ---- | ---------------------- | ------------------------ | -------------------- | --------------------------- |
+
+**Decision rule.** Decide at five branches. Move a lane to Sonnet 5.5 only if it kept every real Warning and Blocker the Opus 5.5 run kept, across all five, and the review cost less. A lane that misses one real Warning stays on Opus 5.5, because code quality outranks cost in this pack. `security-reviewer` and `verifier` aren't in the trial.
+
 ## Review lanes on small standard tasks
 
 Started on 2026-10-20 for issue #35: does a standard task with a small diff need every review lane? Orc sends a standard task through each lane whose surface the diff touches, with no size scaling, so a 50-line change and a 400-line change get the same panel. This section collects the evidence before any rule changes. The evidence is lanes and verified findings only, with no token counts: the review share quoted in #35 came from orc's former token ledger, which overstated reviewer cost.

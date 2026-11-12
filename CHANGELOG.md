@@ -18,6 +18,22 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.0.1] - 2026-11-12
+
+**Summary.** `/orc` now runs its wide code searches on Haiku. Claude Code's built-in Explore agent recently started running on the session's model, so on an Opus session every search `/orc` handed to Explore was billed at Opus prices. `/orc` now pins Explore to Haiku when it dispatches it. Nothing else about how `/orc` works changes. For the 2.0.0 rebuild of `/orc`, read the [2.0.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.0.0).
+
+**Changed areas.**
+
+- **`/orc` searches** — `skills/orc/SKILL.md`: the opening paragraph tells `/orc` to dispatch Explore with `model: "haiku"`. Copy the file over the installed one.
+
+**Update steps.** None beyond copying the changed file. If the target repo defines its own `Explore` agent in `.claude/agents/`, leave it alone: the dispatch's `model` overrides it only for `/orc`'s searches.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/orc/SKILL.md`.
+
+---
+
 ## [2.0.0] - 2026-11-12
 
 **Summary.** `/orc` is rebuilt as a single-session workflow, and one skill now does what `/orc`, `/orc-loop`, and `/orc-rush` did. It works one issue, a list, a range, the next N from the board, or a plain-text request, one issue at a time in your session: plan, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue, then push and close the issues when you say so. It dispatches no builder or reviewer agents. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what that review found. `/do` is the same skill under another name.

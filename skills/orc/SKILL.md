@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # Orc: work GitHub issues
 
-Work the issues in `$ARGUMENTS` on the integration branch, in this session, one at a time. Build in the main session: no builder agents, no reviewer agents, and no review skills unless the owner asks. Send wide code searches to Explore so file dumps stay out of context. Track each issue as a native Task (`TaskCreate`), marking it `in_progress` and `completed` as you go, and mirror the run on the progress bar (see **Progress bar**). `/do` runs this same skill; everything here applies to it unchanged.
+Work the issues in `$ARGUMENTS` on the integration branch, in this session, one at a time. Build in the main session: no builder agents, no reviewer agents, and no review skills unless the owner asks. Send wide code searches to Explore with `model: "haiku"`, so file dumps stay out of context and searches don't run on the session's model. Track each issue as a native Task (`TaskCreate`), marking it `in_progress` and `completed` as you go, and mirror the run on the progress bar (see **Progress bar**). `/do` runs this same skill; everything here applies to it unchanged.
 
 **Not on Opus 5.** If you are Opus 5 (`claude-opus-5`, the 5.0 release), stop before touching the repo and say so: in our testing it hallucinates, drifts off task, and reports problems that aren't there. Tell the owner to run `/model claude-opus-5-5` and start again, and that they own this skill and can remove this check.
 
