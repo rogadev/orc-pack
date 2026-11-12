@@ -48,7 +48,7 @@ node "<base>/references/usage.mjs" "$(git rev-parse --show-toplevel)" "$D" --sin
 **Run artifacts,** for the sessions in scope:
 
 - **Commits** in the window: `git log --since <date> --format='%h %ad %s%n%b'`. Each issue's commit names the change and carries `Closes #<n>` or `Refs #<n>`.
-- **Saved `/orc-review` reports:** when `.claude/skills/deep-review/SKILL.md` names a **Report destination** folder, the reports in it dated within the window. Each report gives its verdict, its Blockers, Warnings, and Nits, and each lane's raised and kept counts. Otherwise the review sessions' own reports are in their timelines' sessions; the analysis agent reads them from `usage.json`'s transcript paths, final report only.
+- **Saved `/orc-review` reports:** when `.claude/skills/deep-review/SKILL.md` names a **Report destination** folder, the reports in it dated within the window. Each report gives its verdict, its Blockers, Warnings, and Nits, and each lane's raised and kept counts. Otherwise each review session's report is in its transcript; the analysis agent finds the path in `usage.json` and reads only the final report.
 - **Issues filed or reopened** in the window: `gh issue list --state all --search "created:>=<date>"`, for bugs that point back at a run's work.
 
 ## 2. Analyze
