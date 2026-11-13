@@ -18,6 +18,26 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.0.1] - 2026-11-13
+
+**Summary.** Fixes a bug where a project's code review worked only for the person who set it up ([#60](https://github.com/rogadev/orc-pack/issues/60)). `/orc-review setup` used to write only the project's profile and repo lanes, while the review workflow, the standards, and the reviewer agents those files hand off to could stay in one person's global or plugin install. Setup now copies that review suite into the project's own `.claude/`, so it is committed with the profile, and a profile built from the new review template (5) stops with a list of what's missing rather than running a partial review. `/update-orc` updates the project's copy when one exists. This patch also makes `/orc` run its wide code searches on Haiku: Claude Code's built-in Explore agent started running on the session's model, so `/orc` now pins Explore to Haiku when it dispatches it. For the 2.0.0 rebuild of `/orc`, read the [2.0.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.0.0).
+
+**Changed areas.**
+
+- **Setup installs the review suite** — `skills/orc-review/SKILL.md`, the new **Pack files first** paragraph in **Setup** and step 10: before writing anything, setup checks the target repo's `.claude/` (never `~/.claude/` or a plugin) for `skills/orc-review/` with its `references/`, every file of `skills/orc/references/`, the agents `quality-reviewer`, `security-reviewer`, `architecture-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `comment-reviewer`, `fallow`, `usages`, `verifier`, `lint`, `typecheck`, `test`, and `setup-auditor`, plus `skills/update-orc/`, `orc-updater`, and `dependency-vetter`. It copies the missing ones from the kit at its own version, writes `.claude/orc-pack.provenance.md` with `Scope: project` and `Subset: review`, and lists every copied file in its report for the user to commit. Copy the file over the installed one.
+- **Profile guard (review template 5)** — `skills/orc-review/references/profile-template.md`: the opening hand-off paragraph first checks that the repo's `.claude/` holds `orc-review`, orc's standards, and every generic lane, and stops when any is missing. `skills/orc-review/references/template-changes.md` records it as item 5.1. Copy both files; existing profiles are offered the change by `/orc-review setup`.
+- **Updating a project's copy** — `skills/update-orc/SKILL.md`, `agents/orc-updater.md`, and `UPDATE.md`: a project install is found from `skills/orc/SKILL.md` or `skills/orc-review/SKILL.md`, and is updated in preference to a global install, with the report naming which copy it updated. A `Subset: review` install converges on the review suite only, and its `skills/orc/references/` count as pack-owned. Copy the files over the installed ones.
+- **Install docs** — `INSTALL.md` Phase 1 and `README.md`: a repo with a committed review profile needs the review suite at project scope even when the rest of the pack is global. Kit docs only; nothing to copy.
+- **`/orc` searches** — `skills/orc/SKILL.md`: the opening paragraph tells `/orc` to dispatch Explore with `model: "haiku"`. Copy the file over the installed one. If the target repo defines its own `Explore` agent in `.claude/agents/`, leave it alone: the dispatch's `model` overrides it only for `/orc`'s searches.
+
+**Update steps.** Copy the changed files. Then, in a repo that has a committed `.claude/skills/deep-review/SKILL.md` profile, run `/orc-review setup` in a new session: it installs any missing review-suite files at project scope and offers template item 5.1. Commit the profile and the installed pack files together. A global install stays as it is; it keeps working for projects with no committed profile.
+
+**Breaking changes.** A profile refreshed to review template 5 refuses to run where the review suite isn't in the repo's own `.claude/`, including on a machine with only a global or plugin install. Run `/orc-review setup` once in that repo and commit what it installs. Profiles not yet refreshed behave as before.
+
+**Files to read.** `skills/orc-review/SKILL.md` (**Setup**), `skills/orc-review/references/profile-template.md`, `skills/orc-review/references/template-changes.md`, `skills/update-orc/SKILL.md`, `agents/orc-updater.md`, `UPDATE.md`, and `skills/orc/SKILL.md`.
+
+---
+
 ## [2.0.0] - 2026-11-12
 
 **Summary.** `/orc` is rebuilt as a single-session workflow, and one skill now does what `/orc`, `/orc-loop`, and `/orc-rush` did. It works one issue, a list, a range, the next N from the board, or a plain-text request, one issue at a time in your session: plan, pin the behavior in tests, build, screenshot UI changes, update the docs, and commit each issue, then push and close the issues when you say so. It dispatches no builder or reviewer agents. You review afterward with `/orc-review` in a fresh session, and `/orc warnings and nits` fixes what that review found. `/do` is the same skill under another name.

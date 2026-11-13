@@ -12,9 +12,10 @@ Work the phases in order.
 
 ## Phase 1 — Locate the current install and the new kit
 
-1. Find the installed pack: `.claude/skills/*/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers, plus the `.claude/skills/orc/references/` directory beside the skill. Read the recorded version from `.claude/orc-pack.provenance.md`.
-2. Have the new kit checked out somewhere outside the repo. `/update-orc` fetches it into the session scratchpad at the target tag; by hand, clone it there yourself or use the checkout the user names.
-3. Compare versions. If the kit is not newer, there's nothing to do — say so and stop.
+1. Find the installed pack: `.claude/skills/*/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers, plus the `.claude/skills/orc/references/` directory beside the skill. Read the recorded version from `.claude/orc-pack.provenance.md`. When the project has its own install, update it even if `~/.claude/` holds another: the project's copy is what the repo's collaborators run.
+2. **A review-suite install** (provenance `Subset: review`, written by `/orc-review setup`) holds only the review suite that `skills/orc-review/SKILL.md` lists under **Pack files first**. In Phase 2, the kit files are only that suite in the new kit: refresh them, add any the new kit adds to the list, and don't add the rest of the pack.
+3. Have the new kit checked out somewhere outside the repo. `/update-orc` fetches it into the session scratchpad at the target tag; by hand, clone it there yourself or use the checkout the user names.
+4. Compare versions. If the kit is not newer, there's nothing to do — say so and stop.
 
 ---
 
@@ -24,7 +25,7 @@ For every kit file (the mapping table in `INSTALL.md` Phase 2 is authoritative):
 
 - **File has a `pack:` marker** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits the repo made since (its git history for that file shows them).
 - **File has no `pack:` marker** → the repo's own artifact. Do not clobber it; route through `INSTALL.md` Phase 3 conflict handling. The one exception is the reference directory:
-- **Reference files are pack-owned.** Files under the `references/` directory of a pack skill (`.claude/skills/orc/`, `orc-review/`, `retro/`, and `shipcheck/`; an install older than 2.0.0 may also have `orc-rush/`) carry no `pack:` marker, but they belong to the pack whenever that skill's `SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
+- **Reference files are pack-owned.** Files under the `references/` directory of a pack skill (`.claude/skills/orc/`, `orc-review/`, `retro/`, and `shipcheck/`; an install older than 2.0.0 may also have `orc-rush/`) carry no `pack:` marker, but they belong to the pack whenever that skill's `SKILL.md` carries one, or, for `skills/orc/references/`, whenever provenance says `Subset: review`: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
 - **Re-applied edits must still fit the new file.** 2.0.0 rewrote `skills/orc/SKILL.md` from scratch, so an edit made to a 1.x orc skill (to its builder dispatch, review panel, work contract, or efficiency mode) has nothing to apply to. Don't force it in: list it in the report as dropped, and say what in the new skill covers the same need, if anything. If a local edit conflicts with the kit's format, keep the kit's format and note the conflict in the report.
 - **A new agent or skill in the kit that isn't in the repo yet** → copy it in, same as a fresh install. Coming from 1.x, that is `skills/do/`.
 - **A same-name `do` skill.** When `.claude/skills/do/SKILL.md` already exists without a `pack:` marker, it is the repo's own `/do`. Never overwrite it: route it through `INSTALL.md` Phase 3 conflict handling, and skip the kit's `do` by default, because `/orc` works without it. Say in the report which one the install kept.

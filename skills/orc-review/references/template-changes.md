@@ -1,6 +1,6 @@
 # Review template changes
 
-**Current review template: 4.**
+**Current review template: 5.**
 
 The review template is `profile-template.md` and `lane-template.md` together: the shape of a project's profile and of its repo lanes. Its number moves only when a change would make an existing profile or lane read differently or miss something, which is rare; pack releases that change anything else leave it alone. It is not the pack version.
 
@@ -41,3 +41,9 @@ Each section below lists, for one template version, what an existing profile or 
 **Summary:** repo lanes write their findings to a report file and reply with one line, so the verifier reads them and orc-review never relays them.
 
 - **4.1 Report file:** give each repo lane the `Write` tool, limited in its **Read-only** paragraph to the brief's `Report` file, add `Report` to **Your brief**, and rewrite its **Report** section to the current `lane-template.md`: findings go to the file, and the reply is one line with the counts and the path. A lane left as it is still works: orc-review passes its reply to the verifier, at the cost of the orchestrator copying the findings.
+
+## Template 5 (orc-review 2.0.1)
+
+**Summary:** the profile stops, rather than running a partial review, when the review suite isn't in the repo's own `.claude/`.
+
+- **5.1 Review suite guard:** replace the profile's opening hand-off paragraph with the current `profile-template.md` one, which first checks that the repo's `.claude/` holds `orc-review`, orc's standards, and every generic lane, and stops naming what's missing when it doesn't. Setup's **Pack files first** step installs those files in the same run, so commit them with the profile. Keep the rest of the paragraph as the profile has it.
