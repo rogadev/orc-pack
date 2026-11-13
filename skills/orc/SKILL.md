@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@2.0.0
+pack: orc-pack@2.0.1
 description: Works GitHub issues end to end in any repo, one at a time in this session - read, plan, pin the behaviour in tests, build, screenshot UI, update the docs, and commit each issue, with the run shown as a paceline progress bar. Takes one issue, a list, a range, "next N" to pick the N most important open issues from the board, or a plain-text request to work as if it were an issue, for example "/orc 356", "/orc 356 357 360", "/orc 350-360", "/orc next 10", or "/orc add a CSV export to the reports page". `/do` is the same skill under another name.
 argument-hint: "<issue> [<issue> ...] | <first>-<last> | next [N] | <text request>"
 disable-model-invocation: true

@@ -1,6 +1,6 @@
 ---
 name: tiedown
-pack: orc-pack@2.0.0
+pack: orc-pack@2.0.1
 description: End-of-session check in three stages. Stage 1 finds every open question and loose end, or says "We're done." when nothing is left. Stage 2 thinks through each open item (what to do, the best option, what an expert would do) with a right-sized subagent per item, and none for obvious ones. Stage 3 presents one final list with a firm recommendation per item, so the user can say "yes, do all of it". Read-only; it recommends but never fixes anything. Use only when the user types /tiedown or asks "are we done?", "any loose ends?", or "anything else you need from me?".
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git log:*), Bash(git fetch:*), Bash(git branch:*), Bash(git worktree list:*), Bash(git stash list:*), Bash(git rev-list:*), Bash(git diff:*), Bash(gh issue list:*), Bash(gh issue view:*), Bash(gh pr list:*), Bash(netstat:*), Bash(tasklist:*), Bash(ls:*), Read, Grep, Glob, ListAgents, TaskList, Agent
