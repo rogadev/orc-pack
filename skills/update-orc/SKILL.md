@@ -27,7 +27,7 @@ Read, in order:
 - `.claude/orc-pack.provenance.md` for the source repo, the installed version, the `Subset:` line if any, and any recorded local edits.
 - The `pack: orc-pack@x.y.z` marker in `.claude/skills/orc/SKILL.md`, or in `.claude/skills/orc-review/SKILL.md` when the project holds only the review suite (`Subset: review`, which `/orc-review setup` installs).
 
-Only when the project has neither file, check for a global install: `~/.claude/skills/orc/SKILL.md` and `~/.claude/orc-pack.provenance.md`. When the project has one, update the project's copy even if a global install also exists: the project's copy is what everyone who clones the repo runs. Say in the report which copy you updated, and that the other is left as it was.
+Only when the project has neither `skills/orc/SKILL.md` nor `skills/orc-review/SKILL.md`, check for a global install: `~/.claude/skills/orc/SKILL.md` and `~/.claude/orc-pack.provenance.md`. When the project has either, update the project's copy even if a global install also exists: the project's copy is what everyone who clones the repo runs.
 
 Determine:
 
@@ -71,7 +71,7 @@ Also read the **latest release body** (`body` from step 2) for anything not capt
 
 Dispatch `orc-updater` **without a `model` parameter**, so its frontmatter's exact id (`claude-opus-5-5`) applies; the `opus` alias would follow an Opus 5 session. Give it:
 
-- The fetched kit path and the target install root, and its `Subset:` line when provenance records one.
+- The fetched kit path and the target install root, and the `Subset:` line when the install's provenance records one.
 - The installed version, the target version, and the full range between them.
 - The migration map from step 4 (or the diff fallback), quoted verbatim.
 - The latest release body.
@@ -95,7 +95,7 @@ A file that differs outside that allowed list is a failure, not a nit — report
 
 Lead with the version transition and the size of the jump. Headings, dropping empty ones:
 
-- **Updated** — `x.y.z -> a.b.c` (n releases), which copy (project or global, and its path), the files refreshed, added, renamed, or removed, and anything left uncommitted.
+- **Updated** — `x.y.z -> a.b.c` (n releases), which copy (project or global, and its path; when both exist, that the other is left as it was), the files refreshed, added, renamed, or removed, and anything left uncommitted.
 - **Map** — whether the update used the changelog sections, the diff fallback, or both, and which versions were in range.
 - **Next** — when the install has `orc-review` and the repo has no project review profile (`.claude/skills/deep-review/SKILL.md`), or has a hand-written one with no `based-on: orc-review@` line: run `/orc-review setup` in a new session to draft or convert it. When the profile's `template` and `template-reviewed` numbers (inferred from `based-on` when absent, per the kit's `skills/orc-review/references/template-changes.md`) are both below that file's current review template number, name the newer versions' summaries and suggest `/orc-review setup` to refresh it or `/orc-review setup skip` to keep it; say nothing when the user has already decided, or when only the pack version moved.
 - **Your call** — this report's only handback section, so it holds two kinds of item: work the update cannot finish without a person (missing access or a credential), with the exact step, and calls only the user can make (accepting a breaking change, deleting a repo-owned file, or overriding a recorded local edit), with your recommendation. Decide anything else yourself, and say under **Updated** what you chose and how to reverse it.

@@ -7,7 +7,7 @@ argument-hint: "[setup [skip]] | [ref | a..b | #PR | working] [quick | full] [au
 
 # Orc review
 
-You review one change by dispatching the reviewer lanes it needs, filtering their findings through the `verifier`, and returning one report a busy person can act on. **You never fix code, commit, push, or open a PR,** and you never run a fixer or formatter in write mode: nothing in the repo changes because of a review. The one exception is **Setup**, which writes the review files (the profile, its reference files, and repo lanes), plus the pack's review suite when the repo lacks it, and nothing else.
+You review one change by dispatching the reviewer lanes it needs, filtering their findings through the `verifier`, and returning one report a busy person can act on. **You never fix code, commit, push, or open a PR,** and you never run a fixer or formatter in write mode: nothing in the repo changes because of a review. The one exception is **Setup**, which writes the review files (the profile, its reference files, and repo lanes), plus the pack's review suite and its provenance when the repo lacks it, and nothing else.
 
 Arguments: `$ARGUMENTS`. When they start with `setup`, go to **Setup** (or **Setup skip**, for `setup skip`) and do nothing else.
 
@@ -232,16 +232,16 @@ NOT READY or READY AFTER SMALL FIXES: fix the listed items, then re-run the revi
 
 ## Setup
 
-`/orc-review setup` drafts, refreshes, or converts the project profile at `.claude/skills/deep-review/SKILL.md` from `<base>/references/profile-template.md`. The model it builds: the pack's generic lanes are the base, and repo lanes add depth only where that base is thin for this project. It writes review files only (the profile, its `references/`, repo lanes in `.claude/agents/`, agent-memory notes about them, and the review suite below) and never commits; step 10 hands the result to the user. Make a scratch folder `$D` as step 1 of the review does.
+`/orc-review setup` drafts, refreshes, or converts the project profile at `.claude/skills/deep-review/SKILL.md` from `<base>/references/profile-template.md`. The model it builds: the pack's generic lanes are the base, and repo lanes add depth only where that base is thin for this project. It writes review files only (the profile, its `references/`, repo lanes in `.claude/agents/`, agent-memory notes about them, and the review suite and its provenance below) and never commits; step 10 hands the result to the user. Make a scratch folder `$D` as step 1 of the review does.
 
-**Pack files first.** A committed profile only hands off to this workflow, so it works for whoever clones the repo only when everything it hands off to is committed beside it. Before step 1, look in the target repo's `.claude/` only, never `~/.claude/` or a plugin, for the **review suite**:
+**Pack files first.** A committed profile does nothing on its own: it hands off to this workflow, so it works for whoever clones the repo only when everything it hands off to is committed beside it. After making `$D` and before Setup's step 1, look in the target repo's `.claude/` only, never `~/.claude/` or a plugin, for the **review suite**:
 
 - `skills/orc-review/` with its `references/`
 - `skills/orc/references/`, every file
 - the agents `quality-reviewer`, `security-reviewer`, `architecture-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `comment-reviewer`, `fallow`, `usages`, `verifier`, `lint`, `typecheck`, `test`, and `setup-auditor`
 - `skills/update-orc/` and the agents `orc-updater` and `dependency-vetter`, so the project's copy can be updated where it lives
 
-When every piece is there, copy nothing and write no provenance; if their `pack:` markers are older than this skill's, say so in step 10 and suggest `/update-orc`. Otherwise install the missing pieces at project scope, following the kit's `INSTALL.md` Phases 2 and 3 (file mapping, conflicts, markers): copy from the kit cloned into `$D` at this skill's version (`gh repo clone <owner/repo> "$D/kit" -- --branch "v<version>" --depth 1`, with the source repo from provenance, else `rogadev/orc-pack`), or, when that tag or the network isn't available, from the installed pack that is running this skill (`<base>/..` and its sibling `agents/` directory). Then write or update `.claude/orc-pack.provenance.md` with the pack version, the source repo and URL, the date, `Scope: project`, `Subset: review` (unless the full pack is already installed there), and every file copied. Leave the repo's `.gitignore` policy for `.claude/` as it is; when it would keep any of these files out of git, say so in step 10.
+When every piece is there, copy nothing and write no provenance; if their `pack:` markers are older than this skill's, say so in step 10 and suggest `/update-orc`. When any piece is missing, install the missing pieces at project scope, following the kit's `INSTALL.md` Phases 2 and 3 (file mapping, conflicts, markers): copy from the kit cloned into `$D` at this skill's version (`gh repo clone <owner/repo> "$D/kit" -- --branch "v<version>" --depth 1`, with the source repo from provenance, else `rogadev/orc-pack`), or, when that tag or the network isn't available, from the installed pack running this skill (its skills under `<base>/..`, its agents in the `agents/` directory beside that `skills/` directory). Then write or update `.claude/orc-pack.provenance.md` with the pack version, the source repo and URL, the date, `Scope: project`, `Subset: review` (unless the full pack is already installed there), and every file copied. Leave the repo's `.gitignore` policy for `.claude/` as it is, and check whether it would keep any of these files out of git, for step 10.
 
 1. **Check the target.**
    - **No file:** draft a new profile.
