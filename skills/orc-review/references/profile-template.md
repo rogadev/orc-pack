@@ -9,7 +9,7 @@ template-reviewed: <the same number>
 
 # Deep review: <project>
 
-This is a project profile for orc-pack's `orc-review` skill. Invoke the `orc-review` skill with `$ARGUMENTS (profile: .claude/skills/deep-review/SKILL.md)` and run its workflow with the profile below. Edit only the profile; the workflow lives in `orc-review` and updates with the pack. The pack's generic lanes are the base; **Repo lanes** adds this project's specialists only where the base is thin.
+This is a project profile for orc-pack's `orc-review` skill. First check that this repo's own `.claude/` holds `skills/orc-review/SKILL.md`, `skills/orc/references/standards/`, and, in `agents/`, every generic lane `orc-review` dispatches (`quality-reviewer`, `security-reviewer`, `architecture-reviewer`, `ui-reviewer`, `test-coverage-reviewer`, `comment-reviewer`, `fallow`, `usages`, `verifier`, `lint`, `typecheck`, and `test`). When any is missing, even if `~/.claude/` or a plugin has it, stop: name the missing pieces, say the fix is `/orc-review setup`, which installs them at project scope to commit with this profile, and run no lanes. Never run a partial review. Otherwise invoke the `orc-review` skill with `$ARGUMENTS (profile: .claude/skills/deep-review/SKILL.md)` and run its workflow with the profile below. Edit only the profile; the workflow lives in `orc-review` and updates with the pack. The pack's generic lanes are the base; **Repo lanes** adds this project's specialists only where the base is thin.
 
 ## Stack
 

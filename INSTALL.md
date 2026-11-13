@@ -88,6 +88,8 @@ Two valid targets. **Default to project scope** unless the user says otherwise.
 | **Project** (default) | `<repo>/.claude/`                                   | The pack should live with this repo and be shared/committed with it (or kept local to it). This is almost always what's wanted when installing "into this project". |
 | **Global**            | `~/.claude/` (`C:\Users\<you>\.claude\` on Windows) | The user wants `/orc` available in every project on this machine.                                                                                                   |
 
+**A repo with a committed review profile needs the review suite at project scope,** even when the rest of the pack is global. `.claude/skills/deep-review/SKILL.md` only hands off to `orc-review`, so a collaborator who clones the repo can run `/deep-review` only when the suite `skills/orc-review/SKILL.md` lists under **Pack files first** is committed beside it. A global or plugin install lives on one machine. `/orc-review setup` installs the suite at project scope itself when it's missing (provenance `Subset: review`); a project-scope install of the full pack covers it too.
+
 The destination root for project scope is the **target** you resolved in Phase 0 — the session's repo, not the kit. Everything below is relative to the destination root you chose.
 
 **Note on committing:** some repos intentionally gitignore `.claude/` (keep it local); others commit it to share with the team. Check the repo's `.gitignore` and existing `.claude/` tracking before assuming. Don't change that policy as a side effect of installing — match what the repo already does.
