@@ -18,6 +18,22 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.1.1] - 2026-11-13
+
+**Summary.** Closes two gaps in the install check that 2.1.0 added. A piece passed with `--declined` was skipped even when it was installed, so a modified copy could pass; it is now compared like any other file when it's present. A stray file inside a pack skill's directory (outside `references/`, with no `pack:` marker) went unreported; every file under a pack skill's directory that the kit doesn't ship is now listed as stale. Unmarked files in `agents/` are still the repo's own lanes and are never flagged. For the 2.1.0 install model, read the [2.1.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.1.0).
+
+**Changed areas.**
+
+- **Install check** — `skills/update-orc/references/check-install.mjs`: the declined and stale rules above. Copy the file over the installed one.
+
+**Update steps.** Copy the file. An install that passed the 2.1.0 check may now list stale files in a pack skill's directory; remove them, as `UPDATE.md` Phase 2 says for files the kit dropped.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/update-orc/references/check-install.mjs`.
+
+---
+
 ## [2.1.0] - 2026-11-13
 
 **Summary.** Installs, updates, and `/orc-review setup` now bring the whole pack into a repo and prove it. Recent installs came out partial: agents kept a repo's older reviewer because it looked "richer", skipped `/do` and `/tiedown` because a personal skill of the same name existed in `~/.claude/`, installed the `fallow` agent without the fallow CLI, and let the repo's formatter rewrite pack files. The rule is now one split: a repo's `.claude/` holds the whole pack, identical to the release, plus what's unique to the project (its review profile, the profile's references, repo lanes, and `CLAUDE.md` facts). A file at a pack name is always the pack's; its project-specific rules move into the profile or `CLAUDE.md`. A new script, `check-install.mjs`, compares an install with the kit file by file, and every install, update, and setup ends by running it until it passes. For the review-suite fix this builds on, read the [2.0.1 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.0.1).
