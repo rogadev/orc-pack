@@ -1,6 +1,6 @@
 ---
 name: update-orc
-pack: orc-pack@2.0.1
+pack: orc-pack@2.1.0
 description: Update an installed orc pack (the copied-into-.claude/ kind) to the latest released version, from any older version in one pass. Reads the local pack version and provenance, finds the latest GitHub release, fetches the pack at that tag, builds the cumulative update map from every changelog entry in range, and dispatches the orc-updater subagent (Opus 5.5) to converge the install on the latest kit. Use whenever the user says "/update-orc", "update orc", "update the orc pack", "is there a newer orc", "refresh orc", or "get the latest orc-pack".
 ---
 
@@ -25,7 +25,7 @@ Three:
 Read, in order:
 
 - `.claude/orc-pack.provenance.md` for the source repo, the installed version, the `Subset:` line if any, and any recorded local edits.
-- The `pack: orc-pack@x.y.z` marker in `.claude/skills/orc/SKILL.md`, or in `.claude/skills/orc-review/SKILL.md` when the project holds only the review suite (`Subset: review`, which `/orc-review setup` installs).
+- The `pack: orc-pack@x.y.z` marker in `.claude/skills/orc/SKILL.md`, or in `.claude/skills/orc-review/SKILL.md` when the project holds only the review suite (`Subset: review`, which `/orc-review setup` installed before 2.1.0; the update completes it to the whole pack).
 
 Only when the project has neither `skills/orc/SKILL.md` nor `skills/orc-review/SKILL.md`, check for a global install: `~/.claude/skills/orc/SKILL.md` and `~/.claude/orc-pack.provenance.md`. When the project has either, update the project's copy even if a global install also exists: the project's copy is what everyone who clones the repo runs.
 
@@ -71,18 +71,18 @@ Also read the **latest release body** (`body` from step 2) for anything not capt
 
 Dispatch `orc-updater` **without a `model` parameter**, so its frontmatter's exact id (`claude-opus-5-5`) applies; the `opus` alias would follow an Opus 5 session. Give it:
 
-- The fetched kit path and the target install root, and the `Subset:` line when the install's provenance records one.
+- The fetched kit path and the target install root, and the `Subset:` and `Declined:` lines when the install's provenance records them.
 - The installed version, the target version, and the full range between them.
 - The migration map from step 4 (or the diff fallback), quoted verbatim.
 - The latest release body.
 - Instruction to follow its agent contract and the fetched kit's `UPDATE.md`.
-- The constraint that files without a `pack:` marker belong to the repo and are never clobbered — except files under `skills/orc/references/`, which are pack-owned and refreshed from the kit like any marked file.
+- The constraint that a file at a pack name always ends up as the kit's file: a marked one is refreshed, and an unmarked one (the repo's or the user's own version, such as a hand-made `do`) is backed up and replaced, with its project facts moved as `INSTALL.md` Phase 3 says. Files under a pack skill's `references/` are pack-owned. Files under names the pack doesn't use belong to the repo and are never touched.
 
 ### 6. Verify convergence
 
-The update passes only when the install matches the target kit:
+The update passes only when the install matches the target kit. Run the check yourself, never take the updater's word for it: `node "<kit>/skills/update-orc/references/check-install.mjs" "<kit>" "<install root>"`, with `--allow` for each documented local edit and `--declined` for each piece provenance's `Declined:` line names. It must print `RESULT: PASS`. It covers:
 
-- Every file under the fetched kit's `skills/` and `agents/` exists in the install with the same content, **except** files with a documented, intentional repo-local edit (which must be listed). For a `Subset: review` install, that set is the review suite the target kit's `skills/orc-review/SKILL.md` lists under **Pack files first**, not the whole kit.
+- Every file under the fetched kit's `skills/` and `agents/` exists in the install with the same content, **except** files with a documented, intentional repo-local edit (which must be listed) and pieces the user declined.
 - Every refreshed skill and agent file's `pack:` marker equals the target version, and every frontmatter block still parses (`name` and `description`). Reference files carry no marker; they pass when their content matches the kit's.
 - No file the target kit dropped remains in the install.
 - Every agent the refreshed skills name resolves to a file under the install's `agents/`.
@@ -95,7 +95,7 @@ A file that differs outside that allowed list is a failure, not a nit — report
 
 Lead with the version transition and the size of the jump. Headings, dropping empty ones:
 
-- **Updated** — `x.y.z -> a.b.c` (n releases), which copy (project or global, and its path; when both exist, that the other is left as it was), the files refreshed, added, renamed, or removed, and anything left uncommitted.
+- **Updated** — `x.y.z -> a.b.c` (n releases), which copy (project or global, and its path; when both exist, that the other is left as it was), the files refreshed, added, renamed, replaced, or removed, the install check's summary line, and anything left uncommitted. Quote each **Shadowed for you** line from the check: a personal skill in `~/.claude/skills/` runs instead of the project's for this user, so suggest running `/update-orc` from a folder with no project install (it then updates `~/.claude/`) or removing the personal copy.
 - **Map** — whether the update used the changelog sections, the diff fallback, or both, and which versions were in range.
 - **Next** — when the install has `orc-review` and the repo has no project review profile (`.claude/skills/deep-review/SKILL.md`), or has a hand-written one with no `based-on: orc-review@` line: run `/orc-review setup` in a new session to draft or convert it. When the profile's `template` and `template-reviewed` numbers (inferred from `based-on` when absent, per the kit's `skills/orc-review/references/template-changes.md`) are both below that file's current review template number, name the newer versions' summaries and suggest `/orc-review setup` to refresh it or `/orc-review setup skip` to keep it; say nothing when the user has already decided, or when only the pack version moved.
 - **Your call** — this report's only handback section, so it holds two kinds of item: work the update cannot finish without a person (missing access or a credential), with the exact step, and calls only the user can make (accepting a breaking change, deleting a repo-owned file, or overriding a recorded local edit), with your recommendation. Decide anything else yourself, and say under **Updated** what you chose and how to reverse it.
@@ -119,7 +119,7 @@ Nothing after it.
 ## Guardrails
 
 - **Converge, do not replay.** The target kit is the source of truth; the changelog explains the special cases. A file copy that matches the kit is correct even if no changelog entry mentions it.
-- **Never clobber a file without a `pack:` marker** (the pack-owned `skills/orc/references/` files excepted), and never silently drop a repo-local edit.
+- **Never touch a file under a name the pack doesn't use,** and never silently drop a repo-local edit. An unmarked file at a pack name is backed up and replaced, as step 5 says.
 - **Do not commit or push** unless the user asks. Leave the refreshed files in the working tree and say so.
 - **Never force-push, rebase, or rewrite history.**
 - **Do not run `/orc`.** This skill only refreshes the pack.
