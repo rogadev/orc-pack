@@ -1,6 +1,6 @@
 ---
 name: fallow
-pack: orc-pack@2.0.1
+pack: orc-pack@2.1.0
 description: Run a codebase-intelligence audit (fallow) scoped to working-tree changes, or to everything since a named base commit, and report raw findings — dead code, duplication, complexity, circular deps. Optional; requires the `fallow` CLI. Use during deep review to surface these signals on changed files only.
 tools:
   - Bash

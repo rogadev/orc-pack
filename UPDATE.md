@@ -13,7 +13,7 @@ Work the phases in order.
 ## Phase 1 — Locate the current install and the new kit
 
 1. Find the installed pack: `.claude/skills/*/SKILL.md` and `.claude/agents/*.md` carrying `pack: orc-pack@<version>` markers, plus the `.claude/skills/orc/references/` directory beside the skill. Read the recorded version from `.claude/orc-pack.provenance.md`. When the project has its own install, update it even if `~/.claude/` holds another: the project's copy is what the repo's collaborators run.
-2. **A review-suite install** (provenance `Subset: review`, written by `/orc-review setup`) holds only the review suite that `skills/orc-review/SKILL.md` lists under **Pack files first**. In Phase 2, the kit files are only that suite in the new kit: refresh them, add any the new kit adds to the list, and don't add the rest of the pack.
+2. **A review-suite install** (provenance `Subset: review`, written by `/orc-review setup` before 2.1.0) holds only part of the pack. Complete it: in Phase 2, the kit files are the whole kit, as for any install. Replace the `Subset:` line with `Scope: project`. A `Declined:` line in provenance names pieces the user chose not to install; leave those out and pass them to Phase 4's check with `--declined`.
 3. Have the new kit checked out somewhere outside the repo. `/update-orc` fetches it into the session scratchpad at the target tag; by hand, clone it there yourself or use the checkout the user names.
 4. Compare versions. If the kit is not newer, there's nothing to do — say so and stop.
 
@@ -24,11 +24,11 @@ Work the phases in order.
 For every kit file (the mapping table in `INSTALL.md` Phase 2 is authoritative):
 
 - **File has a `pack:` marker** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits the repo made since (its git history for that file shows them).
-- **File has no `pack:` marker** → the repo's own artifact. Do not clobber it; route through `INSTALL.md` Phase 3 conflict handling. The one exception is the reference directory:
-- **Reference files are pack-owned.** Files under the `references/` directory of a pack skill (`.claude/skills/orc/`, `orc-review/`, `retro/`, and `shipcheck/`; an install older than 2.0.0 may also have `orc-rush/`) carry no `pack:` marker, but they belong to the pack whenever that skill's `SKILL.md` carries one, or, for `skills/orc/references/`, whenever provenance says `Subset: review`: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
+- **File has no `pack:` marker at a pack name** → the repo's own version of a pack file. Follow `INSTALL.md` Phase 3: back it up, install the kit's file, and move its project facts to the profile, a repo lane, or `CLAUDE.md`. An update before 2.1.0 may have kept such a file (a hand-made `do` or `tiedown`, an old reviewer); replace it now and say so in the report. Reference files are a separate case:
+- **Reference files are pack-owned.** Files under the `references/` directory of a pack skill (`.claude/skills/orc/`, `orc-review/`, `retro/`, `shipcheck/`, and `update-orc/`; an install older than 2.0.0 may also have `orc-rush/`) carry no `pack:` marker, but they belong to the pack whenever that skill's `SKILL.md` carries one, or, for `skills/orc/references/`, whenever provenance says `Subset: review`: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never route them through conflict handling as repo-owned files.
 - **Re-applied edits must still fit the new file.** 2.0.0 rewrote `skills/orc/SKILL.md` from scratch, so an edit made to a 1.x orc skill (to its builder dispatch, review panel, work contract, or efficiency mode) has nothing to apply to. Don't force it in: list it in the report as dropped, and say what in the new skill covers the same need, if anything. If a local edit conflicts with the kit's format, keep the kit's format and note the conflict in the report.
 - **A new agent or skill in the kit that isn't in the repo yet** → copy it in, same as a fresh install. Coming from 1.x, that is `skills/do/`.
-- **A same-name `do` skill.** When `.claude/skills/do/SKILL.md` already exists without a `pack:` marker, it is the repo's own `/do`. Never overwrite it: route it through `INSTALL.md` Phase 3 conflict handling, and skip the kit's `do` by default, because `/orc` works without it. Say in the report which one the install kept.
+- **Formatters.** Apply `INSTALL.md` Phase 4.6 to any pack path the repo's formatters don't ignore yet, including paths this update adds.
 - **The project's `.claude/skills/deep-review/SKILL.md` is never refreshed.** It is repo-owned, and the kit ships no file at that path. When it carries a `based-on: orc-review@` line, compare its `template` and `template-reviewed` numbers (inferred from `based-on` when absent, as the target kit's `skills/orc-review/references/template-changes.md` says) with that file's current review template number. Only when the current number is greater than both, say so in the report, naming the newer template versions' summaries, and suggest `/orc-review setup` (which refreshes the profile, keeps the user's entries, and lets them decline any change) or `/orc-review setup skip` (which keeps the profile and stops the reminder). A pack version change alone is never a reason to suggest it.
 - **A file the new kit dropped** → remove the stale copy and note it in the report. Remove only files that carry a `pack:` marker, or that sit in a pack skill's `references/` directory; a dropped name the repo reuses for its own file is the repo's.
 
@@ -40,7 +40,7 @@ For every kit file (the mapping table in `INSTALL.md` Phase 2 is authoritative):
 - **Agents:** `implementer.md`, `ui-implementer.md`, `api-implementer.md`, `data-implementer.md`, `design-reviewer.md`, `scope-reviewer.md`, `next-issue-finder.md`, `docs-writer.md`, and `impact.md`.
 - **References:** `skills/orc/references/builder-contract.md`, `design-brief.md`, `work-contract.md`, and `your-call.md`.
 
-The skills and agents carry `pack:` markers and the references sit in orc's `references/` directory, so all of them are pack-owned: remove them without asking. A file at one of those paths with no `pack:` marker is the repo's own, so leave it and say so. Then add `skills/do/` (see the same-name rule above) and refresh every remaining file.
+The skills and agents carry `pack:` markers and the references sit in orc's `references/` directory, so all of them are pack-owned: remove them without asking. A file at one of those paths with no `pack:` marker is the repo's own, so leave it and say so. Then add `skills/do/` (an unmarked `do` already there is replaced, as the rule for a file at a pack name says) and refresh every remaining file.
 
 Also clean up what the dropped workflow left behind, and report each item rather than deleting repo files:
 
@@ -68,7 +68,7 @@ Fallow follows **install-latest-after-vet**: an update pulls the newest version 
 
 ## Phase 4 — Verify and report
 
-1. Frontmatter on every refreshed file still parses (`---` … `---` with `name` and `description`).
+1. Run the install check from the new kit: `node <kit>/skills/update-orc/references/check-install.mjs <kit> <install root>`, with `--allow` for each file whose local edit you re-applied and `--declined` for each piece provenance's `Declined:` line names. It must print `RESULT: PASS`; fix what it lists and rerun until it does. Quote its summary line and any **Shadowed for you** lines in the report. Frontmatter on every refreshed file still parses (`---` … `---` with `name` and `description`).
 2. Every agent name the installed skills dispatch (mainly `skills/orc-review/SKILL.md`) resolves to a file under `.claude/agents/`, and no installed skill names a removed skill or agent.
 3. Tell the user: the old and new pack versions, what you refreshed, what you removed, any conflicts and how you resolved them, and — if Phase 3 ran — the `dependency-vetter` verdict and which fallow version is now installed.
 4. Remind them the refreshed skills and agents load in a **new** Claude Code session, not the one running the update.

@@ -1,6 +1,6 @@
 ---
 name: retro
-pack: orc-pack@2.0.1
+pack: orc-pack@2.1.0
 description: Retrospective on past /orc (or /do) runs in this repo and the /orc-review reviews that followed them. Measures cost, tokens, and active time per closed issue, how much of it went to review and fix-up, and what the reviews found, then reports what to improve, each finding with its evidence, rough cost, and where to change it. Read-only. Use when the user says "/retro", "retro on the last run", "how did orc do this week", "what does an issue cost", "where did the tokens go", or "what can orc do better".
 argument-hint: "[last | <n>d | since <date> | session <id>...]"
 ---
