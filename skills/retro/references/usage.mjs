@@ -250,14 +250,14 @@ function issuesWorked(lines) {
   return [...nums].sort((a, b) => a - b);
 }
 
-// What a session was for, from the first pack skill it ran: a review (or a review's setup), a
+// What a session was for, from the first pack skill it ran: a review (or a review's init or update), a
 // fix run scoped to a review's findings, or a build.
 function roleOf(lines) {
   for (const o of lines) {
     const inv = invocation(o);
     if (!inv) continue;
     if (["orc-review", "deep-review"].includes(inv.skill))
-      return /^setup\b/.test(inv.args) ? "setup" : "review";
+      return /^(setup|init|update)\b/.test(inv.args) ? "setup" : "review";
     if (
       /\b(nits?|warnings?|blockers?|findings?|should.?fix)\b/i.test(inv.args) &&
       !/#?\d{2,}/.test(inv.args)

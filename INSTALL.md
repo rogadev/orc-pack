@@ -29,7 +29,7 @@ orc-pack/
 │   │   └── SKILL.md        ← /do, which reads and follows ../orc/SKILL.md
 │   ├── orc-review/
 │   │   ├── SKILL.md
-│   │   └── references/     ← profile-template.md (the project profile /orc-review setup fills in), lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
+│   │   └── references/     ← profile-template.md (the project profile /orc-review init fills in), lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
 │   ├── newissue/
 │   │   └── SKILL.md
 │   ├── retro/
@@ -42,7 +42,7 @@ orc-pack/
 │   │   └── SKILL.md
 │   └── update-orc/
 │       ├── SKILL.md
-│       └── references/     ← check-install.mjs, the install check every install, update, and setup ends with
+│       └── references/     ← check-install.mjs, the install check every install, update, and /orc-review init ends with
 └── agents/
     ├── architecture-reviewer.md
     ├── comment-reviewer.md
@@ -87,7 +87,7 @@ How you got here decides where the kit lives:
 A repo carries two kinds of file, and both live in it, so everyone who clones the repo gets the same workflow:
 
 - **The pack's files:** every skill and agent in the kit, identical in every repo. They are the workflow; a project never edits them to fit itself.
-- **The project's own files:** its review profile, the profile's references, and its repo lanes (`.claude/skills/deep-review/`, written by `/orc-review setup`), its facts in `CLAUDE.md`, `AGENTS.md`, and `.claude/rules/`, and any skill or agent under a name the pack doesn't use. This is where the project's framework, packages, paths, and conventions go.
+- **The project's own files:** its review profile, the profile's references, and its repo lanes (`.claude/skills/deep-review/`, written by `/orc-review init`), its facts in `CLAUDE.md`, `AGENTS.md`, and `.claude/rules/`, and any skill or agent under a name the pack doesn't use. This is where the project's framework, packages, paths, and conventions go.
 
 A global install gives the pack to repos that don't have one. It never stands in for a project install, and it is never a reason to skip a project file. Claude Code resolves same-name files differently by kind: a skill in `~/.claude/skills/` runs instead of the project's skill of that name, and an agent in the project's `.claude/agents/` runs instead of the personal one. So a repo's reviews run its own committed agents, and a stale or hand-made personal skill (for example an old `do`) shadows the project's for that one user. Phase 5's check lists those shadows; report them, and install the project's file regardless.
 
@@ -130,14 +130,14 @@ Create `<root>/.claude/skills/orc/` and `<root>/.claude/agents/` if they don't e
 
 **The rule: a pack name holds the pack's file, and the project's knowledge moves to the project's files.** The pack's skills dispatch its agents by name and depend on their brief and report contract, so a repo's own file at a pack name breaks the workflow, often in silence. Project-specific depth is welcome, but it lives under the project's own names (Phase 1), never in place of a pack file. Never keep a repo's file at a pack name because it looks richer or more tuned: that is the most common way an install ends up partial.
 
-**Whole-system check first.** Look at what already lives in `.claude/`. When the repo has its own issue workflow or review pipeline under other names (for example `/go`, `/next`, `/auto`, `/ship`, or an agent team), install the whole pack anyway: it never conflicts with files under other names. Then ask the user **once** whether to retire the repo's workflow, and recommend retiring it: list each of its skills and agents, what in the pack covers it, and which project facts it holds that move to `CLAUDE.md` or the profile. Deleting repo-owned files needs the user's yes; installing the pack never does. Never choose on your own to install nothing, only complements, or suffixed copies. A repo's own `.claude/skills/deep-review/` is not a competing system: it is the project reviewer `orc-review` works with. Leave it in place, and tell the user that `/orc-review setup` converts it into a profile.
+**Whole-system check first.** Look at what already lives in `.claude/`. When the repo has its own issue workflow or review pipeline under other names (for example `/go`, `/next`, `/auto`, `/ship`, or an agent team), install the whole pack anyway: it never conflicts with files under other names. Then ask the user **once** whether to retire the repo's workflow, and recommend retiring it: list each of its skills and agents, what in the pack covers it, and which project facts it holds that move to `CLAUDE.md` or the profile. Deleting repo-owned files needs the user's yes; installing the pack never does. Never choose on your own to install nothing, only complements, or suffixed copies. A repo's own `.claude/skills/deep-review/` is not a competing system: it is the project reviewer `orc-review` works with. Leave it in place, and tell the user that `/orc-review init` converts it into a profile.
 
 Then, for every destination path, check whether a file already exists. **Never blind-overwrite.**
 
 - **No file there** → copy it in. Done.
 - **`pack: orc-pack@<version>` present** → an earlier install of this pack. Overwrite with the kit version, then re-apply any repo-specific edits made since (the repo's git history for that file shows them), and record each such file in provenance so Phase 5 passes it with `--allow`.
 - **No `pack:` marker, under the `references/` directory of a pack skill (`orc`, `orc-review`, `retro`, `shipcheck`, or `update-orc`)** → pack-owned. The reference files carry no marker but belong to the pack whenever the skill's own `SKILL.md` carries one: overwrite them from the kit, re-apply any repo-local edits the repo's git history shows, and remove any the kit no longer ships. Never treat them as repo-owned.
-- **No `pack:` marker at any other pack name** (a skill such as `do` or `tiedown`, or an agent such as `security-reviewer` or `verifier`) → the repo's own version of a pack file. Back it up where a reboot won't clear it: git history is enough for a committed file; otherwise copy it to `~/.claude/orc-pack-backups/<repo name>/<yyyy-mm-dd>/<its path>`. Read it for what is specific to this project (paths, stack and package rules, the trust boundary, conventions, known non-issues), install the kit's file, and put those facts where project knowledge lives: an old reviewer's facts go into the review profile (`/orc-review setup` converts them; tell the user to run it), a specialist check becomes a repo lane under its own name, and anything else goes into `CLAUDE.md` after asking. Report each replacement and where its facts went. A personal skill of the same name in `~/.claude/skills/` is not a repo file and never a conflict.
+- **No `pack:` marker at any other pack name** (a skill such as `do` or `tiedown`, or an agent such as `security-reviewer` or `verifier`) → the repo's own version of a pack file. Back it up where a reboot won't clear it: git history is enough for a committed file; otherwise copy it to `~/.claude/orc-pack-backups/<repo name>/<yyyy-mm-dd>/<its path>`. Read it for what is specific to this project (paths, stack and package rules, the trust boundary, conventions, known non-issues), install the kit's file, and put those facts where project knowledge lives: an old reviewer's facts go into the review profile (`/orc-review init` converts them; tell the user to run it), a specialist check becomes a repo lane under its own name, and anything else goes into `CLAUDE.md` after asking. Report each replacement and where its facts went. A personal skill of the same name in `~/.claude/skills/` is not a repo file and never a conflict.
 - **A skill is its whole directory, not just `SKILL.md`.** When replacing one, decide the fate of every file in the destination directory: remove support files the new version doesn't reference — they're orphans — and say so in the report.
 
 **After any replacement, sweep for what it leaves behind.** Grep the repo for references to the replaced system: `CLAUDE.md`, `.claude/README.md`, ADRs or docs describing the old workflow, skills that chained into it, agents only the old system dispatched. Propose updates to the user (in repos with an ADR convention, a superseding ADR rather than an edit). A replaced orchestrator whose docs still describe it misleads every future session.
@@ -155,10 +155,10 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
    - `skills/orc/` and its whole `references/` directory are what `/orc-review` reads the standards from, and `/do` reads orc's `SKILL.md`.
    - `agents/fallow.md` stays even on a non-JS/TS repo: it self-skips. Phase 4.5 installs the CLI.
    - `skills/newissue/` reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
-   - `/orc-review setup` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its stack, risk map, architecture, and known non-issues), so don't create that file during the install.
+   - `/orc-review init` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its stack, risk map, architecture, and known non-issues), so don't create that file during the install.
    - `skills/retro/references/usage.mjs` needs Node to measure tokens.
    - `skills/shipcheck/` drafts `.claude/required-secrets.md` and `.claude/smoke-checklist.md` from the code on first use, so don't create them during the install.
-3. **Never tune a pack file to the repo.** The reviewers and standards adapt at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when `/orc-review` detects that stack, so keep them all even if the repo uses one. A repo's trust boundary, stack rules, and packages go into its review profile, and its specialist checks into repo lanes; `/orc-review setup` writes both. That keeps every pack file identical to the kit, so updates stay clean.
+3. **Never tune a pack file to the repo.** The reviewers and standards adapt at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when `/orc-review` detects that stack, so keep them all even if the repo uses one. A repo's trust boundary, stack rules, and packages go into its review profile, and its specialist checks into repo lanes; `/orc-review init` writes both and `/orc-review update` keeps them current. That keeps every pack file identical to the kit, so updates stay clean.
 
 Don't over-engineer this phase. The pack is designed to work as-copied; adaptation is polish, not a prerequisite.
 
@@ -205,6 +205,6 @@ Give them a short, human summary:
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
 - The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The skill refuses to start on Opus 5, but the session model is the user's to set.
 - How the workflow runs: `/orc` (or `/do`) builds and commits the issues in the session, then the user runs `/orc-review` in a fresh session and `/orc warnings and nits` to fix what it found. Both `/orc` and `/do` are user-invoked only and become available in a new session.
-- Whether the repo has a project review profile. With no `<root>/.claude/skills/deep-review/SKILL.md`, tell them to run `/orc-review setup` once in a new session: it drafts the profile that tailors the review to this project's stack and architecture. When that file exists without a `based-on: orc-review@` line, it is a hand-written reviewer: tell them `/orc-review setup` converts it into a profile and keeps its project-specific parts.
+- Whether the repo has a project review profile. With no `<root>/.claude/skills/deep-review/SKILL.md`, tell them to run `/orc-review init` once in a new session: it drafts the profile that tailors the review to this project's stack and architecture. When that file exists without a `based-on: orc-review@` line, it is a hand-written reviewer: tell them `/orc-review init` converts it into a profile and keeps its project-specific parts.
 
 Do **not** run `/orc` yourself to "test" it unless the user asks: it commits code, and it is user-invoked only. Installation is done when the install check prints `RESULT: PASS`.

@@ -7,7 +7,7 @@ The review template is `profile-template.md` and `lane-template.md` together: th
 A profile records two numbers in its frontmatter:
 
 - `template: <n>` — the template version the profile and its repo lanes were last built or refreshed to. A refresh applies the notes after this number.
-- `template-reviewed: <n>` — the latest template version the user has decided on, by refreshing or by `/orc-review setup skip`. `/orc-review` suggests a refresh only when the current template is greater than both.
+- `template-reviewed: <n>` — the latest template version the user has decided on, by refreshing with `/orc-review update` or by `/orc-review update skip`. `/orc-review` suggests a refresh only when the current template is greater than both.
 
 **A profile with no `template:` line** predates these numbers: take its number from its `based-on: orc-review@<version>` line (before 1.20.0 is 1, 1.20.x is 2, 1.21.x is 3), and treat `template-reviewed` as the same number.
 

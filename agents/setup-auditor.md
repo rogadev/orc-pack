@@ -1,7 +1,7 @@
 ---
 name: setup-auditor
-pack: orc-pack@2.2.0
-description: Blind audit of a project's deep-review profile, run once after /orc-review setup writes it. Reads the finished profile, its references, and any repo lanes cold, checks every checkable fact against the repo, and offers judgment suggestions clearly labeled as suggestions. Read-only apart from its one report file. Dispatched by orc-review setup; finding nothing is a valid result.
+pack: orc-pack@2.3.0
+description: Blind audit of a project's deep-review profile, run once after /orc-review init or update writes or changes it. Reads the finished profile, its references, and any repo lanes cold, checks every checkable fact against the repo, and offers judgment suggestions clearly labeled as suggestions. Read-only apart from its one report file. Dispatched by orc-review init and update; finding nothing is a valid result.
 model: claude-opus-5-5
 effort: medium
 tools:
@@ -26,7 +26,7 @@ Read the profile, every file under `.claude/skills/deep-review/references/`, eve
 
 A **fact** is a claim the repo can settle. The repo wins any disagreement about a fact. Check every one you can; do not sample.
 
-1. **Shape.** The frontmatter has `name`, `description`, `argument-hint`, `based-on`, `template`, and `template-reviewed`, with both template numbers equal to the current one on a fresh setup. Every section of `profile-template.md` is present in its order or deliberately omitted (the optional ones only). No `<placeholder>` text is left. An optional section that remains has content.
+1. **Shape.** The frontmatter has `name`, `description`, `argument-hint`, `based-on`, `template`, and `template-reviewed`, with both template numbers equal to the current one after an init or update. Every section of `profile-template.md` is present in its order or deliberately omitted (the optional ones only). No `<placeholder>` text is left. An optional section that remains has content.
 2. **Paths.** Each glob in the risk map, **Ignore**, and every `Paths:` line matches at least one tracked file (`git ls-files`), except a framework file convention marked `(none yet)`. Test files are never in a risk-map row. A path cited in prose exists.
 3. **Symbols, scripts, and counts.** Each backticked function, export, env var, script, route, and file is found with `git grep` or `git ls-files`. Recount every number the profile states ("73 import lines", "6 files", "14 uses") and report any that differ by more than a few, with your count and command. A commit hash cited resolves with `git show`.
 4. **Checks table.** Each command runs a script or tool that exists in the manifest or config. The `install` row is the frozen install. Each path condition in **When** matches something. **Never run** names every script in the manifest that writes files, formats, seeds, migrates, resets, generates, pushes, or deletes (read the script bodies, not just their names).
