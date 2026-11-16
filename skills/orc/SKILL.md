@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@2.1.0
+pack: orc-pack@2.2.0
 description: Works GitHub issues end to end in any repo, one at a time in this session - read, plan, pin the behaviour in tests, build, screenshot UI, update the docs, and commit each issue, with the run shown as a paceline progress bar. Takes one issue, a list, a range, "next N" to pick the N most important open issues from the board, or a plain-text request to work as if it were an issue, for example "/orc 356", "/orc 356 357 360", "/orc 350-360", "/orc next 10", or "/orc add a CSV export to the reports page". `/do` is the same skill under another name.
 argument-hint: "<issue> [<issue> ...] | <first>-<last> | next [N] | <text request>"
 disable-model-invocation: true
@@ -50,6 +50,10 @@ The text is the issue. Treat it exactly like one from here on, with these differ
 
 **The text is the go-ahead.** Typing `/orc <text>` (or `/do <text>`) already says yes, so don't stop to ask whether to proceed. In step 2, show the brief's items as the plan in a short message, then start building in the same turn. End the turn before building only for a question in item 5, or for one of the stops in step 3; any other doubt about scope goes in the plan message as the reading you chose, so the owner can correct it while you build. Commits carry no `Closes` or `Refs` line unless an issue was filed.
 
+### Fixing review findings
+
+A review finding is a sample of a kind of defect, not the whole of it. Before fixing one, name its kind (a failure mode missing at a boundary, a route without an auth check, a handler without its loading state), then check the rest of the reviewed range for the same kind: at a boundary, its whole failure map from `references/standards/errors.md`. Fix every instance in the same commit as the finding. Those siblings are in scope even for a text request scoped to the review's items, because they are the same defect; a different defect you notice still goes in the report. Step 4's tally lists them apart from the review's own counts.
+
 ### Picking the next N
 
 If the repo documents its own ranking (a roadmap or priority rule in `CLAUDE.md` or `.claude/rules/`), follow it. Otherwise read the board with `gh issue list --state open --limit 200 --json number,title,labels,milestone,body,createdAt`, then rank:
@@ -68,6 +72,7 @@ For each issue, read the issue, the docs that cover its area (architecture notes
 
 - **Small change** (copy, a one-file fix): one line saying what changes and where.
 - **Anything larger:** the files, the approach, the risks, and how you'll know it's done: the test names, the routes and roles to screenshot, any schema change and its migration, and the doc to update. The bar is that someone who never saw this conversation could build from it.
+- **Failure map,** at either size, when the change adds or alters a call across a boundary (a model or AI provider, an API, an auth gateway or proxy, a database): read `references/standards/errors.md` (in this skill's base directory) and the repo's docs on that upstream, then list each failure mode with how the code detects it, what the user sees, and what is logged. A small change gets the map as its plan's second line.
 
 With one small issue, state the one-line plan and start building. A text request never waits for a go-ahead; see **Working a text request**. Otherwise put every plan in one message, in build order. Note where two issues touch the same code, and ask any question only the owner can answer. Then end your turn and wait. The owner approves, edits, or drops items, and that one go-ahead covers the whole list.
 
@@ -75,7 +80,7 @@ With one small issue, state the one-line plan and start building. A text request
 
 Work through the approved list without stopping between issues:
 
-1. **Pin the behaviour.** Write the tests for new logic from the plan first, where the repo keeps its tests. For a bug, start with a failing test that reproduces it. After that, change the code, not those tests.
+1. **Pin the behaviour.** Write the tests for new logic from the plan first, where the repo keeps its tests. For a bug, start with a failing test that reproduces it. With a failure map, one test per row drives that upstream signal and asserts the error kind and what the user sees. After that, change the code, not those tests.
 2. **Build it,** at the scope the plan set. Fix a small problem next to your change and mention it. Note anything larger or unrelated for the report instead of building it or filing it.
 3. **Schema changes:** use the repo's own migration tool and keep the migration additive. Apply it only to a local or test database and confirm it landed. Never point a database command at a shared or production database.
 4. **Look at UI changes** with the repo's verification recipe when it has one. Otherwise use a running dev server, or start one in the background, and screenshot each changed route with a Playwright script in the scratchpad, signed in as the role the change is for:
@@ -109,7 +114,7 @@ Then, for each issue, give:
 
 Then list the dropped numbers and why.
 
-**When the run fixed review findings** (a text request scoped to a review's items, such as `/orc warnings and nits`, or a review in this session), add a tally by the review's severities: how many Blockers, Warnings, and Nits were fixed, and how many of each were left open, with why. The bold done line carries the fixed counts.
+**When the run fixed review findings** (a text request scoped to a review's items, such as `/orc warnings and nits`, or a review in this session), add a tally by the review's severities: how many Blockers, Warnings, and Nits were fixed, and how many of each were left open, with why, plus the siblings the sweep in **Fixing review findings** found and fixed, each with the finding it came from. The bold done line carries the fixed counts.
 
 If this run started the dev server, stop it and confirm its port is free.
 
@@ -123,7 +128,7 @@ If this run started the dev server, stop it and confirm its port is free.
 
 ## When the owner asks for a review
 
-This covers "review", and the owner running `/orc-review` (or the project's `/deep-review`) right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, with step 4's tally of what you fixed and what's still open. Then push or ask about it, and end with the bold done line, as step 4 says.
+This covers "review", and the owner running `/orc-review` (or the project's `/deep-review`) right after this run. Run the review over the range this run committed. Fix every confirmed Blocker and Warning in the main session, as **Fixing review findings** says, commit the fixes (a subject that names the change, never the review), and re-review the fixes once. Report what the review found, with step 4's tally of what you fixed and what's still open. Then push or ask about it, and end with the bold done line, as step 4 says.
 
 ## When the owner says push
 

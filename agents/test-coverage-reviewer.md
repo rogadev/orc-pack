@@ -1,6 +1,6 @@
 ---
 name: test-coverage-reviewer
-pack: orc-pack@2.1.0
+pack: orc-pack@2.2.0
 description: Test-coverage analyst. Reviews whether new or changed code has sufficient, meaningful test coverage following the testing pyramid. Use during code review of any change to logic that can regress, in deep reviews, and before a behavior-preserving cleanup to check that today's behavior is pinned down. Exists to prevent regressions, not to demand tests for their own sake.
 model: claude-sonnet-5-5
 effort: high
@@ -54,6 +54,7 @@ Use the repo's naming convention. **Read the test file — don't just confirm it
 
 - **Branch coverage:** are conditionals, early returns, and error paths tested?
 - **Edge cases:** empty inputs, null/undefined, boundaries, error states; for clients — non-2xx responses, malformed payloads, timeouts, empty results.
+- **Failure modes:** for each failure the code tells apart at a boundary (see `errors.md` when the dispatch lists it), a test that drives the upstream signal and asserts the error kind and what the user sees. When one is untested, check the rest of that boundary's modes and list every untested one in a single finding.
 - **Meaningful assertions:** do tests assert real outcomes, or just exercise code? `expect(x).toBeDefined()` proves almost nothing; `expect(x).toEqual({...})` proves behavior.
 - **Regression value:** if someone breaks this code, will a test catch it?
 - **Mock discipline:** mocks stub the boundary (the network, the clock, the filesystem), not the module under test. A test that mocks the very thing it claims to test is a no-op.
