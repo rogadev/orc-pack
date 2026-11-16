@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Compares an installed orc pack with the kit it came from, file by file, so an install,
-// update, or setup proves the result instead of describing it. It reads both trees and writes
-// nothing.
+// Compares an installed orc pack with the kit it came from, file by file, so an install, an
+// update, or /orc-review init proves the result instead of describing it. It reads both trees
+// and writes nothing.
 //
 // Usage: node check-install.mjs <kitDir> <installRoot> [--allow <path>]... [--declined <path>]...
 //

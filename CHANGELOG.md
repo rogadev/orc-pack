@@ -18,6 +18,27 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.3.0] - 2026-11-16
+
+**Summary.** `/orc-review setup` is now two commands. `/orc-review init` sets up a project's review once: it drafts the profile (or converts a hand-written reviewer) and installs the pack into the repo. `/orc-review update` keeps it current in one pass: it updates the project's copy of the pack when a newer release is out (through `/update-orc`), applies the review template changes the user accepts, re-checks every path and fact in the profile against today's code, and reports "nothing to change" in one line when that's the case. `init` in a repo that already has a profile says so and runs `update` instead. `/orc-review setup skip` is now `/orc-review dismiss`: it keeps the profile as it is and stops the template reminder. The old names still work: `setup` runs `init` with no profile and `update` with one, and `setup skip` runs `dismiss`. For the failure-map release this follows, read the [2.2.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.2.0).
+
+**Changed areas.**
+
+- **`/orc-review`** — `skills/orc-review/SKILL.md`: the **Setup** section is now **Init** (draft or convert, with an **Already initialized?** check that diverts to **Update**); a new **Update** section (the pack, the template, the facts, the audit, the report); **Setup skip** is now **Dismiss**; the argument routing, `argument-hint`, `description`, the no-profile line, and the template-check line name the new commands. Copy the file over the installed one.
+- **References** — `skills/orc-review/references/profile-template.md` (the hand-off's fix for missing pack files is `/orc-review update`; **Declined template changes** is written by `update`), `lane-template.md`, and `template-changes.md` (`dismiss`). The review template stays at 5: profiles that still say `/orc-review setup` keep working through the alias.
+- **Agents** — `agents/setup-auditor.md` (dispatched by `init` and `update`; the agent keeps its name, so installs don't gain a stale file) and `agents/orc-updater.md` (project facts go to the profile through `/orc-review update`).
+- **`/update-orc`** — `skills/update-orc/SKILL.md`: its **Next** suggestions name `/orc-review init` and `/orc-review update`. `skills/update-orc/references/check-install.mjs`: a comment only.
+- **`/retro`** — `skills/retro/references/usage.mjs`: a session that ran `/orc-review init` or `update` counts as a profile session, as `setup` did.
+- **Docs** — `README.md`, `INSTALL.md`, `UPDATE.md`, and this repo's `CLAUDE.md` name the new commands. Kit docs only.
+
+**Update steps.** Copy the files. Nothing in a project's profile needs to change. From now on, run `/orc-review update` in a project to take a new release, instead of `/update-orc` followed by `/orc-review setup`.
+
+**Breaking changes.** None: `setup` and `setup skip` still work.
+
+**Files to read.** `skills/orc-review/SKILL.md` (**Init**, **Update**, **Dismiss**, and the argument routing), `skills/orc-review/references/profile-template.md`, and `skills/update-orc/SKILL.md` (**Next**).
+
+---
+
 ## [2.2.0] - 2026-11-16
 
 **Summary.** `/orc` and `/orc-review` now plan and check every way a call across a boundary can fail. A new standard, `standards/errors.md`, defines a **failure map**: for each call to a model or AI provider, an API, an auth gateway or proxy (PingFederate, a WAF), or a database, one row per failure mode, saying how the code detects it, what the user sees, what is logged, and which test pins it, with a starter catalog of failure modes per boundary. `/orc` writes the map into its plan and pins one test per row; the quality, test-coverage, and UI lanes check it. Reviews and fixes also now treat a finding as a sample: a lane that finds one defect checks the rest of the change for the same kind and reports every instance, and `/orc`, when it fixes review findings, sweeps the reviewed range for siblings of each finding and fixes them in the same commit. This release also carries two install-check fixes made after 2.1.0 (a declined piece that is installed is now compared, and stray files in a pack skill's directory are now listed as stale). For the 2.1.0 install model, read the [2.1.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.1.0).

@@ -1,6 +1,6 @@
 # Repo lane template
 
-A repo lane is a project-owned reviewer agent that `orc-review` dispatches on top of the pack's generic lanes, for a surface the generic bench covers too thinly for this project. It lives at `.claude/agents/<name>.md`, the profile lists it under **Repo lanes**, and it follows the contract below so `orc-review` can brief it, the `verifier` can check it, and a pack update never breaks it. `/orc-review setup` writes new lanes from this file, and rewrites an older suite's lanes to it.
+A repo lane is a project-owned reviewer agent that `orc-review` dispatches on top of the pack's generic lanes, for a surface the generic bench covers too thinly for this project. It lives at `.claude/agents/<name>.md`, the profile lists it under **Repo lanes**, and it follows the contract below so `orc-review` can brief it, the `verifier` can check it, and a pack update never breaks it. `/orc-review init` and `/orc-review update` write new lanes from this file, and rewrite an older suite's lanes to it.
 
 ## The contract
 
