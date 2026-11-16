@@ -18,6 +18,28 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.2.0] - 2026-11-16
+
+**Summary.** `/orc` and `/orc-review` now plan and check every way a call across a boundary can fail. A new standard, `standards/errors.md`, defines a **failure map**: for each call to a model or AI provider, an API, an auth gateway or proxy (PingFederate, a WAF), or a database, one row per failure mode, saying how the code detects it, what the user sees, what is logged, and which test pins it, with a starter catalog of failure modes per boundary. `/orc` writes the map into its plan and pins one test per row; the quality, test-coverage, and UI lanes check it. Reviews and fixes also now treat a finding as a sample: a lane that finds one defect checks the rest of the change for the same kind and reports every instance, and `/orc`, when it fixes review findings, sweeps the reviewed range for siblings of each finding and fixes them in the same commit. This release also carries two install-check fixes made after 2.1.0 (a declined piece that is installed is now compared, and stray files in a pack skill's directory are now listed as stale). For the 2.1.0 install model, read the [2.1.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.1.0).
+
+**Changed areas.**
+
+- **Error standard (new)** — `skills/orc/references/standards/errors.md`: the failure map, the rules (classify once at the boundary, check the response before parsing it, a message and a structured log event per failure kind, a shared reference ID, retries only for what can pass, timeouts, partial failure), the catalog by boundary, and how reviewers report a gap. Copy it with the rest of `skills/orc/references/`.
+- **Code standard** — `skills/orc/references/standards/code.md`, **Errors**: one line pointing calls across a boundary to `errors.md`.
+- **`/orc`** — `skills/orc/SKILL.md`: step 2's plan gets a **Failure map** item for any change that adds or alters a boundary call; step 3's **Pin the behaviour** writes one test per row; a new **Fixing review findings** section sweeps the reviewed range for siblings of each finding; step 4's tally lists those siblings apart from the review's counts.
+- **`/orc-review`** — `skills/orc-review/SKILL.md`: the **Standards** paragraph notes `standards/errors.md`; the quality and test-coverage lanes always get it, the UI lane when the UI shows a failure from a server or upstream call; the quality lane's ownership line adds failure maps; every lane brief carries a line telling the lane to treat a finding as a sample and report every instance of its kind.
+- **Reviewer agents** — `agents/quality-reviewer.md` (the failure-map checks under **Error handling**, and `errors.md` in **Orient first**), `agents/test-coverage-reviewer.md` (a test per failure mode, untested modes reported together), and `agents/ui-reviewer.md` (each failure kind reaches the screen with its own message). Copy all three.
+- **Install check** — `skills/update-orc/references/check-install.mjs`: a piece passed with `--declined` is compared like any other file when it is installed, so a modified copy no longer passes; every file under a pack skill's directory that the kit doesn't ship (outside `references/`, with no `pack:` marker) is listed as stale. Unmarked files in `agents/` are still the repo's own lanes and are never flagged.
+- **Docs** — `README.md` (**The standards**), `INSTALL.md` (the layout tree), and this repo's `CLAUDE.md`. Kit docs only.
+
+**Update steps.** Copy the files. An install that passed the 2.1.0 install check may now list stale files in a pack skill's directory; remove them, as `UPDATE.md` Phase 2 says for files the kit dropped. Review profiles need no change: the review template stays at 5. A project with known upstream quirks (for example, an SSO gateway that answers an expired session with a 200 login page) should record them in a doc in the repo, which `/orc` reads when it plans that area, and can name it in an **Extra focus** block for the quality and test-coverage lanes.
+
+**Breaking changes.** None.
+
+**Files to read.** `skills/orc/references/standards/errors.md`, `skills/orc/SKILL.md` (step 2, step 3, **Fixing review findings**, and step 4), `skills/orc-review/SKILL.md` (**Standards**, step 2's lanes, step 3's brief), the three reviewer agents above, and `skills/update-orc/references/check-install.mjs`.
+
+---
+
 ## [2.1.0] - 2026-11-13
 
 **Summary.** Installs, updates, and `/orc-review setup` now bring the whole pack into a repo and prove it. Recent installs came out partial: agents kept a repo's older reviewer because it looked "richer", skipped `/do` and `/tiedown` because a personal skill of the same name existed in `~/.claude/`, installed the `fallow` agent without the fallow CLI, and let the repo's formatter rewrite pack files. The rule is now one split: a repo's `.claude/` holds the whole pack, identical to the release, plus what's unique to the project (its review profile, the profile's references, repo lanes, and `CLAUDE.md` facts). A file at a pack name is always the pack's; its project-specific rules move into the profile or `CLAUDE.md`. A new script, `check-install.mjs`, compares an install with the kit file by file, and every install, update, and setup ends by running it until it passes. For the review-suite fix this builds on, read the [2.0.1 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.0.1).

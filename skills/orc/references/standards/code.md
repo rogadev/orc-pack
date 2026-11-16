@@ -44,6 +44,7 @@ Code is written for the next reader, not for the compiler. A reviewer should be 
 - **Expected failures use the framework's mechanism** (see the loaded framework playbook).
 - **Users see a message they can act on**, never a raw exception or stack trace.
 - **Log through the repo's logger**, with enough context to debug, and never log secrets or personal data.
+- **Calls across a boundary** (a model or AI provider, an API, an auth gateway, a database) follow `errors.md`: each failure mode classified, with its own message, log event, and test.
 
 ## Async and data
 

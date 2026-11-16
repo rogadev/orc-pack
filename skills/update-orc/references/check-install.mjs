@@ -91,12 +91,10 @@ const result = {
 
 for (const rel of kitFiles) {
   const target = path.join(installRoot, rel);
-  if (isDeclined(rel)) {
-    result.declined.push(rel);
-    continue;
-  }
+  // A declined piece may be absent. When it is present anyway, it is checked like any other
+  // file, so --declined can never hide a modified copy.
   if (!fs.existsSync(target)) {
-    result.missing.push(rel);
+    (isDeclined(rel) ? result.declined : result.missing).push(rel);
     continue;
   }
   const have = read(target);
@@ -107,21 +105,19 @@ for (const rel of kitFiles) {
   else result.differ.push(rel);
 }
 
-// Stale: a pack-marked skill or agent the kit no longer ships, or a file in a pack skill's
-// references/ directory that the kit dropped.
+// Stale: any file inside a pack skill's directory that the kit doesn't ship (the directory is
+// the pack's, so an extra file there is an orphan), or a pack-marked skill or agent the kit no
+// longer ships. Unmarked files elsewhere in agents/ and skills/ are the repo's own.
 for (const rel of [
   ...walk(installRoot, "skills"),
   ...walk(installRoot, "agents"),
 ]) {
   if (kitSet.has(rel)) continue;
   const parts = rel.split("/");
-  const inPackRefs =
-    parts[0] === "skills" &&
-    kitSkills.includes(parts[1]) &&
-    parts[2] === "references";
+  const inPackSkill = parts[0] === "skills" && kitSkills.includes(parts[1]);
   const marked =
     rel.endsWith(".md") && hasMarker(read(path.join(installRoot, rel)));
-  if (inPackRefs || marked) result.stale.push(rel);
+  if (inPackSkill || marked) result.stale.push(rel);
 }
 
 // Personal skills outrank project skills of the same name in Claude Code, so a stale or

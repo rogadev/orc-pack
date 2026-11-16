@@ -143,6 +143,7 @@ The quality bar lives in `skills/orc/references/`, and `/orc-review`'s reviewer 
 - **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
 - **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
 - **`standards/data.md`** — migrations, expand/contract changes, locks, backfills, indexes, and query safety.
+- **`standards/errors.md`** — the failure map for every call across a boundary (a model or AI provider, an API, an auth gateway, a database): each way the call can fail, how the code detects it, the message the user sees, the log event, and the test, with a starter catalog of failure modes per boundary. `/orc` writes the map into its plan and pins each row in a test, and the reviewers check it.
 - **`frameworks/`** (Next.js, Nuxt, SvelteKit, Astro) and **`platforms/`** (Cloudflare, Vercel) — each loads only when the review detects that stack, and tells the lanes to trust the installed version's docs over the playbook.
 
 Your repo always wins: every file defers to your `CLAUDE.md`/`AGENTS.md` and your established patterns, so the review never pushes a project structure onto your code that it doesn't already follow.

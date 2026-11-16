@@ -22,7 +22,7 @@ orc-pack/
 │   │   ├── SKILL.md
 │   │   └── references/     ← the standards and playbooks /orc-review's lanes check against, and the release check
 │   │       ├── update-check.md
-│   │       ├── standards/  (code, comments, structure, ui, data)
+│   │       ├── standards/  (code, comments, structure, ui, data, errors)
 │   │       ├── frameworks/ (next, nuxt, sveltekit, astro)
 │   │       └── platforms/  (cloudflare, vercel)
 │   ├── do/
