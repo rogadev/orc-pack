@@ -97,7 +97,7 @@ Good reasons for a `//` comment:
 - **Why, not what.** `// Retry once: the upstream returns 503 during its hourly cache flush.`
 - **A constraint.** `// Must run before auth middleware; the session cookie is not set yet.`
 - **A non-obvious decision and its trade-off.** `// Linear scan: lists here never exceed 20 items, and a Map costs more to build.`
-- **A pointer** to an issue, spec, or upstream bug that explains a workaround. Include the link.
+- **A pointer** to an issue, spec, or upstream bug that explains a workaround whose cause is outside the repo (see **Workarounds** in `code.md`). Include the link.
 - **A lint or type directive's reason**, on the same line or the line above. The repo's rules on directives still apply.
 
 Write in full sentences, in plain language, in the same voice as the rest of the file. A multi-line implementation comment is consecutive `//` lines, not a `/* */` block, unless the repo does otherwise. A parameter-name comment at a call site (`/* force= */ true`) is fine when the value alone does not say what it means.
@@ -120,7 +120,7 @@ These are the signatures of a comment written for a conversation instead of for 
 7. **Stale comments** that no longer describe the code beside them. Rewrite them to match the code, or delete them. When you cannot tell whether the comment or the code is wrong, leave the comment and report it: delete what you are certain is wrong, never what is merely unclear.
 8. **Commented-out code.** Version control keeps it.
 9. **Orphan `TODO`s** with no issue reference or owner. A `TODO` names an issue (`// TODO(#142): ...`), or is deleted and the work goes in the report.
-10. **Apologies for a hack** instead of fixing it or explaining the constraint that forces it.
+10. **Apologies for a hack** instead of fixing it or explaining the constraint that forces it. A comment that names the real fix inside the repo ("the real fix is X, but that's a bigger change") is one too. The workaround it defends is the finding (`code.md` **Workarounds**), so the comment goes when that's fixed, not on its own.
 11. **Undocumented exports** that the change adds or modifies (see **JSDoc: what gets one**). Add the JSDoc. Older undocumented exports in a touched file are cleanup work, documented in a cleanup run rather than as a side effect of an unrelated change.
 
 Keep license headers, generated-file markers, and tool directives the build depends on.

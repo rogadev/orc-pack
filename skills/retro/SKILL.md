@@ -1,6 +1,6 @@
 ---
 name: retro
-pack: orc-pack@2.3.0
+pack: orc-pack@2.4.0
 description: Retrospective on past /orc (or /do) runs in this repo and the /orc-review reviews that followed them. Measures cost, tokens, and active time per closed issue, how much of it went to review and fix-up, and what the reviews found, then reports what to improve, each finding with its evidence, rough cost, and where to change it. Read-only. Use when the user says "/retro", "retro on the last run", "how did orc do this week", "what does an issue cost", "where did the tokens go", or "what can orc do better".
 argument-hint: "[last | <n>d | since <date> | session <id>...]"
 ---
@@ -15,7 +15,7 @@ Arguments: `$ARGUMENTS`.
 - **`<n>d`** (for example `14d`) or **`since <date>`:** every session in that window.
 - **`session <id>...`:** those sessions only.
 
-`/do` is `/orc` under another name; count both. Sessions from before 2.0.0 may show `orc-loop` or `orc-rush`; count them as builds too, and say in the report that the window spans both workflows.
+`/do` is `/orc` under another name; count both. Sessions from before 2.0.0 may show `orc-loop` or `orc-rush`; count them as builds too, and say in the report that the window spans both workflows. `/fix` runs `/orc` on a review's findings; count it as a fix run.
 
 ## Ground rules
 
@@ -79,7 +79,10 @@ Find what to improve. Look at least for:
    and lanes that ran on a diff outside their surface.
 3. Quality: what the first review of each run found, by severity and kind. Defects the build
    should have caught itself (a failing format check or test, a missing test the plan named,
-   an unscreenshotted UI change) point at the build; others point at the review.
+   an unscreenshotted UI change) point at the build; others point at the review. A kind that
+   recurs across runs, or breaks a rule the repo's docs already state, is a check to propose
+   (WHERE: repo): a design change that makes it impossible, else a lint rule (with the message
+   it prints, naming what to use instead), a type, or a test.
 4. Scope: text requests whose plan the user corrected, issues reopened, follow-up bugs filed
    against a run's work.
 5. Anything else that cost tokens, time, or quality.

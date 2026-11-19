@@ -13,6 +13,8 @@ When two sources disagree, the higher one wins:
 
 A client repo with its own structure and conventions is followed as it is. Never reshape a repo to match this file; raise the disagreement in the report instead.
 
+**Item 2 covers conventions, never defects.** The repo's patterns decide names, layout, and its choice among sound ways to do a thing. They never make a workaround (see **Workarounds**) or a known defect acceptable, however many copies there are: agents copy the nearest example, so each copy left in place invites the next.
+
 ## The bar
 
 Code is written for the next reader, not for the compiler. A reviewer should be able to read a changed function once, top to bottom, and know what it does, why it exists, and what it guarantees. When that takes a second read, the code is not done.
@@ -45,6 +47,15 @@ Code is written for the next reader, not for the compiler. A reviewer should be 
 - **Users see a message they can act on**, never a raw exception or stack trace.
 - **Log through the repo's logger**, with enough context to debug, and never log secrets or personal data.
 - **Calls across a boundary** (a model or AI provider, an API, an auth gateway, a database) follow `errors.md`: each failure mode classified, with its own message, log event, and test.
+
+## Workarounds
+
+A workaround makes a symptom go away while its cause stays: a timer, `requestAnimationFrame`, or `queueMicrotask` that waits out a race; a retry around the repo's own code; a guard against a state that should never exist; a swallowed error; a fallback value that hides a bad input; a suppression.
+
+- **Fix the cause when it's in this repo.** A guard is a fix only when the state it handles is legitimate.
+- **A workaround is acceptable only when its cause is outside the repo's control,** such as a third-party bug or a platform limit, and the site names that cause, with the upstream issue when there is one. Suppressions in **Types** follow the same rule.
+- **A comment doesn't excuse it.** A comment that names the real fix ("the proper fix is to validate this upstream, but that's a bigger change") names a fix in this repo, so it is evidence for the finding, not a reason to drop it.
+- **Copies don't make it a pattern.** A shared helper that wraps a workaround is still a workaround. A change that adds another copy, or another call to that helper, gets the finding the first copy would; name the existing copies as pre-existing.
 
 ## Async and data
 
@@ -85,6 +96,7 @@ These are the signatures of code written to look finished rather than to be righ
 12. **Inconsistent idioms.** Code that reads as if three authors wrote it: mixed async styles, mixed error strategies, mixed naming in one file.
 13. **Slop tests.** Tests that assert a mock was called instead of asserting behavior, snapshot everything, assert `toBeDefined()`, or mock the module under test. The test-coverage reviewer owns these.
 14. **Slop comments.** Covered by the comments standard, `comments.md`.
+15. **Symptom patches.** A workaround for a cause inside the repo, with or without a comment defending it (see **Workarounds**).
 
 ## Touched files
 
@@ -100,7 +112,7 @@ A file the task modifies is in scope for cleanup, within limits:
 Churn is its own kind of slop. Do not flag, and do not change:
 
 - Working code that matches the repo's conventions but not your preference.
-- A pattern the repo uses consistently, even if you would choose another. Consistency wins.
+- A convention the repo uses consistently, even if you would choose another. Consistency wins, except for a workaround or a defect (see **Precedence**).
 - Formatting the repo's formatter already owns.
 - Micro-optimizations with no measured or obvious cost.
 

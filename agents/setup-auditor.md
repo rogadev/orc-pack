@@ -1,6 +1,6 @@
 ---
 name: setup-auditor
-pack: orc-pack@2.3.0
+pack: orc-pack@2.4.0
 description: Blind audit of a project's deep-review profile, run once after /orc-review init or update writes or changes it. Reads the finished profile, its references, and any repo lanes cold, checks every checkable fact against the repo, and offers judgment suggestions clearly labeled as suggestions. Read-only apart from its one report file. Dispatched by orc-review init and update; finding nothing is a valid result.
 model: claude-opus-5-5
 effort: medium
