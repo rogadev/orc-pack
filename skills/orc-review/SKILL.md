@@ -1,6 +1,6 @@
 ---
 name: orc-review
-pack: orc-pack@2.3.0
+pack: orc-pack@2.4.0
 description: Read-only deep review of a branch, range, pull request, or uncommitted work, sized to the change. Runs only the reviewer lanes whose surface the change touches, verifies the findings, and returns a plain-language report with a verdict. Reads the repo's project profile (risk map, architecture, known non-issues) from .claude/skills/deep-review/SKILL.md; `/orc-review init` drafts it and `/orc-review update` brings the project's pack and profile up to date. Use when the user says "/orc-review", "review my branch", "review dev before the PR", "is this ready to merge", "set up deep review for this project", or "update deep review".
 argument-hint: "init | update | dismiss | [ref | a..b | #PR | working] [quick | full] [auto]"
 ---
@@ -219,7 +219,7 @@ Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' r
 
 **Update check.** Unless the arguments contain `auto`, run the check in `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
 
-Return the report in chat (drop empty sections) and end with a bold action line, for example `**Fix the 2 Warnings, then re-run the review.**` or `**Ready to merge.**` Give the full report's path (the saved copy when there is one) just above it.
+Return the report in chat (drop empty sections) and end with a bold action line. When a Blocker or Warning survived, or the report asks the user to decide something, it names `/fix`, for example **Run `/fix` for the 2 Warnings and the debug-page decision, then re-run the review.** Otherwise it reads, for example, **Ready to merge.** Give the full report's path (the saved copy when there is one) just above it.
 
 **Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so a calling skill or script can read it:
 

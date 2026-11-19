@@ -18,6 +18,28 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.4.0] - 2026-11-19
+
+**Summary.** A new command, `/fix`, fixes what a review found. Run it in the session where `/orc-review` (or the project's `/deep-review`) finished. `/fix` fixes the findings worth fixing this round, by best judgement: every Blocker, every Warning unless the code shows it's wrong or the fix is a redesign, and the Nits that are cheap, clearly better, and inside the reviewed change. `/fix all` fixes every Blocker, Warning, and Nit. Either one commits each fix, and `and push` at the end also pushes. `/fix` is a thin skill that runs `/orc` on a text request, so the fixes are built, checked, and committed the way orc builds an issue. Orc's **Fixing review findings** section now defines the two scopes, where the findings come from (the review in this conversation, or a report path; otherwise it asks), how it settles the decisions a review hands the user, and the triage list it shows before building. `/orc-review`'s closing line now names `/fix` when anything is left to fix or decide. For the `init` and `update` split this follows, read the [2.3.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.3.0).
+
+**Changed areas.**
+
+- **`/fix` (new)** — `skills/fix/SKILL.md`: builds a request from its arguments (`all` as the first word for scope All, otherwise scope Best judgement; a report path when given; the rest, such as `and push`, passed through) and follows `../orc/SKILL.md` with it. Copy the new directory beside `skills/orc/`, because it reads orc's `SKILL.md` by relative path.
+- **`/orc`** — `skills/orc/SKILL.md`: **Fixing review findings** gains **The report**, **The scope** (Best judgement and All, and `not a defect` for a finding the code shows is false), **Decisions** (clear calls under the report's **Needs your attention** are made and reported with how to reverse them; toss-ups go to the owner with a recommendation), and **Show the triage**; step 4's tally adds `not a defect` and the decisions; the intro and `description` name `/fix`. Copy the file over the installed one.
+- **`/orc-review`** — `skills/orc-review/SKILL.md`, step 5: the bold action line names `/fix` when a Blocker or Warning survived or the report asks for a decision. The auto-mode block is unchanged. Copy the file over the installed one.
+- **`/retro`** — `skills/retro/references/usage.mjs`: a session whose first pack skill is `fix` counts as a fix session; `skills/retro/SKILL.md` says so. Copy both.
+- **Every other skill and agent** — only the `pack:` marker changes, to `orc-pack@2.4.0`.
+- **CI** — `.github/workflows/pack-integrity.yml` checks the agent names `skills/fix/SKILL.md` mentions. Kit CI only; nothing to copy.
+- **Docs** — `README.md` (a **Fix what the review found** section, and `/fix` in place of `/orc warnings and nits`), `INSTALL.md` (the layout tree, the mapping table, and the report), `UPDATE.md`, this repo's `CLAUDE.md`, and the plugin descriptions in `.claude-plugin/`. Kit docs only.
+
+**Update steps.** Copy the files, including the new `skills/fix/`. When the repo already holds its own `fix` skill with no `pack:` marker, it is a repo file at a pack name: back it up and replace it as `INSTALL.md` Phase 3 says, and name it in the report. Review profiles need no change: the review template stays at 5. `/orc warnings and nits` and other text requests that name a review's items still work as before.
+
+**Breaking changes.** None, unless the repo has its own `/fix`, which this release replaces (see **Update steps**).
+
+**Files to read.** `skills/fix/SKILL.md`, `skills/orc/SKILL.md` (**Fixing review findings** and step 4), `skills/orc-review/SKILL.md` (step 5's action line), and `skills/retro/references/usage.mjs` (`ORC_SKILLS` and `roleOf`).
+
+---
+
 ## [2.3.0] - 2026-11-16
 
 **Summary.** `/orc-review setup` is now two commands. `/orc-review init` sets up a project's review once: it drafts the profile (or converts a hand-written reviewer) and installs the pack into the repo. `/orc-review update` keeps it current in one pass: it updates the project's copy of the pack when a newer release is out (through `/update-orc`), applies the review template changes the user accepts, re-checks every path and fact in the profile against today's code, and reports "nothing to change" in one line when that's the case. `init` in a repo that already has a profile says so and runs `update` instead. `/orc-review setup skip` is now `/orc-review dismiss`: it keeps the profile as it is and stops the template reminder. The old names still work: `setup` runs `init` with no profile and `update` with one, and `setup skip` runs `dismiss`. For the failure-map release this follows, read the [2.2.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.2.0).

@@ -19,11 +19,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-// `do` is orc under another name. The loop and rush names are kept so a retro can still read
-// runs from before 2.0.0.
+// `do` is orc under another name, and `fix` runs orc on a review's findings. The loop and rush
+// names are kept so a retro can still read runs from before 2.0.0.
 const ORC_SKILLS = [
   "orc",
   "do",
+  "fix",
   "orc-loop",
   "orc-loop-iter",
   "orc-rush",
@@ -258,6 +259,7 @@ function roleOf(lines) {
     if (!inv) continue;
     if (["orc-review", "deep-review"].includes(inv.skill))
       return /^(setup|init|update)\b/.test(inv.args) ? "setup" : "review";
+    if (inv.skill === "fix") return "fix";
     if (
       /\b(nits?|warnings?|blockers?|findings?|should.?fix)\b/i.test(inv.args) &&
       !/#?\d{2,}/.test(inv.args)

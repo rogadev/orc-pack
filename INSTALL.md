@@ -27,6 +27,8 @@ orc-pack/
 │   │       └── platforms/  (cloudflare, vercel)
 │   ├── do/
 │   │   └── SKILL.md        ← /do, which reads and follows ../orc/SKILL.md
+│   ├── fix/
+│   │   └── SKILL.md        ← /fix, which runs ../orc/SKILL.md on a review's findings
 │   ├── orc-review/
 │   │   ├── SKILL.md
 │   │   └── references/     ← profile-template.md (the project profile /orc-review init fills in), lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
@@ -104,6 +106,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/orc/SKILL.md`                 | `<root>/.claude/skills/orc/SKILL.md`                 |
 | `skills/orc/references/` (all)        | `<root>/.claude/skills/orc/references/` (all)        |
 | `skills/do/SKILL.md`                  | `<root>/.claude/skills/do/SKILL.md`                  |
+| `skills/fix/SKILL.md`                 | `<root>/.claude/skills/fix/SKILL.md`                 |
 | `skills/retro/SKILL.md`               | `<root>/.claude/skills/retro/SKILL.md`               |
 | `skills/retro/references/` (all)      | `<root>/.claude/skills/retro/references/` (all)      |
 | `skills/orc-review/SKILL.md`          | `<root>/.claude/skills/orc-review/SKILL.md`          |
@@ -118,7 +121,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 
 **Copy nothing else.** `INSTALL.md`, `UPDATE.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `LICENSE`, `docs/`, `.claude-plugin/`, and `.github/` are kit docs and kit CI, not runtime files. The kit's own `.claude/` holds this repo's `required-secrets.md` and `smoke-checklist.md`, which are repo-owned: never copy them over the target's. It also holds `skills/condense/`, a maintainer skill for this repo only: never copy it. `/update-orc` reads `CHANGELOG.md` from the fetched kit, not from the install.
 
-**Copy `skills/orc/references/` as a whole directory, keeping its subfolders.** `/orc-review` finds the standards and playbooks at `skills/orc/references/` and hands them to its lanes by path; without them the lanes fall back to their generic rubrics and the pack's standards are lost. `/orc` and `/orc-review` also read `update-check.md` there. Keep `skills/orc/` and `skills/do/` side by side under the same `skills/` directory, because `/do` reads `../orc/SKILL.md`.
+**Copy `skills/orc/references/` as a whole directory, keeping its subfolders.** `/orc-review` finds the standards and playbooks at `skills/orc/references/` and hands them to its lanes by path; without them the lanes fall back to their generic rubrics and the pack's standards are lost. `/orc` and `/orc-review` also read `update-check.md` there. Keep `skills/orc/`, `skills/do/`, and `skills/fix/` side by side under the same `skills/` directory, because `/do` and `/fix` read `../orc/SKILL.md`.
 
 Every kit skill and agent file carries `pack: orc-pack@<version>` in its frontmatter (the reference files do not; they belong to the pack-owned `skills/orc/` directory). Leave it in place when copying — it's how a future install recognizes a file as the pack's rather than the repo's own (Phase 3). After copying, write `<root>/.claude/orc-pack.provenance.md` recording the pack version, the source repo (`owner/repo`) and URL, the install date, `Scope: project` (or `global`), a `Declined:` line naming each skill or agent the user declined (Phase 4), and any files you overwrote, replaced, or renamed. Recording the source repo is what lets `/update-orc` find future releases later.
 
@@ -152,7 +155,7 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
 
 1. **Confirm the ready command and working branch.** `/orc` runs "the repo's ready check" and commits to "the integration branch". If the repo's `CLAUDE.md`/`AGENTS.md` already state these (for example `pnpm ready`, branch `dev`), the skill will find them, so no edit is needed. If the repo has **no** `CLAUDE.md`/`AGENTS.md` documenting them, consider adding a short note there (not into the skill) so every session benefits. Ask the user before creating or editing repo docs.
 2. **Install every skill and agent; prune nothing on your own.** The user relies on the whole pack, and a skill that "adds nothing" in your judgment is one they use. Leave a piece out only when the user declines it by name, record it on provenance's `Declined:` line, and pass it to Phase 5's check with `--declined`. A name clash with a personal skill in `~/.claude/` is never a reason to leave one out (Phase 1). Notes for the report:
-   - `skills/orc/` and its whole `references/` directory are what `/orc-review` reads the standards from, and `/do` reads orc's `SKILL.md`.
+   - `skills/orc/` and its whole `references/` directory are what `/orc-review` reads the standards from, and `/do` and `/fix` read orc's `SKILL.md`.
    - `agents/fallow.md` stays even on a non-JS/TS repo: it self-skips. Phase 4.5 installs the CLI.
    - `skills/newissue/` reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
    - `/orc-review init` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its stack, risk map, architecture, and known non-issues), so don't create that file during the install.
@@ -188,7 +191,7 @@ A repo formatter that rewrites a pack file changes it from the kit's, so the nex
 1. **Run the install check.** `node <kit>/skills/update-orc/references/check-install.mjs <kit> <root>/.claude`, adding `--allow <path>` for each file Phase 3 re-applied a local edit to and `--declined <path>` for each piece the user declined. It compares every kit file with the install and must print `RESULT: PASS`. On a failure, fix what it lists and run it again; never report the install done while it fails. Then run the repo's own format check (check mode, never write mode) and confirm it lists no pack file, and run the install check once more if it did. Quote its summary line, and any **Shadowed for you** lines, in the report.
 2. **Frontmatter parses.** Each agent `.md` and each `SKILL.md` must start with a valid YAML frontmatter block (`---` … `---`) with at least `name` and `description`. A malformed frontmatter block makes Claude Code silently skip the file.
 3. **Agent names match references.** Every agent name the installed skills dispatch resolves to a file under `<root>/.claude/agents/`. A pack agent is never renamed (Phase 3), so a name that doesn't resolve means a file is missing.
-4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc`, `/do`, `/orc-review`, and the agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
+4. **Discoverability.** Skills and agents are picked up when a session starts. Tell the user that `/orc`, `/do`, `/fix`, `/orc-review`, and the agents become available in a **new** Claude Code session (or after reloading), not necessarily mid-session in the one running the install.
 5. **Provenance.** `<root>/.claude/orc-pack.provenance.md` exists and names the installed pack version (Phase 2).
 
 ---
@@ -204,7 +207,7 @@ Give them a short, human summary:
 - Fallow status (Phase 4.5): installed at the vetted version, declined, or held back because the vet didn't PASS — and the `dependency-vetter` verdict if you ran it.
 - The one setup step the pack can't do for them: **enabling the Task/to-do tool**, which recent Claude Code turns off by default on newer models, such as Opus 4.8 and Sonnet 5, and likely the ones this pack runs on, such as Opus 5.5. Point them at the pack's `README.md` → "Turn on the to-do list" and give them the one-liner: set `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the environment before launching Claude Code (details and alternatives in the README).
 - The model recommendation: **run `/orc` on Opus 5.5 (`claude-opus-5-5`), and do not use Opus 5 (`claude-opus-5`)**. The skill refuses to start on Opus 5, but the session model is the user's to set.
-- How the workflow runs: `/orc` (or `/do`) builds and commits the issues in the session, then the user runs `/orc-review` in a fresh session and `/orc warnings and nits` to fix what it found. Both `/orc` and `/do` are user-invoked only and become available in a new session.
+- How the workflow runs: `/orc` (or `/do`) builds and commits the issues in the session, then the user runs `/orc-review` in a fresh session and `/fix` in that session to fix what it found (`/fix all` takes every finding, and `and push` also pushes). `/orc`, `/do`, and `/fix` are user-invoked only and become available in a new session.
 - Whether the repo has a project review profile. With no `<root>/.claude/skills/deep-review/SKILL.md`, tell them to run `/orc-review init` once in a new session: it drafts the profile that tailors the review to this project's stack and architecture. When that file exists without a `based-on: orc-review@` line, it is a hand-written reviewer: tell them `/orc-review init` converts it into a profile and keeps its project-specific parts.
 
 Do **not** run `/orc` yourself to "test" it unless the user asks: it commits code, and it is user-invoked only. Installation is done when the install check prints `RESULT: PASS`.

@@ -10,11 +10,11 @@ Measured over a week of real work, per closed issue, with the follow-up review a
 
 `/orc` works GitHub issues for Claude Code. For each issue, it reads the issue and the code, plans the change, pins the behavior in tests, builds it, screenshots any UI change, updates the docs, and commits one commit per issue. When the batch is done, it asks whether to push to your integration branch, then closes each issue with a comment that says where it landed.
 
-The review is a separate step that you start. Run `/orc-review` (or your project's `/deep-review`) in a fresh session over what orc committed. It runs only the reviewer agents the change calls for, filters their findings through a skeptical verifier, and gives you a verdict. Then run `/orc warnings and nits` to fix what it found.
+The review is a separate step that you start. Run `/orc-review` (or your project's `/deep-review`) in a fresh session over what orc committed. It runs only the reviewer agents the change calls for, filters their findings through a skeptical verifier, and gives you a verdict. Then run `/fix` in the same session to fix what it found.
 
 ![Diagram: from issue to reviewed commit. You hand orc an issue, a range, next 10, or a sentence. In your session, /orc plans, pins the behavior in tests, builds, screenshots every UI change at phone and desktop widths in light and dark, updates the docs, and commits one commit per issue, then asks before it pushes and closes each issue with a note. In a fresh session, /orc-review sizes the review to the change, runs only the specialist reviewers it needs, verifies each finding against the code, and gives a verdict; /orc warnings and nits fixes what it found.](docs/media/orc-2-workflow.png)
 
-This pack contains `/orc`, `/do`, `/orc-review`, the reviewer agents the review relies on, and a few supporting skills, written to work in **any** repo.
+This pack contains `/orc`, `/do`, `/orc-review`, `/fix`, the reviewer agents the review relies on, and a few supporting skills, written to work in **any** repo.
 
 ### Why one session
 
@@ -77,7 +77,7 @@ When your request already said to push (for example, `/orc 350-360 and push to d
 
 `/orc-review` reviews a branch, a range, a pull request (`/orc-review #123`), or uncommitted work, and changes nothing. It sorts each changed file by risk surface and runs only the reviewers those surfaces call for: `security-reviewer` only when the change touches a trust boundary such as auth, input handling, or secrets; only the UI lanes for a change to markup and styles; nothing for a change to docs and comments. There is no cap on the number of reviewers, so a change that crosses several risk surfaces gets every lane it needs. The `verifier` filters the findings (it skips a run with only Nits), and the report ends with a verdict: not ready, ready after small fixes, ready to merge, or incomplete.
 
-Run it in a fresh session after an `/orc` run, so the review doesn't read the build's reasoning. Then run `/orc warnings and nits` (or `/orc fix the Blocker and the Warnings`) to fix what it found. Orc reports how many Blockers, Warnings, and Nits it fixed and which it left open.
+Run it in a fresh session after an `/orc` run, so the review doesn't read the build's reasoning. Then run `/fix` to fix what it found; see [Fix what the review found](#fix-what-the-review-found-fix).
 
 Run `/orc-review init` once per project. It writes `.claude/skills/deep-review/SKILL.md`, a short profile with that project's stack, a risk map of real paths (which files sit on the trust boundary, which are server, data, and UI), what to leave out of the diff, the architecture, and the patterns that look wrong but are deliberate. From then on, `/deep-review` runs the same workflow with the profile, so the choice of reviewers is exact for that app. Init also copies the whole pack into the project's `.claude/` when the pack is installed only globally or as a plugin, so everyone who clones the repo gets the same review. Commit those files with the profile; each project keeps its own copy, and a profile stops with a list of what's missing rather than running a partial review. Each risk-map row says which surface a path is, and an optional **Extra lanes** column adds reviewers on top, for example `security-reviewer` on a billing folder.
 
@@ -89,6 +89,23 @@ When the pack changes the shape of the profile or the repo-lane contract, which 
 
 `/orc-review update` is the one command for keeping a project's review current. It updates the project's copy of the pack when a newer release is out (through `/update-orc`), applies any review template changes you accept, and re-checks every path and fact in the profile against today's code, fixing what drifted. When nothing needs changing, it says so in one line. The old name, `/orc-review setup`, still works: it runs `init` in a repo with no profile and `update` in one that has a profile, and `setup skip` runs `dismiss`.
 
+### Fix what the review found: `/fix`
+
+```
+/fix                     # the findings worth fixing this round, by best judgement
+/fix all                 # every Blocker, Warning, and Nit
+/fix and push            # either one, then push the commits
+/fix all but leave the debug page
+```
+
+Run `/fix` in the session where the review finished. It runs `/orc` on the review's findings, so the fixes are built, checked, and committed the way orc builds an issue, each commit named for what it fixes.
+
+- **`/fix`** fixes every Blocker, and every Warning unless reading the code shows the finding is wrong or the fix would be a redesign. It also fixes the Nits that are cheap, clearly better, and inside the reviewed change, and skips taste calls and churn.
+- **`/fix all`** fixes every Blocker, Warning, and Nit.
+- **Either way**, a finding that turns out false once the code is read isn't "fixed" into a wrong change; the report marks it `not a defect` and says why. When a finding is one instance of a defect, orc fixes every instance in the reviewed range. And when the review asks you to decide something, such as whether a debug page stays, orc makes the call when it's clear and says how to undo it, and leaves real toss-ups to you, with a recommendation.
+
+Before it builds, orc lists every finding as fix, skip, or yours to decide, with a reason for each skip, and starts in the same turn, so you can correct it while it works. The report counts what it fixed and left open at each severity. It commits and asks before pushing, unless you added `and push`. Anything else you add after `/fix` is passed along as an instruction. In a session with no review, give it the report's path (`/fix <path>`); without one, it asks. To fix only the items you name, use `/orc` instead, for example `/orc the two Warnings`.
+
 ### Look back at a run: `/retro`
 
 ```
@@ -96,7 +113,7 @@ When the pack changes the shape of the profile or the repo-lane contract, which 
 /retro 14d         # every session in the last 14 days
 ```
 
-`/retro` reads the session transcripts of your `/orc` and `/do` runs in this repo, and the reviews and fix runs that followed them, and tells you what an issue costs and what to improve. It measures cost, tokens, and active time per closed issue, how much of that went to review and fix-up, and what the reviews found. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
+`/retro` reads the session transcripts of your `/orc`, `/do`, and `/fix` runs in this repo, and the reviews and fix runs that followed them, and tells you what an issue costs and what to improve. It measures cost, tokens, and active time per closed issue, how much of that went to review and fix-up, and what the reviews found. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
 
 ---
 
@@ -106,6 +123,7 @@ When the pack changes the shape of the profile or the repo-lane contract, which 
 
 - `skills/orc/` — the issue workflow itself, plus `references/`: the shared standards and stack playbooks the review lanes check against (see [The standards](#the-standards)), and `update-check.md`, the once-a-day release check.
 - `skills/do/` — `/do`, the same skill as `/orc` under another name. It reads and follows `skills/orc/SKILL.md`.
+- `skills/fix/` — `/fix`, which runs `/orc` on a review's findings. See [Fix what the review found](#fix-what-the-review-found-fix).
 - `skills/orc-review/` — the read-only deep review of a branch before a merge, plus `references/profile-template.md`, the project profile `/orc-review init` fills in as the repo's own `/deep-review`, `references/lane-template.md`, the contract a project's own reviewer lanes follow, and `references/template-changes.md`, the review template's version and what each version changed. See [Review a branch before you merge](#review-a-branch-before-you-merge-orc-review).
 - `skills/retro/` — a retrospective on past runs: what an issue costs, where the tokens and time went, and what to improve. See [Look back at a run](#look-back-at-a-run-retro).
 - `skills/tiedown/` — run `/tiedown` when you think a session is finished. It checks the whole session and the real state of the repo and machine for unanswered questions, unfinished requests, unpushed or uncommitted work, failed or skipped checks, things still running, open issues, and promises not yet kept. It replies "We're done." when nothing is left. Otherwise it thinks through each open item, with no subagent for an obvious one and a Haiku, Sonnet, or Opus subagent sized to the rest, and gives you one final list: the exact action, a one-sentence reason, and who does it. Reply "do all of it" to approve. It never changes anything itself. Optional.
@@ -195,7 +213,7 @@ The companion `INSTALL.md` is written **for an AI agent**. The intended flow:
 
 If you'd rather do it by hand, it's a copy:
 
-- each directory in `skills/` (the whole directory, including its `references/`) → `<repo>/.claude/skills/<same-name>/`. `skills/orc/` and `skills/do/` go together, because `/do` reads orc's skill file, and `/orc-review` reads `skills/orc/references/`.
+- each directory in `skills/` (the whole directory, including its `references/`) → `<repo>/.claude/skills/<same-name>/`. `skills/orc/`, `skills/do/`, and `skills/fix/` go together, because `/do` and `/fix` read orc's skill file, and `/orc-review` reads `skills/orc/references/`.
 - every file in `agents/` → `<repo>/.claude/agents/<same-name>.md`
 
 A copy in `~/.claude/` as well makes orc available in projects that don't have one, but it never replaces a project's copy, and `/orc-review init` installs the whole pack into any repo that lacks it. Claude Code runs a personal skill in `~/.claude/skills/` instead of a project skill of the same name, so keep that copy current with `/update-orc` (run from a folder with no project install), or a stale one will run instead of the repo's; the install check names any that do. Either way the pack goes into the repo your session is open in, never into a checkout of `orc-pack` itself; if Claude starts "installing" into an `orc-pack` folder it found on your machine, stop it and open the session in the target repo. **Skills and agents load when a session starts**, so start a fresh Claude Code session after installing.
@@ -257,12 +275,12 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 4. **Build each issue in order.** Tests first, then the change, screenshots of any UI change at 390 and 1440 pixels in light and dark, the docs, and one commit per issue.
 5. **Report.** It runs the ready check once over the whole run, reports each issue, and asks whether to push (or pushes when you already said to).
 6. **Push and close.** After the push, it comments on and closes each fully resolved issue. A partly resolved issue gets a comment and stays open.
-7. **Review, in a fresh session.** You run `/orc-review` over what orc committed, then `/orc warnings and nits` to fix what it found.
+7. **Review, in a fresh session.** You run `/orc-review` over what orc committed, then `/fix` to fix what it found.
 
 ## Good to know
 
 - **Run it on Opus 5.5 (`claude-opus-5-5`).** `/orc` refuses to start on Opus 5 (`claude-opus-5`, the 5.0 release), which hallucinates, drifts off task, and reports problems that aren't there.
-- **You start it; it doesn't start itself.** `/orc` and `/do` are user-invoked only, so Claude never runs them on its own.
+- **You start it; it doesn't start itself.** `/orc`, `/do`, and `/fix` are user-invoked only, so Claude never runs them on its own.
 - **It commits to your working branch** (typically `dev`) and pushes only when you say so. It **never opens a PR, never touches `main`, and never force-pushes.** Promoting to your release branch stays your decision.
 - **It won't fake a pass.** It fixes the cause of a failing check and never weakens, skips, or deletes a test to get green. A failure it can't fix stops the run and comes back to you.
 - **It's for repos that track work as GitHub issues** and use `gh`. A plain-text request works without an issue board.
