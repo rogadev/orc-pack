@@ -15,7 +15,7 @@ Arguments: `$ARGUMENTS`.
 - **`<n>d`** (for example `14d`) or **`since <date>`:** every session in that window.
 - **`session <id>...`:** those sessions only.
 
-`/do` is `/orc` under another name; count both. `/fix` runs `/orc` on a review's findings; count it as a fix run. Sessions from before 2.0.0 may show `orc-loop` or `orc-rush`; count them as builds too, and say in the report that the window spans both workflows.
+`/do` is `/orc` under another name; count both. Sessions from before 2.0.0 may show `orc-loop` or `orc-rush`; count them as builds too, and say in the report that the window spans both workflows. `/fix` runs `/orc` on a review's findings; count it as a fix run.
 
 ## Ground rules
 

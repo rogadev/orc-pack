@@ -54,16 +54,16 @@ The text is the issue. Treat it exactly like one from here on, with these differ
 
 **The report.** When the request names a report file, take the findings from it. Otherwise take them from the last review in this conversation, reading the full report file whose path it printed when that file still exists. Either way, skip the board search, as **Working a text request** item 1 says. With neither, stop and ask the owner for the report's path; never pick a saved report yourself, because it may cover an older range.
 
-**The scope.** A request that names items (`warnings and nits`, `the two Warnings`) takes exactly those. Otherwise it takes one of two scopes, which `/fix` and `/fix all` set:
+**The scope.** A request that names items (`warnings and nits`, `the two Warnings`) takes exactly those, even when it also names a scope. Otherwise it takes one of two scopes: All when it names scope All (as `/fix all` does) or asks for every finding, and Best judgement for any other request, including `/fix`:
 
-- **Best judgement:** every Blocker; every Warning, unless the code shows it's wrong or its fix is a redesign; and each Nit that is cheap, clearly better, and inside the reviewed change. Skip taste calls and churn.
+- **Best judgement:** every Blocker and Warning, and each Nit that is cheap, clearly better, and inside the reviewed change. Skip taste calls and churn. A Warning whose fix is a redesign goes in the report as open, with what it would take; don't build it.
 - **All:** every Blocker, Warning, and Nit.
 
-At any scope, a finding the code shows is false gets no change: list it as `not a defect`, with why. A Warning whose fix is a redesign goes in the report as open, with what it would take; don't build it.
+At every scope, named items included, a finding the code shows is false gets no change: list it as `not a defect`, with why.
 
-**Decisions.** At either of those two scopes, also settle each item under the report's **Needs your attention** that asks the owner to choose, such as whether a debug page stays. Make the call when an expert would make it without asking, and say how to reverse it. Leave a real toss-up, or a call on policy, a security boundary, an external contract, or spending money, to the owner, with your recommendation. An item that only informs, such as a flaky test, needs nothing.
+**Decisions.** At either of those two scopes, also settle each item under the report's **Needs your attention** that asks the owner to choose, such as whether a debug page stays. Make the call when an expert would make it without asking, and say how to reverse it. Leave a real toss-up, or a call on policy, a security boundary, an external contract, or spending money, to the owner, with your recommendation, in the report; it doesn't stop the run. An item that only informs, such as a flaky test, needs nothing.
 
-**Show the triage.** The plan message lists every finding, with its severity dot, and every decision, each marked `fix`, `skip`, or `owner`, with a one-line reason for each skip. Then start building in the same turn.
+**Show the triage.** The plan message lists every finding (with its severity dot) and every decision, and marks each one `fix`, `skip`, or `owner`, with a one-line reason for each skip.
 
 **Fix the kind, not only the instance.** A review finding is a sample of a kind of defect, not the whole of it. Before fixing one, name its kind (a failure mode missing at a boundary, a route without an auth check, a handler without its loading state), then check the rest of the reviewed range for the same kind: at a boundary, its whole failure map from `references/standards/errors.md`. Fix every instance in the same commit as the finding. Those siblings are in scope even for a text request scoped to the review's items, because they are the same defect; a different defect you notice still goes in the report. Step 4's tally lists them apart from the review's own counts.
 
@@ -127,7 +127,7 @@ Then, for each issue, give:
 
 Then list the dropped numbers and why.
 
-**When the run fixed review findings** (a `/fix` run, a text request scoped to a review's items such as `/orc warnings and nits`, or a review in this session), add a tally by the review's severities: how many Blockers, Warnings, and Nits were fixed, and how many of each were left open or marked `not a defect`, with why, plus the siblings the sweep in **Fixing review findings** found and fixed, each with the finding it came from. List each decision you made, with how to reverse it, and each one left to the owner, with your recommendation. The bold done line carries the fixed counts.
+**When the run fixed review findings**, add a tally by the review's severities: how many Blockers, Warnings, and Nits were fixed, and how many of each were left open or marked `not a defect`, with why, plus the siblings the sweep in **Fixing review findings** found and fixed, each with the finding it came from. List each decision you made, with how to reverse it, and each one left to the owner, with your recommendation. The bold done line carries the fixed counts.
 
 If this run started the dev server, stop it and confirm its port is free.
 

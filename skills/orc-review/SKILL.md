@@ -219,7 +219,7 @@ Write the full report to `$D/report.md`, from `$D/verified.md` (and the lanes' r
 
 **Update check.** Unless the arguments contain `auto`, run the check in `references/update-check.md` (in the `orc` skill directory beside this one) before returning the report; its line goes last under **Needs your attention**.
 
-Return the report in chat (drop empty sections) and end with a bold action line. When a Blocker or Warning survived, or the report asks the user to decide something, it names `/fix`, for example **Run `/fix` for the 2 Warnings and the debug-page decision, then re-run the review.** Otherwise it reads, for example, **Ready to merge.** Give the full report's path (the saved copy when there is one) just above it.
+Return the report in chat (drop empty sections) and end with a bold action line. When a Blocker or Warning survived, or the report asks the user to decide something, the line names `/fix`, for example **Run `/fix` for the 2 Warnings and the debug-page decision, then re-run the review.** Otherwise it reads, for example, **Ready to merge.** Give the full report's path (the saved copy when there is one) just above the action line.
 
 **Auto mode.** When the arguments contain `auto`, append this exact block after the action line, so a calling skill or script can read it:
 
