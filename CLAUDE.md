@@ -45,6 +45,13 @@ Plugin users only receive updates when `.claude-plugin/plugin.json`'s `version` 
 
 Practical consequence: when editing skill or agent content on `dev`, you can leave the version alone and let the guard bump it, **or** bump `plugin.json` yourself for an intentional minor/major release — but if you bump by hand, sync the `pack:` markers in the same commit so they don't drift. Never hand-edit a `pack:` marker to a version that disagrees with `plugin.json`.
 
+## Shipping a release
+
+`/ship` (a personal skill in `~/.claude/skills/`, not part of this repo) takes `dev` to a published release: it pushes `dev`, opens the `dev` to `main` PR with `/pr`, merges it with `/land`, and waits for `release-guard.yml` to publish the release on `main`.
+
+- **Before pushing, leave the guard nothing to fix,** so `/land` doesn't wait on a fix commit or fail on a missing changelog section. When pack content changed since the last tag, `plugin.json`'s version must have no tag yet: bump it by hand otherwise (the next minor when a commit since the tag adds a command or skill, else the next patch) and sync every `pack:` marker. `CHANGELOG.md` needs that version's section, covering every change since the last tag and dated today. Run `npx prettier@3 --write .` and commit what it changes.
+- **Installing locally.** The maintainer runs the pack from a copied global install in `~/.claude/`, not the plugin, so `claude plugin list` doesn't list it. Once the release is published, run the `update-orc` skill from this repo: this repo has no project install, so it updates `~/.claude/`. It must report `UPDATED to <version>` (or `ALREADY CURRENT` at that version). New and changed skills load in a new session.
+
 ## Model assignments are intentional
 
 `/orc` runs on the session's own model and dispatches no subagents of its own (it may send a wide search to Claude Code's built-in Explore agent, pinned to Haiku in the dispatch because Explore otherwise runs on the session's model, and runs the `fallow` agent once before its report when the run removed or moved code). Every other agent pins a `model:` and, where the model supports it, an `effort:` in frontmatter:
