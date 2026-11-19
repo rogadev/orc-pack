@@ -47,10 +47,9 @@ Practical consequence: when editing skill or agent content on `dev`, you can lea
 
 ## Shipping a release
 
-`/ship` (a personal skill in `~/.claude/skills/`, not part of this repo) takes `dev` to a published release: it pushes `dev`, opens the `dev` to `main` PR with `/pr`, merges it with `/land`, and waits for `release-guard.yml` to publish the release on `main`.
+The maintainer's `/ship` takes `dev` to a published release and updates their copied install in `~/.claude/`. It lives at `.claude/skills/ship/SKILL.md`, ignored through `.git/info/exclude`, so it exists only in the maintainer's checkout and never ships.
 
-- **Before pushing, leave the guard nothing to fix,** so `/land` doesn't wait on a fix commit or fail on a missing changelog section. When pack content changed since the last tag, `plugin.json`'s version must have no tag yet: bump it by hand otherwise (the next minor when a commit since the tag adds a command or skill, else the next patch) and sync every `pack:` marker. `CHANGELOG.md` needs that version's section, covering every change since the last tag and dated today. Run `npx prettier@3 --write .` and commit what it changes.
-- **Installing locally.** The maintainer runs the pack from a copied global install in `~/.claude/`, not the plugin, so `claude plugin list` doesn't list it. Once the release is published, run the `update-orc` skill from this repo: this repo has no project install, so it updates `~/.claude/`. It must report `UPDATED to <version>` (or `ALREADY CURRENT` at that version). New and changed skills load in a new session.
+However a release goes out, leave the guard nothing to fix before the PR, so the merge doesn't wait on a fix commit or fail on a missing changelog section. When pack content changed since the last tag, `plugin.json`'s version must have no tag yet: bump it by hand otherwise (the next minor when a commit since the tag is a `feat:`, else the next patch) and sync every `pack:` marker. `CHANGELOG.md` needs that version's section, covering every change since the last tag and dated today. Run `npx prettier@3 --write .` and commit what it changes.
 
 ## Model assignments are intentional
 
