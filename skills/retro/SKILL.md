@@ -79,7 +79,10 @@ Find what to improve. Look at least for:
    and lanes that ran on a diff outside their surface.
 3. Quality: what the first review of each run found, by severity and kind. Defects the build
    should have caught itself (a failing format check or test, a missing test the plan named,
-   an unscreenshotted UI change) point at the build; others point at the review.
+   an unscreenshotted UI change) point at the build; others point at the review. A kind that
+   recurs across runs, or breaks a rule the repo's docs already state, is a check to propose
+   (WHERE: repo): a design change that makes it impossible, else a lint rule (with the message
+   it prints, naming what to use instead), a type, or a test.
 4. Scope: text requests whose plan the user corrected, issues reopened, follow-up bugs filed
    against a run's work.
 5. Anything else that cost tokens, time, or quality.

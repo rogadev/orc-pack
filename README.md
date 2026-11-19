@@ -160,7 +160,7 @@ Before it builds, orc lists every finding as fix, skip, or yours to decide, with
 
 The quality bar lives in `skills/orc/references/`, and `/orc-review`'s reviewer lanes check against it. The review detects your stack from your profile or your manifest and hands each lane the files it needs:
 
-- **`standards/code.md`** — readability, types, errors, async, state, reuse, and a named list of AI slop code patterns (defensive noise, pass-through layers, reinvented utilities, synced state, and more).
+- **`standards/code.md`** — readability, types, errors, async, state, reuse, workarounds (acceptable only when the cause is outside the repo, never because the code already has copies), and a named list of AI slop code patterns (defensive noise, pass-through layers, reinvented utilities, synced state, symptom patches, and more).
 - **`standards/comments.md`** — the cold-read test (every comment must make sense to someone who sees only the file), JSDoc on exports following Google's style guides, and the slop comments to remove.
 - **`standards/structure.md`** — layers, separation of concerns, the server and client boundary, and file and folder placement.
 - **`standards/ui.md`** — design-system and theme adherence, every interaction state, responsive behavior, accessibility (WCAG 2.2 AA), and copy.
@@ -284,4 +284,4 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 - **It commits to your working branch** (typically `dev`) and pushes only when you say so. It **never opens a PR, never touches `main`, and never force-pushes.** Promoting to your release branch stays your decision.
 - **It won't fake a pass.** It fixes the cause of a failing check and never weakens, skips, or deletes a test to get green. A failure it can't fix stops the run and comes back to you.
 - **It's for repos that track work as GitHub issues** and use `gh`. A plain-text request works without an issue board.
-- **When you correct it** on something it should have known, it proposes the check that would have caught it: a lint rule, a test, or a hook first, and a line in `CLAUDE.md` only when nothing deterministic fits.
+- **When a mistake repeats,** it proposes the check that would have caught it. That covers three cases: you correct it on something it should have known, a review finding breaks a rule your docs already state, or a defect it fixes has copies elsewhere in the code. It tries a design change that makes the mistake impossible first, then a lint rule (whose message says what to use instead), a type, a test, or a hook, and a line in `CLAUDE.md` only when nothing deterministic fits. It adds the check only when you say yes.

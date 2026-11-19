@@ -65,7 +65,7 @@ At every scope, named items included, a finding the code shows is false gets no 
 
 **Show the triage.** The plan message lists every finding (with its severity dot) and every decision, and marks each one `fix`, `skip`, or `owner`, with a one-line reason for each skip.
 
-**Fix the kind, not only the instance.** A review finding is a sample of a kind of defect, not the whole of it. Before fixing one, name its kind (a failure mode missing at a boundary, a route without an auth check, a handler without its loading state), then check the rest of the reviewed range for the same kind: at a boundary, its whole failure map from `references/standards/errors.md`. Fix every instance in the same commit as the finding. Those siblings are in scope even for a text request scoped to the review's items, because they are the same defect; a different defect you notice still goes in the report. Step 4's tally lists them apart from the review's own counts.
+**Fix the kind, not only the instance.** A review finding is a sample of a kind of defect, not the whole of it. Before fixing one, name its kind (a failure mode missing at a boundary, a route without an auth check, a handler without its loading state), then check the rest of the reviewed range for the same kind: at a boundary, its whole failure map from `references/standards/errors.md`. Fix every instance in the same commit as the finding. Those siblings are in scope even for a text request scoped to the review's items, because they are the same defect; a different defect you notice still goes in the report. Step 4's tally lists them apart from the review's own counts. Then `git grep` for copies of the same defect outside the reviewed range, because those are what the next agent copies. They're outside the fix's scope: list them in the report with a proposed check, as **When a mistake repeats** says, and change one only when your fix removes its cause.
 
 ### Picking the next N
 
@@ -154,9 +154,16 @@ gh issue close <n>
 
 The comment says `Done in <sha> on <branch>.`, then two or three lines on what changed and where, then `It's on <branch>, not released yet; it goes out with the next promotion.` A partly resolved issue gets the comment, saying what landed and what remains, but stays open. A text request has nothing to comment on or close: mark `land`'s `close` stage done once the push lands. Never open the promotion PR unless the owner asks.
 
-## When the owner corrects you
+## When a mistake repeats
 
-If the owner corrects something you should have known, propose the check that would have caught it: a lint rule, a test, or a hook first, and one line in `CLAUDE.md` or a `.claude/rules/` file only when nothing deterministic fits.
+A mistake that comes back means prose didn't hold. Three things count: the owner corrects something you should have known; a review finding breaks a rule the repo's docs already state; or a defect you fix has copies outside the reviewed range. For each, propose the check that would have caught it, choosing the first that fits:
+
+1. A change that makes the mistake impossible: one owner for the state, one helper, an import boundary.
+2. A lint rule, a type, or a test. A lint rule's message says what to use instead (the helper, token, or file), not only what's banned, because the next agent acts on that message.
+3. A hook.
+4. One line in `CLAUDE.md` or a `.claude/rules/` file, only when nothing deterministic fits.
+
+The proposal names the real instance the check would have failed on and how many existing copies it would flag, and asks whether to remove those copies in the same change or exempt them by path until a cleanup. It goes in the report; add the check only when the owner says yes, and confirm it fails on that instance before you commit it.
 
 ## Progress bar
 
