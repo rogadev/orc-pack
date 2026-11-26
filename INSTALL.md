@@ -42,6 +42,9 @@ orc-pack/
 │   │   └── references/     ← smoke-runner.mjs, the Playwright smoke template
 │   ├── tiedown/
 │   │   └── SKILL.md
+│   ├── triage/
+│   │   ├── SKILL.md        ← /triage, the whole-board audit
+│   │   └── references/     ← snapshot.mjs (the board snapshot), investigate.md (the investigator brief), report.md (the report template)
 │   └── update-orc/
 │       ├── SKILL.md
 │       └── references/     ← check-install.mjs, the install check every install, update, and /orc-review init ends with
@@ -116,6 +119,8 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/shipcheck/SKILL.md`           | `<root>/.claude/skills/shipcheck/SKILL.md`           |
 | `skills/shipcheck/references/` (all)  | `<root>/.claude/skills/shipcheck/references/` (all)  |
 | `skills/tiedown/SKILL.md`             | `<root>/.claude/skills/tiedown/SKILL.md`             |
+| `skills/triage/SKILL.md`              | `<root>/.claude/skills/triage/SKILL.md`              |
+| `skills/triage/references/` (all)     | `<root>/.claude/skills/triage/references/` (all)     |
 | `skills/update-orc/SKILL.md`          | `<root>/.claude/skills/update-orc/SKILL.md`          |
 | `skills/update-orc/references/` (all) | `<root>/.claude/skills/update-orc/references/` (all) |
 | `agents/<name>.md` (every file)       | `<root>/.claude/agents/<name>.md` (same name)        |
@@ -161,6 +166,7 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
    - `skills/issues/` reads house rules from `.claude/issues.local.md` or a `## Issue house rules` section in `CLAUDE.md`/`AGENTS.md`, and still honours the older names `.claude/newissue.local.md` and `## New issue house rules`; don't edit the skill, and don't rename a repo's existing house rules.
    - `/orc-review init` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its stack, risk map, architecture, and known non-issues), so don't create that file during the install.
    - `skills/retro/references/usage.mjs` needs Node to measure tokens.
+   - `skills/triage/` reads the same house rules as `skills/issues/` and finds `/issues` at `../issues/SKILL.md`, so keep the two side by side. Its `references/snapshot.mjs` needs Node and an authenticated `gh`.
    - `skills/shipcheck/` drafts `.claude/required-secrets.md` and `.claude/smoke-checklist.md` from the code on first use, so don't create them during the install.
 3. **Never tune a pack file to the repo.** The reviewers and standards adapt at runtime, and every standards file already defers to the repo's own docs and patterns. The framework and platform playbooks load only when `/orc-review` detects that stack, so keep them all even if the repo uses one. A repo's trust boundary, stack rules, and packages go into its review profile, and its specialist checks into repo lanes; `/orc-review init` writes both and `/orc-review update` keeps them current. That keeps every pack file identical to the kit, so updates stay clean.
 
