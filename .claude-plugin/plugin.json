@@ -1,5 +1,5 @@
 {
   "name": "orc-pack",
   "description": "Works GitHub issues end to end in your session (/orc, also /do), reviews the work with /orc-review's bench of reviewer subagents and a finding verifier, and fixes what the review found with /fix, plus ship checks, retros, and issue writing.",
-  "version": "2.4.0"
+  "version": "2.5.0"
 }

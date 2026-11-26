@@ -32,8 +32,8 @@ orc-pack/
 │   ├── orc-review/
 │   │   ├── SKILL.md
 │   │   └── references/     ← profile-template.md (the project profile /orc-review init fills in), lane-template.md (the repo-lane contract), and template-changes.md (the review template's version and its changes)
-│   ├── newissue/
-│   │   └── SKILL.md
+│   ├── issues/
+│   │   └── SKILL.md        ← /issues (named /newissue before 2.5.0)
 │   ├── retro/
 │   │   ├── SKILL.md
 │   │   └── references/     ← usage.mjs, the transcript usage summary
@@ -50,6 +50,7 @@ orc-pack/
     ├── comment-reviewer.md
     ├── dependency-vetter.md
     ├── fallow.md
+    ├── issue-auditor.md
     ├── lint.md
     ├── orc-updater.md
     ├── quality-reviewer.md
@@ -111,7 +112,7 @@ Copy each kit file to the destination below. The directory names — `.claude/sk
 | `skills/retro/references/` (all)      | `<root>/.claude/skills/retro/references/` (all)      |
 | `skills/orc-review/SKILL.md`          | `<root>/.claude/skills/orc-review/SKILL.md`          |
 | `skills/orc-review/references/` (all) | `<root>/.claude/skills/orc-review/references/` (all) |
-| `skills/newissue/SKILL.md`            | `<root>/.claude/skills/newissue/SKILL.md`            |
+| `skills/issues/SKILL.md`              | `<root>/.claude/skills/issues/SKILL.md`              |
 | `skills/shipcheck/SKILL.md`           | `<root>/.claude/skills/shipcheck/SKILL.md`           |
 | `skills/shipcheck/references/` (all)  | `<root>/.claude/skills/shipcheck/references/` (all)  |
 | `skills/tiedown/SKILL.md`             | `<root>/.claude/skills/tiedown/SKILL.md`             |
@@ -157,7 +158,7 @@ The kit's agents and skill are written to be **project-agnostic**: they discover
 2. **Install every skill and agent; prune nothing on your own.** The user relies on the whole pack, and a skill that "adds nothing" in your judgment is one they use. Leave a piece out only when the user declines it by name, record it on provenance's `Declined:` line, and pass it to Phase 5's check with `--declined`. A name clash with a personal skill in `~/.claude/` is never a reason to leave one out (Phase 1). Notes for the report:
    - `skills/orc/` and its whole `references/` directory are what `/orc-review` reads the standards from, and `/do` and `/fix` read orc's `SKILL.md`.
    - `agents/fallow.md` stays even on a non-JS/TS repo: it self-skips. Phase 4.5 installs the CLI.
-   - `skills/newissue/` reads house rules from `.claude/newissue.local.md` or a `## New issue house rules` section in `CLAUDE.md`/`AGENTS.md`; don't edit the skill.
+   - `skills/issues/` reads house rules from `.claude/issues.local.md` or a `## Issue house rules` section in `CLAUDE.md`/`AGENTS.md`, and still honours the older names `.claude/newissue.local.md` and `## New issue house rules`; don't edit the skill, and don't rename a repo's existing house rules.
    - `/orc-review init` drafts the repo's own `.claude/skills/deep-review/SKILL.md` profile (its stack, risk map, architecture, and known non-issues), so don't create that file during the install.
    - `skills/retro/references/usage.mjs` needs Node to measure tokens.
    - `skills/shipcheck/` drafts `.claude/required-secrets.md` and `.claude/smoke-checklist.md` from the code on first use, so don't create them during the install.

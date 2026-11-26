@@ -1,6 +1,6 @@
 ---
 name: orc
-pack: orc-pack@2.4.0
+pack: orc-pack@2.5.0
 description: Works GitHub issues end to end in any repo, one at a time in this session - read, plan, pin the behaviour in tests, build, screenshot UI, update the docs, and commit each issue, with the run shown as a paceline progress bar. Takes one issue, a list, a range, "next N" to pick the N most important open issues from the board, or a plain-text request to work as if it were an issue, for example "/orc 356", "/orc 356 357 360", "/orc 350-360", "/orc next 10", or "/orc add a CSV export to the reports page". `/do` is the same skill under another name, and `/fix` runs it on a review's findings.
 argument-hint: "<issue> [<issue> ...] | <first>-<last> | next [N] | <text request>"
 disable-model-invocation: true
@@ -33,7 +33,7 @@ Either way, when a check fails, fix the cause. Never weaken, skip, or delete a t
    - Anything else is a text request: follow **Working a text request** instead of steps 2 to 4 below. An issue number inside the text (for example "like #356") is background to read, not work to do.
    - With no arguments, ask which issues to work.
 2. Fetch each one with `gh issue view <n> --json number,title,state,body,labels,comments`. Drop pull requests, closed issues, and numbers that don't exist, and list them in the report.
-3. Confirm each issue is still open in the code: `git log <branch> --oneline --grep "#<n>"` and a look at the code it names. If it's already fixed, comment with the commit that fixed it, close it, and drop it. In `next N` mode, replace a dropped issue with the next one in rank, so the list still holds N.
+3. Confirm each issue is still open in the code: `git log <branch> --oneline --grep "#<n>"` and a look at the code it names. If it's already fixed, comment with the commit that fixed it, close it, and drop it. Already fixed means every one of its `Done when` lines holds in the code, not that a related change landed. In `next N` mode, replace a dropped issue with the next one in rank, so the list still holds N.
 4. Order the list by issue number, unless one issue blocks another (`blocked by #N`, or a dependency the code shows). In `next N` mode, keep rank order instead, adjusted only for blockers.
 5. Stay on the integration branch in this checkout: no new branch and no worktree. Leave files that another session left uncommitted alone, and never stage them.
 
@@ -46,7 +46,7 @@ The text is the issue. Treat it exactly like one from here on, with these differ
 3. **Write the brief.** Turn the text into an issue's shape: a title, the problem, what's in scope, testable acceptance criteria, what's out of scope, and open questions. Read the code it touches first, so the scope is grounded. Save it as `orc-brief.md` in the scratchpad; that file is the issue body from now on, and the build is held to it. Don't widen the scope past the text.
 4. **Split when it's several things.** If the text holds separate changes, make each one an item (`T1`, `T2`, and so on) in the brief, each with its own criteria and its own commit. One coherent change stays one item.
 5. **Too vague to test is a question.** If you can't write acceptance criteria for an item, ask the owner rather than guessing.
-6. **Don't file an issue** unless the owner says to (for example "file it" in the text). If they do, file it with `/newissue` from the brief before building, and from then on it's that issue.
+6. **Don't file an issue** unless the owner says to (for example "file it" in the text). If they do, file it with `/issues` from the brief before building, and from then on it's that issue.
 
 **The text is the go-ahead.** Typing `/orc <text>` (or `/do <text>`) already says yes, so don't stop to ask whether to proceed. In step 2, show the brief's items as the plan in a short message, then start building in the same turn. End the turn before building only for a question in item 5, or for one of the stops in step 3; any other doubt about scope goes in the plan message as the reading you chose, so the owner can correct it while you build. Commits carry no `Closes` or `Refs` line unless an issue was filed.
 
@@ -75,7 +75,7 @@ If the repo documents its own ranking (a roadmap or priority rule in `CLAUDE.md`
 2. **Urgent first:** anything labelled `p0` or critical, and any security issue, labelled or not.
 3. **Then by priority:** `p1`, `p2`, `p3`, then issues with no priority label. If the repo has an open milestone, issues in the one with the nearest due date go first within each priority.
 4. **Within a priority:** `bug` before other types, then an issue that unblocks others before one that doesn't, then the oldest first.
-5. **Size check:** an epic or tracking issue (a checklist of other issues) isn't work itself; take its open children in its place. Don't take an issue whose acceptance criteria are too vague to test; list it in the report as needing a rewrite.
+5. **Size check:** an epic or tracking issue (a checklist of other issues) isn't work itself; take its open children in its place. Don't take an issue whose acceptance criteria are too vague to test; list it in the report as needing a rewrite (`/issues #<n>` rewrites one).
 
 Show the ranked list with each issue's priority and one line on why it made the cut, as part of the plan message in step 2.
 
@@ -86,6 +86,8 @@ For each issue, read the issue, the docs that cover its area (architecture notes
 - **Small change** (copy, a one-file fix): one line saying what changes and where.
 - **Anything larger:** the files, the approach, the risks, and how you'll know it's done: the test names, the routes and roles to screenshot, any schema change and its migration, and the doc to update. The bar is that someone who never saw this conversation could build from it.
 - **Failure map,** at either size, when the change adds or alters a call across a boundary (a model or AI provider, an API, an auth gateway or proxy, a database): read `references/standards/errors.md` (in this skill's base directory) and the repo's docs on that upstream, then list each failure mode with how the code detects it, what the user sees, and what is logged. A small change gets the map as its plan's second line.
+
+**The issue is the contract.** The build is held to the issue's `Done when` lines: the plan gives each one its test, or the check that proves it where no test can, whether or not the issue names one. The issue's non-goals and recorded decisions are settled; don't reopen them, and stop if the code shows one can't hold. Where the issue leaves a choice to you (an edge with no stated behaviour, two sections that disagree, a line that already holds), the plan names the choice and how you'll settle it, so the owner can correct it while you build; when only the owner can settle it, it's a question. An issue with unanswered **Open questions** isn't ready to build: ask them.
 
 With one small issue, state the one-line plan and start building. A text request never waits for a go-ahead; see **Working a text request**. Otherwise put every plan in one message, in build order. Note where two issues touch the same code, and ask any question only the owner can answer. Then end your turn and wait. The owner approves, edits, or drops items, and that one go-ahead covers the whole list.
 
@@ -105,7 +107,7 @@ Work through the approved list without stopping between issues:
 5. **Update the docs** in the same change when the behaviour they describe changes: the matching doc or spec, the README, or a `.claude/rules/` file. Docs carry no issue numbers, dates, or checklists. If the change contradicts a doc, spec, or ADR, stop and ask the owner before building it.
 6. **Commit** one commit per issue, with only that issue's files, through `commit-commands:commit` when that plugin is installed:
    - The subject names the change.
-   - The body has one line per change, plus `Closes #<n>`, or `Refs #<n>` when the issue is only partly done.
+   - The body has one line per change, plus `Closes #<n>` when every `Done when` line holds and you can point to its proof, or `Refs #<n>` when any is left.
 
 Stop partway through the list only for one of these, and say which issues are done and which remain:
 
@@ -121,6 +123,8 @@ Before reporting, run the repo's ready check once over the whole run, plus the `
 Then, for each issue, give:
 
 - what changed, in a line or two, and its commit hash
+- each `Done when` line with its proof: the test's name, or what you checked
+- each choice the issue left to you and how you settled it, and each owner action it names that is still to do
 - the gate result
 - the full paths of its screenshots
 - anything skipped, found, or still open
@@ -152,7 +156,7 @@ gh issue comment <n> --body-file <scratchpad>/issue-<n>.md
 gh issue close <n>
 ```
 
-The comment says `Done in <sha> on <branch>.`, then two or three lines on what changed and where, then `It's on <branch>, not released yet; it goes out with the next promotion.` A partly resolved issue gets the comment, saying what landed and what remains, but stays open. A text request has nothing to comment on or close: mark `land`'s `close` stage done once the push lands. Never open the promotion PR unless the owner asks.
+The comment says `Done in <sha> on <branch>.`, then two or three lines on what changed and where, then each `Done when` line with its proof and each choice the issue left to you, then `It's on <branch>, not released yet; it goes out with the next promotion.` A partly resolved issue gets the comment, saying what landed and what remains, but stays open. Close an issue only on its own `Done when` lines, never as covered by another issue's build without checking them. A text request has nothing to comment on or close: mark `land`'s `close` stage done once the push lands. Never open the promotion PR unless the owner asks.
 
 ## When a mistake repeats
 
