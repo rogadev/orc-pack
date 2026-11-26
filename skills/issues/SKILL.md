@@ -36,7 +36,14 @@ Stops 3 and 4 go in the same round as the questions; when the breakdown depends 
 
 **Ask with `AskUserQuestion`** when you have it, not by ending your turn: the run stays on this skill's model and effort, and the user answers in a click. Put the option you recommend first, and say what each option leads to. The user may see only the dialog, so each question carries what you found inside it. A dialog holds four questions; when a round needs more, send the rest in a second dialog straight after. A big pivot is the exception: its picture is too large for a dialog, so end your turn with it as your message, and ask the user to start their reply with `/issues`, which puts the next turn back on this skill's model and effort.
 
-**Unattended runs.** When nobody can answer (the run's instructions say so, or you have no way to ask), never guess silently and never drop the work. File or edit what is certain. Put each question you couldn't ask under **Open questions**, directly after the size band, with its options and the one you recommend, and give the issue the repo's label for work that waits on an answer, when it has one (`question`, `needs decision`, or the house rules' own), so nothing builds it yet. Leave the scope and state of other issues alone: comment on each affected one, and list in the report what you would have changed.
+**Unattended runs.** When nobody can answer (the run's instructions say so, or you have no way to ask), never guess silently and never drop the work. File or edit what is certain, and in place of each stop:
+
+- **A question:** put it under **Open questions**, directly after the size band, with its options and the one you recommend, and give the issue the repo's label for work that waits on an answer, when it has one (`question`, `needs decision`, or the house rules' own), so nothing builds it yet.
+- **A big pivot, or a breakdown of three or more issues:** file one decision issue that holds the picture or the breakdown with your recommendation, labelled the same way, and write nothing else for that piece of work.
+- **Another issue's body or state:** leave it. Comment on each affected issue, and list in the report what you would have changed.
+- **A closed issue that decided this the other way, or a label or milestone the work needs that doesn't exist:** change nothing for it, and put it in the report as a `[DECISION]`.
+
+What the caller says the owner has already approved or answered (a plan, a breakdown, the rewrite of a named issue, a set of answers) isn't a stop: act on it.
 
 **Model.** This skill is written for Opus 5.5 at high effort or above, and typing `/issues` sets that for the turn. When it starts another way, or a run continues in a later turn, and you are Sonnet or Haiku, don't write issues on that model: tell the user in one line to type `/issues` with their request, so the run moves to Opus 5.5, and stop. In an unattended run, hand the request instead to one subagent with `model: "opus"` and `effort: "xhigh"`, giving it this file's path, the facts from this conversation it needs, and word that the run is unattended. Relay its report.
 
@@ -45,7 +52,7 @@ Stops 3 and 4 go in the same round as the questions; when the breakdown depends 
 - `/issues <rough idea>`: the seed. It's a starting point, not a spec, and it may be wrong. Requests are often dictated, so when a name matches nothing in the repo, take the closest real file, feature, or term. Two real matches that would lead to different work are a question for step 6.
 - `/issues #<n> <what to change>`, or any request that names an issue: update that issue.
 - `/issues` with nothing after it: work from what this conversation just covered. With nothing to go on, ask what it's about.
-- From another skill (`/orc` filing a brief, `/shipcheck` filing a regression): what it hands you is the seed, and every step below still runs.
+- From another skill (`/orc` filing a brief, `/shipcheck` filing a regression, a board audit sending a rewrite): what it hands you is the seed, and every step below still runs. Work it hands you beyond the seed is work already done, so use it and don't repeat it: a fresh snapshot of the board stands in for step 3's fetches; its evidence stands in for the parts of step 4 it covers, once you've checked the citations you rely on; an outcome it settled stands in for step 5's ladder, though the pivot check still runs; the owner's answers go into the issue as decided; and a milestone, priority, or label it names is applied as given. Whatever it doesn't cover, you still do.
 
 ## House rules (per-repo config)
 
@@ -247,7 +254,7 @@ Then settle every finding:
 - **Only the owner can answer it:** ask, in one more round, as step 6 says. In an unattended run it becomes an open question.
 - **You disagree:** leave the draft as it is, and say why under **Flagged** in the report.
 
-One cold read per run; read again only when settling the findings changed an issue's scope. This step is the only review: don't start other reviewer subagents or further rounds on your own. When you can't dispatch the agent, say in the report that no cold read ran.
+One cold read per run; read again only when settling the findings changed an issue's scope. This step is the only review: don't start other reviewer subagents or further rounds on your own. When you can't dispatch the agent, or the skill that called you runs the cold read itself over its whole set, skip it and say in the report that no cold read ran here.
 
 ### 10. Write to the board
 
