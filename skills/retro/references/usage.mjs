@@ -306,13 +306,10 @@ function textOf(content) {
   return "";
 }
 
-// Long but no secret, so they stay readable: a 40-character git SHA, a UUID (a session id), and an
-// identifier made of short words joined by `_` or `-`, such as an MCP tool name
-// (mcp__claude_ai_Vercel__list_projects). A token mixes digits into long stretches and isn't one.
-const KEEP = /^(?:[0-9a-f]{40}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
-const wordy = (m) =>
-  m.split(/[_-]+/).every((p) => /^(?:[A-Za-z]{1,12}|\d{1,4})?$/.test(p));
-const mask = (m) => (KEEP.test(m) || wordy(m) ? m : "[redacted]");
+// An MCP tool name (mcp__claude_ai_Vercel__list_projects) is long but no secret, so it stays
+// readable. Nothing else is kept by its shape: a 40-character hex string or a UUID can be a token
+// as easily as a commit SHA or an id.
+const mask = (m) => (/^mcp__[\w-]+$/.test(m) ? m : "[redacted]");
 // Base64 with a `+`, `/`, or `=` is a secret when some stretch between slashes is long and mixes
 // digits with upper- and lowercase letters; a file path's segments are words and don't.
 const randomish = (m) =>
@@ -334,10 +331,7 @@ function redact(s) {
       // webhook or reset token) is masked.
       .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
       .replace(/https?:\/\/[^\s"'<>]+/g, (u) =>
-        u.replace(
-          /\/([A-Za-z0-9_-]{32,})(?=\/|$)/g,
-          (_, seg) => `/${mask(seg)}`,
-        ),
+        u.replace(/\/[A-Za-z0-9_-]{32,}(?=\/|$)/g, "/[redacted]"),
       )
       .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
       .replace(
@@ -647,10 +641,15 @@ const issuesDone = new Set(
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   path.join(outDir, "usage.json"),
-  // Every string is masked once more on the way out, so no transcript text skips redact().
+  // Every string is masked once more on the way out, so no transcript text skips redact(). The
+  // session id, subagent id, and transcript path come from file names, not transcript text, and
+  // stay as they are so the report can name each session.
   JSON.stringify(
     sessions,
-    (_key, v) => (typeof v === "string" ? redact(v) : v),
+    (key, v) =>
+      typeof v === "string" && !["id", "agentId", "file"].includes(key)
+        ? redact(v)
+        : v,
     2,
   ),
 );

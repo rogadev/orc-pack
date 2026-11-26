@@ -50,9 +50,9 @@ const randomish = (m) =>
 // Failing URLs and console errors can carry a credential, in a URL or in the error text, and
 // results.json and the log keep them. Drop each URL's query and fragment, then mask what looks
 // like a credential, with the rules /retro's usage.mjs uses (keep the two in step). One rule
-// differs: any long string is masked here, even after a `/`, and even a SHA, a UUID, or a long
-// word-joined identifier, because a reset or invite link can carry its token in the path.
-// usage.mjs keeps those so file paths, session ids, and tool names stay readable.
+// differs: any long string is masked here, even after a `/` and even an MCP tool name, because a
+// reset or invite link can carry its token in the path. usage.mjs keeps those so file paths and
+// tool names in transcripts stay readable.
 const scrub = (s) =>
   String(s)
     .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")

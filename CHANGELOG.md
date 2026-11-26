@@ -33,13 +33,13 @@ A released version's section is frozen. Once its tag exists, never edit it: late
   - Agent types, model names, skill names, and the wake-up delay are cleaned as they're read from transcripts, so none can break a table row or a timeline line.
   - Every string in `usage.json` passes through `redact()` on the way out.
   - `redact()` also drops a URL's query and fragment, masks a long segment in a URL's path (a webhook or reset token), and masks JWTs and base64 secrets that contain `+`, `/`, or `=`.
-  - It keeps a 40-character git SHA, a UUID (a session id), a file path, and a word-joined identifier such as an MCP tool name readable.
+  - It keeps file paths and MCP tool names readable, and leaves the session id, subagent id, and transcript path in `usage.json` as they are, because those come from file names. A 40-character hex string or a UUID anywhere else is masked: its shape can't tell a commit SHA or an id from a token.
   - Descriptions in `usage.json` keep their text, issue numbers included. On real transcripts from three repos, `usage.md` and `usage.json` are unchanged.
 - **`/shipcheck` smoke runner (`skills/shipcheck/references/smoke-runner.mjs`)**:
   - A failing response is recorded only when it comes from the base URL's origin, under its path when it has one. A plain string prefix also caught a lookalike host such as `app.example.com.cdn.net`, or a sibling path.
   - A failing URL is recorded without its query string or fragment.
   - URLs and console and page errors have credentials masked before they reach `results.json` or the log: a user and password in a URL, `Authorization` headers, `password=` and `token=` values, known key prefixes, JWTs, base64 secrets, and long token-like strings, including one that forms a URL path segment, as a reset or invite link's token does.
-  - The masking rules are the ones `/retro`'s `usage.mjs` uses, except that `usage.mjs` keeps path segments, SHAs, UUIDs, and identifiers readable.
+  - The masking rules are the ones `/retro`'s `usage.mjs` uses, except that `usage.mjs` keeps file paths and MCP tool names readable.
 - **ESLint's recommended rules now pass on the pack's scripts.** `snapshot.mjs` failed `no-useless-escape`, and `usage.mjs` failed `no-control-regex`, which broke `eslint .` in a repo whose ESLint config reaches `.claude/`. Both are fixed in the code, with no change in output. An install that added an ESLint ignore for the pack's `references/` folders during the 2.5.0 update can keep it or drop it.
 
 **Update steps.** Copy the three files. Nothing else changes: no prompt, agent, or provenance format.
