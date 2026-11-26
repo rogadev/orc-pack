@@ -306,20 +306,57 @@ function textOf(content) {
   return "";
 }
 
+// Long but no secret, so they stay readable: a 40-character git SHA, a UUID (a session id), and an
+// identifier made of short words joined by `_` or `-`, such as an MCP tool name
+// (mcp__claude_ai_Vercel__list_projects). A token mixes digits into long stretches and isn't one.
+const KEEP = /^(?:[0-9a-f]{40}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
+const wordy = (m) =>
+  m.split(/[_-]+/).every((p) => /^(?:[A-Za-z]{1,12}|\d{1,4})?$/.test(p));
+const mask = (m) => (KEEP.test(m) || wordy(m) ? m : "[redacted]");
+// Base64 with a `+`, `/`, or `=` is a secret when some stretch between slashes is long and mixes
+// digits with upper- and lowercase letters; a file path's segments are words and don't.
+const randomish = (m) =>
+  /[+/=]/.test(m) &&
+  m
+    .split("/")
+    .some(
+      (p) =>
+        p.length >= 16 && /\d/.test(p) && /[a-z]/.test(p) && /[A-Z]/.test(p),
+    );
+
 // Masks credential-shaped text, so a secret a tool call or error echoed never reaches a report.
+// The same rules mask the smoke runner's errors (skills/shipcheck/references/smoke-runner.mjs):
+// keep the two in step.
 function redact(s) {
-  return s
-    .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
-    .replace(
-      /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
-      "$1$2[redacted]",
-    )
-    .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
-    .replace(
-      /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
-      "[redacted]",
-    )
-    .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, "[redacted]");
+  return (
+    s
+      // A URL keeps its origin and path: its query and fragment go, and a long path segment (a
+      // webhook or reset token) is masked.
+      .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
+      .replace(/https?:\/\/[^\s"'<>]+/g, (u) =>
+        u.replace(
+          /\/([A-Za-z0-9_-]{32,})(?=\/|$)/g,
+          (_, seg) => `/${mask(seg)}`,
+        ),
+      )
+      .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
+      .replace(
+        /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
+        "$1$2[redacted]",
+      )
+      .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
+      .replace(
+        /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
+        "[redacted]",
+      )
+      .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
+      .replace(
+        /(?<![\w+/-])(?!\/)[A-Za-z0-9+/]{32,}={0,2}(?![\w+/=-])/g,
+        (m) => (randomish(m) ? "[redacted]" : m),
+      )
+      // A long token on its own. One next to `/` or `\` is part of a file path and stays.
+      .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, mask)
+  );
 }
 
 // One redacted line of transcript text, kept as written otherwise, for usage.json.
@@ -540,7 +577,7 @@ function summarizeSession(file) {
         what = `Skill ${oneLine(c.input?.skill, 60)} ${oneLine(c.input?.args, 60)}`;
       } else if (c.name === "ScheduleWakeup") {
         wakeups += 1;
-        what = `ScheduleWakeup ${c.input?.delaySeconds ?? ""}s ${oneLine(c.input?.reason, 60)}`;
+        what = `ScheduleWakeup ${oneLine(c.input?.delaySeconds, 10)}s ${oneLine(c.input?.reason, 60)}`;
       } else {
         what = `${c.name} ${oneLine(c.input?.description ?? c.input?.file_path ?? c.input?.pattern ?? "", 90)}`;
       }
@@ -610,7 +647,12 @@ const issuesDone = new Set(
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   path.join(outDir, "usage.json"),
-  JSON.stringify(sessions, null, 2),
+  // Every string is masked once more on the way out, so no transcript text skips redact().
+  JSON.stringify(
+    sessions,
+    (_key, v) => (typeof v === "string" ? redact(v) : v),
+    2,
+  ),
 );
 
 const fmt = (n) => n.toLocaleString("en-US");

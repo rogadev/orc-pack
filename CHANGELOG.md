@@ -20,7 +20,7 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ## [2.5.1] - 2026-11-26
 
-**Summary.** A security patch for three helper scripts that copy text from outside the session into files an agent reads. `/triage`'s board snapshot now cleans every issue, pull request, label, milestone, login, branch, and commit string before it writes it, and puts each issue body and comment inside a fence that text in the body can't close. It also refuses a repo name that isn't `owner/name`. `/retro`'s usage script cleans agent names, models, and skill names from transcripts, and `/shipcheck`'s smoke runner keeps tokens in URLs and console errors out of its results. No skill or agent prompt changed. What 2.5.0 added (`/issues`, `/triage`, and `issue-auditor`) is in the [2.5.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.5.0).
+**Summary.** A security patch for three helper scripts that copy text from outside the session into files an agent reads. `/triage`'s board snapshot now cleans every issue, pull request, label, milestone, login, branch, and commit string before it writes it, and puts each issue body and comment inside a fence that text in the body can't close. It also refuses a repo name that isn't `owner/name`. `/retro`'s usage script masks secrets in every string it writes, and `/shipcheck`'s smoke runner keeps tokens in URLs and console errors out of its results and records failures only from the app it's checking. This closes [#62](https://github.com/rogadev/orc-pack/issues/62). No skill or agent prompt changed. What 2.5.0 added (`/issues`, `/triage`, and `issue-auditor`) is in the [2.5.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.5.0).
 
 **Changed areas.**
 
@@ -29,8 +29,17 @@ A released version's section is frozen. Once its tag exists, never edit it: late
   - Each issue body and comment in `issues/<n>.md` sits in a ` ```text ` fence longer than any run of backticks inside it. Nothing in the body can end the fence early.
   - A `--repo` value, or the repo `gh` reports, that isn't `owner/name` stops the script before any query.
   - GraphQL variables go to `gh api` with `-f`, so a value starting with `@` is sent as text rather than read as a file path.
-- **`/retro` usage script (`skills/retro/references/usage.mjs`)** — Agent types, model names, skill names, and dispatch descriptions from transcripts now get the same cleaning and secret masking as the rest of the report, both in `usage.md` and in `usage.json`. Descriptions in `usage.json` keep their text, issue numbers included, and are only flattened and redacted. On real transcripts the output is unchanged.
-- **`/shipcheck` smoke runner (`skills/shipcheck/references/smoke-runner.mjs`)** — A failing URL is recorded without its query string or fragment. URLs and console and page errors then have credentials masked before they reach `results.json` or the log: a user and password in a URL, `Authorization` headers, `password=` and `token=` values, known key prefixes, JWTs, and long token-like strings, including one that forms a URL path segment, as a reset or invite link's token does. The masking rules are the ones `/retro`'s `usage.mjs` uses, except that `usage.mjs` leaves path segments alone so file paths stay readable.
+- **`/retro` usage script (`skills/retro/references/usage.mjs`)**:
+  - Agent types, model names, skill names, and the wake-up delay are cleaned as they're read from transcripts, so none can break a table row or a timeline line.
+  - Every string in `usage.json` passes through `redact()` on the way out.
+  - `redact()` also drops a URL's query and fragment, masks a long segment in a URL's path (a webhook or reset token), and masks JWTs and base64 secrets that contain `+`, `/`, or `=`.
+  - It keeps a 40-character git SHA, a UUID (a session id), a file path, and a word-joined identifier such as an MCP tool name readable.
+  - Descriptions in `usage.json` keep their text, issue numbers included. On real transcripts from three repos, `usage.md` and `usage.json` are unchanged.
+- **`/shipcheck` smoke runner (`skills/shipcheck/references/smoke-runner.mjs`)**:
+  - A failing response is recorded only when it comes from the base URL's origin, under its path when it has one. A plain string prefix also caught a lookalike host such as `app.example.com.cdn.net`, or a sibling path.
+  - A failing URL is recorded without its query string or fragment.
+  - URLs and console and page errors have credentials masked before they reach `results.json` or the log: a user and password in a URL, `Authorization` headers, `password=` and `token=` values, known key prefixes, JWTs, base64 secrets, and long token-like strings, including one that forms a URL path segment, as a reset or invite link's token does.
+  - The masking rules are the ones `/retro`'s `usage.mjs` uses, except that `usage.mjs` keeps path segments, SHAs, UUIDs, and identifiers readable.
 - **ESLint's recommended rules now pass on the pack's scripts.** `snapshot.mjs` failed `no-useless-escape`, and `usage.mjs` failed `no-control-regex`, which broke `eslint .` in a repo whose ESLint config reaches `.claude/`. Both are fixed in the code, with no change in output. An install that added an ESLint ignore for the pack's `references/` folders during the 2.5.0 update can keep it or drop it.
 
 **Update steps.** Copy the three files. Nothing else changes: no prompt, agent, or provenance format.
