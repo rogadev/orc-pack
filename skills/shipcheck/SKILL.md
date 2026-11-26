@@ -1,6 +1,6 @@
 ---
 name: shipcheck
-pack: orc-pack@2.4.0
+pack: orc-pack@2.5.0
 description: Post-push ship check. Waits for CI on the pushed commit and fixes a red run (at most 2 attempts), confirms every secret in .claude/required-secrets.md exists in the target environment, waits until the deployment serves that exact commit, then runs each flow in .claude/smoke-checklist.md (Playwright by default, Claude in Chrome as the fallback) at 390px and 1440px in light and dark mode with a screenshot per step. Stops and names the exact thing to unlock at an SSO, auth, or VPN wall. Turns each regression into a fix branch with a reproducing test, or a GitHub issue with screenshots and a root-cause hypothesis. Use when the user says "/shipcheck", "check the ship", "did it deploy", "smoke test the deploy", or "watch CI and verify prod" after a push.
 ---
 
@@ -103,7 +103,7 @@ A regression is a failed **Expect** line or an always-a-finding defect from step
 For each confirmed regression, pick one:
 
 - **Fix branch**, when the cause is in the `BASELINE..SHA` diff (`git diff BASELINE..SHA`) and the repo has tests that can express it. Branch `fix/<slug>` from `SHA`. In this session, using the screenshot paths and the failing step, write a test that reproduces the regression and fails on `SHA` first, then fix it. Run the repo's ready check, commit with a subject naming the fix, and push the branch. Never merge it and never deploy it.
-- **Issue**, when the cause is unclear, outside the diff, or not testable here. Use the `newissue` skill if it is installed, else `gh issue create --body-file`. The body carries the flow, step, width, and theme; the expected and actual result; the screenshot paths; the deployed URL and `SHA`; and a root-cause hypothesis that names the suspect file and the commit in `BASELINE..SHA`, marked as a hypothesis. Search open and closed issues for a duplicate first.
+- **Issue**, when the cause is unclear, outside the diff, or not testable here. Use the `issues` skill if it is installed, else `gh issue create --body-file`. The body carries the flow, step, width, and theme; the expected and actual result; the screenshot paths; the deployed URL and `SHA`; and a root-cause hypothesis that names the suspect file and the commit in `BASELINE..SHA`, marked as a hypothesis. Search open and closed issues for a duplicate first.
 
 **Attaching screenshots.** `gh` can't upload images. Collect every image you want attached and ask the user once, at the end, before attaching them, because it posts a comment from their account. On a yes: open the issue in Chrome, reproduce the state in another tab, take a fresh screenshot (the IDs expire in minutes), and `upload_image` it into the comment box. Until then, the issue lists the saved paths.
 

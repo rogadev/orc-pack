@@ -1,6 +1,6 @@
 ---
 name: fix
-pack: orc-pack@2.4.0
+pack: orc-pack@2.5.0
 description: Fixes what a review found by running /orc on its findings in this session, committing each fix. "/fix" takes the findings worth fixing this round, by best judgement; "/fix all" takes every Blocker, Warning, and Nit; "and push" at the end also pushes. For example "/fix", "/fix all", "/fix and push", or "/fix all but leave the debug page".
 argument-hint: "[all] [<report path>] [and push] [<more instructions>]"
 disable-model-invocation: true

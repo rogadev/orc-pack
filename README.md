@@ -115,6 +115,19 @@ Before it builds, orc lists every finding as fix, skip, or yours to decide, with
 
 `/retro` reads the session transcripts of your `/orc`, `/do`, and `/fix` runs in this repo, and the reviews and fix runs that followed them, and tells you what an issue costs and what to improve. It measures cost, tokens, and active time per closed issue, how much of that went to review and fix-up, and what the reviews found. Each finding comes with its evidence, its rough cost, and where to fix it: the pack, your repo's docs or review profile, or how you started the run. It changes nothing, saves each retro under `.git/orc-retro/`, and compares with the last one.
 
+### Triage the whole board: `/triage`
+
+```
+/triage              # the whole board, every few months
+/triage new          # only issues with no milestone: what arrived since the last run
+/triage backlog      # only the Backlog milestone, before a catch-up day
+/triage report-only  # the full report, with nothing changed on GitHub
+```
+
+Boards drift. Work ships under another issue and the first one never closes, a pivot leaves issues describing code that's gone, and priorities set months ago stay on the labels. `/triage` reads every open issue against today's code, history, and direction, and treats the existing labels and milestones as evidence, not truth. For each issue it finds whether it's already done (or done on `dev` and closing on the next release), made obsolete by a pivot, a duplicate, covered by closed work, in need of a rewrite or a split, or right as written, and what its real priority is.
+
+It then proposes how to organize the board: sprint milestones dated on your cadence, or ordered phase milestones for a solo build; a Backlog milestone with no due date, so "no milestone" always means "not triaged yet"; and due dates only where they're real. The build order it reports is the one `/orc next N` will follow once the plan is applied, plus a ranked list for catch-up days. It asks you every call only you can make, then applies what you approve: it closes issues with the evidence in a comment, sets milestones, priorities, and blocked-by links itself, and sends every rewrite and new issue through `/issues`. It runs on Opus 5.5 when you type `/triage`.
+
 ---
 
 ## What's in the box
@@ -128,7 +141,8 @@ Before it builds, orc lists every finding as fix, skip, or yours to decide, with
 - `skills/retro/` — a retrospective on past runs: what an issue costs, where the tokens and time went, and what to improve. See [Look back at a run](#look-back-at-a-run-retro).
 - `skills/tiedown/` — run `/tiedown` when you think a session is finished. It checks the whole session and the real state of the repo and machine for unanswered questions, unfinished requests, unpushed or uncommitted work, failed or skipped checks, things still running, open issues, and promises not yet kept. It replies "We're done." when nothing is left. Otherwise it thinks through each open item, with no subagent for an obvious one and a Haiku, Sonnet, or Opus subagent sized to the rest, and gives you one final list: the exact action, a one-sentence reason, and who does it. Reply "do all of it" to approve. It never changes anything itself. Optional.
 - `skills/update-orc/` — updates an installed pack to the latest release from any older version, by dispatching the `orc-updater` agent. See [Updating the pack](#updating-the-pack) below.
-- `skills/newissue/` — turns a rough idea into a detailed, self-contained GitHub issue: a plain-language title and lead paragraph a PM can track, full technical detail below for the executing agent, with a `**Size band:**` line (Small, Medium, Large, or Huge) that is copied onto the project's own size labels when it has them, splitting into multiple issues, or an `[EPIC]` with an ordered roadmap of sized children, when the work is too big for one. Orc uses it when you ask it to file a plain-text request, and it takes per-repo house rules (labels, milestones, tone) from `.claude/newissue.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
+- `skills/issues/` — `/issues` keeps your board true. Give it a rough idea, a bug, a change of plan, or a note about an existing issue. Every run reads the whole board first and settles one outcome for each piece of work: nothing to file, already tracked, update the issue that covers it, decided before, or new work, filed as one issue, several, or an `[EPIC]` with an ordered roadmap of sized children. It checks whether the request makes other open issues wrong, and discusses a big pivot with you before it writes anything. It asks you about anything that would change what gets built, and records your answers in the issue. Each issue has a plain-language title and first paragraph a PM can track, full technical detail below for the agent that builds it, and a `**Size band:**` line (Small, Medium, Large, or Huge) that is copied onto the project's own size labels when it has them. It runs on Opus 5.5 at `xhigh` effort when you type `/issues`. Orc uses it when you ask it to file a plain-text request, and it takes per-repo house rules (labels, milestones, tone) from `.claude/issues.local.md` or your `CLAUDE.md`. Optional, but the board gets much better with it.
+- `skills/triage/` — `/triage` audits the whole board and turns it into a build order that `/orc next N` follows, with milestones, real priorities, and a catch-up list for backlog days. Rewrites and new issues go through `/issues`. Needs Node. See [Triage the whole board](#triage-the-whole-board-triage).
 - `skills/shipcheck/` — run `/shipcheck` after a push. It waits for CI and fixes a red run in the session (two attempts at most), checks that every secret in `.claude/required-secrets.md` exists in the target environment, waits until the deploy serves the pushed commit, then runs each flow in `.claude/smoke-checklist.md` at 390px and 1440px in light and dark mode, in Playwright by default (exact viewports and a clean browser profile) with Claude in Chrome as the fallback. It stops and tells you what to unlock at an SSO or VPN wall, and turns each regression into a fix branch with a reproducing test, built in the session, or an issue with screenshots. It drafts both files from your code the first time.
 
 **The agents** (`agents/`):
@@ -143,6 +157,7 @@ Before it builds, orc lists every finding as fix, skip, or yours to decide, with
 | `test-coverage-reviewer` | Sonnet 5.5, high | Depth and meaningfulness of test coverage                                                                                  |
 | `verifier`               | Opus 5.5, medium | Skeptical second pass that filters reviewer false positives                                                                |
 | `setup-auditor`          | Opus 5.5, medium | Blind audit of a freshly written deep-review profile: checks its facts against the repo (used by /orc-review init, update) |
+| `issue-auditor`          | Opus 5.5, high   | Cold read of drafted issues before /issues files them: what it would build, where it would have to guess, contradictions   |
 | `usages`                 | Haiku            | Maps where a diff's code is used (callers, importers, tests) once, so the review lanes don't each search for it            |
 | `fallow`                 | Haiku            | Codebase-intelligence audit on JS/TS repos: dead code, duplication, complexity, circular deps (self-skips when absent)     |
 | `lint`                   | Haiku            | Runs the repo's lint and format chain, reports raw results                                                                 |
@@ -152,7 +167,7 @@ Before it builds, orc lists every finding as fix, skip, or yours to decide, with
 | `skill-vetter`           | Opus 5.5, high   | Static security audit of untrusted skills and plugins before you install them                                              |
 | `orc-updater`            | Opus 5.5, high   | Applies an orc-pack release to an installed copy, converging it on the target kit (used by /update-orc)                    |
 
-`/orc` itself dispatches only `fallow`, and only at the end of a run that removed or moved code; it sends wide code searches to the built-in Explore agent. The reviewers, the verifier, `usages`, and the gate runners (`lint`, `typecheck`, `test`) are `/orc-review`'s lanes. They are also useful on their own, for example during a manual code review.
+`/orc` itself dispatches only `fallow`, and only at the end of a run that removed or moved code; it sends wide code searches to the built-in Explore agent. The reviewers, the verifier, `usages`, and the gate runners (`lint`, `typecheck`, `test`) are `/orc-review`'s lanes. They are also useful on their own, for example during a manual code review. `issue-auditor` belongs to `/issues`, which dispatches it once per run before it files anything, and `/triage` dispatches it once over every issue its `/issues` rewrites produced.
 
 ---
 
@@ -271,10 +286,10 @@ Once enabled, the model gets the four Task tools (`TaskCreate`, `TaskGet`, `Task
 
 1. **Learn the repo.** Orc reads your `CLAUDE.md` or `AGENTS.md`, `.claude/rules/`, `.claude/settings.json`, and manifest for the integration branch, the check and test commands, the ready check, the dev server, and any UI verification recipe. Your repo's docs and hooks win over the skill's general steps.
 2. **Resolve the list.** It parses your issues, range, `next N`, or text request, fetches each issue, drops what is closed or already fixed, and orders the rest by number (or by rank for `next N`), with blockers first. It stays on the integration branch in your checkout and never stages files another session left uncommitted.
-3. **Plan.** It reads each issue's docs and code and writes a plan, then waits for one go-ahead on a list. A single small issue or a text request starts at once.
+3. **Plan.** It reads each issue's docs and code and writes a plan, then waits for one go-ahead on a list. A single small issue or a text request starts at once. The issue is the contract: the plan gives every `Done when` line its test, treats the issue's non-goals and recorded decisions as settled, and names each choice the issue left open with how it will be settled.
 4. **Build each issue in order.** Tests first, then the change, screenshots of any UI change at 390 and 1440 pixels in light and dark, the docs, and one commit per issue.
 5. **Report.** It runs the ready check once over the whole run, reports each issue, and asks whether to push (or pushes when you already said to).
-6. **Push and close.** After the push, it comments on and closes each fully resolved issue. A partly resolved issue gets a comment and stays open.
+6. **Push and close.** After the push, it comments on and closes each fully resolved issue: one whose every `Done when` line holds, with its proof listed in the comment. A partly resolved issue gets a comment and stays open.
 7. **Review, in a fresh session.** You run `/orc-review` over what orc committed, then `/fix` to fix what it found.
 
 ## Good to know

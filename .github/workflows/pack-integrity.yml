@@ -82,7 +82,7 @@ jobs:
 
           # 2. Every agent a skill names resolves to a file. Agent-looking
           # backticked tokens end in a known role suffix or are a known role word.
-          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/do/SKILL.md skills/fix/SKILL.md skills/update-orc/SKILL.md skills/shipcheck/SKILL.md skills/orc-review/SKILL.md skills/retro/SKILL.md skills/tiedown/SKILL.md | tr -d '`' | sort -u)
+          refs=$(grep -hoE '`[a-z][a-z0-9-]*`' skills/orc/SKILL.md skills/do/SKILL.md skills/fix/SKILL.md skills/update-orc/SKILL.md skills/shipcheck/SKILL.md skills/orc-review/SKILL.md skills/retro/SKILL.md skills/tiedown/SKILL.md skills/issues/SKILL.md skills/triage/SKILL.md | tr -d '`' | sort -u)
           for name in $refs; do
             case "$name" in
               *-reviewer | *-auditor | *-vetter | *-updater | verifier | fallow | lint | typecheck | test | usages) ;;
