@@ -307,9 +307,18 @@ function textOf(content) {
 }
 
 // An MCP tool name (mcp__claude_ai_Vercel__list_projects) is long but no secret, so it stays
-// readable. Nothing else is kept by its shape: a 40-character hex string or a UUID can be a token
-// as easily as a commit SHA or an id.
-const mask = (m) => (/^mcp__[\w-]+$/.test(m) ? m : "[redacted]");
+// readable: `mcp__`, then short parts joined by `_`, none of them a long stretch mixing digits
+// with upper- and lowercase letters as a token does. Nothing else is kept by its shape: a
+// 40-character hex string or a UUID can be a token as easily as a commit SHA or an id.
+const toolName = (m) =>
+  /^mcp__[A-Za-z0-9-]{1,40}(?:__?[A-Za-z0-9-]{1,40})*$/.test(m) &&
+  !m
+    .split("_")
+    .some(
+      (p) =>
+        p.length >= 16 && /\d/.test(p) && /[a-z]/.test(p) && /[A-Z]/.test(p),
+    );
+const mask = (m) => (toolName(m) ? m : "[redacted]");
 // Base64 with a `+`, `/`, or `=` is a secret when some stretch between slashes is long and mixes
 // digits with upper- and lowercase letters; a file path's segments are words and don't.
 const randomish = (m) =>
@@ -641,15 +650,17 @@ const issuesDone = new Set(
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   path.join(outDir, "usage.json"),
-  // Every string is masked once more on the way out, so no transcript text skips redact(). The
-  // session id, subagent id, and transcript path come from file names, not transcript text, and
-  // stay as they are so the report can name each session.
+  // Every string is masked once more on the way out, so no transcript text skips redact(). Only
+  // each session record's own `id` and `file` stay as they are: they come from the transcript's
+  // file name, not its text, and the report names each session by them.
   JSON.stringify(
     sessions,
-    (key, v) =>
-      typeof v === "string" && !["id", "agentId", "file"].includes(key)
-        ? redact(v)
-        : v,
+    function (key, v) {
+      if (typeof v !== "string") return v;
+      const sessionField =
+        (key === "id" || key === "file") && sessions.includes(this);
+      return sessionField ? v : redact(v);
+    },
     2,
   ),
 );
