@@ -17,6 +17,63 @@ const phone = {
   viewport: { width: 390, height: 844 },
 };
 const desktop = { viewport: { width: 1440, height: 900 } };
+
+// The app's own requests: the base URL's origin, under its path when it has one. A string prefix
+// would also take a lookalike host (https://app.example.com.cdn.net) or a sibling path (/app-other).
+const base = new URL(baseUrl);
+const basePath = base.pathname.replace(/\/+$/, "");
+const inApp = (url) => {
+  try {
+    const u = new URL(url);
+    return (
+      u.origin === base.origin &&
+      (!basePath ||
+        u.pathname === basePath ||
+        u.pathname.startsWith(`${basePath}/`))
+    );
+  } catch {
+    return false;
+  }
+};
+
+// Base64 with a `+`, `/`, or `=` is a secret when some stretch between slashes is long and mixes
+// digits with upper- and lowercase letters.
+const randomish = (m) =>
+  /[+/=]/.test(m) &&
+  m
+    .split("/")
+    .some(
+      (p) =>
+        p.length >= 16 && /\d/.test(p) && /[a-z]/.test(p) && /[A-Z]/.test(p),
+    );
+
+// Failing URLs and console errors can carry a credential, in a URL or in the error text, and
+// results.json and the log keep them. Drop each URL's query and fragment, then mask what looks
+// like a credential, with the rules /retro's usage.mjs uses (keep the two in step). One rule
+// differs: any long string is masked here, even after a `/` and even an MCP tool name, because a
+// reset or invite link can carry its token in the path. usage.mjs keeps those so file paths and
+// tool names in transcripts stay readable.
+const scrub = (s) =>
+  String(s)
+    .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
+    .replace(/https?:\/\/[^\s"'<>]+/g, (u) =>
+      u.replace(/\/[A-Za-z0-9_-]{32,}(?=\/|$)/g, "/[redacted]"),
+    )
+    .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
+    .replace(
+      /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
+      "$1$2[redacted]",
+    )
+    .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
+    .replace(
+      /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
+      "[redacted]",
+    )
+    .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
+    .replace(/(?<![\w+/-])(?!\/)[A-Za-z0-9+/]{32,}={0,2}(?![\w+/=-])/g, (m) =>
+      randomish(m) ? "[redacted]" : m,
+    )
+    .replace(/(?<![\w-])[A-Za-z0-9_-]{32,}(?![\w-])/g, "[redacted]");
 const PASSES = [
   { name: "390-light", ctx: phone, theme: "light" },
   { name: "390-dark", ctx: phone, theme: "dark" },
@@ -53,11 +110,14 @@ for (const pass of PASSES) {
   for (const flow of FLOWS) {
     const page = await context.newPage();
     const errors = [];
-    page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on(
+      "console",
+      (m) => m.type() === "error" && errors.push(scrub(m.text())),
+    );
+    page.on("pageerror", (e) => errors.push(scrub(String(e))));
     page.on("response", (r) => {
-      if (r.url().startsWith(baseUrl) && r.status() >= 400)
-        errors.push(`${r.status()} ${r.url()}`);
+      if (inApp(r.url()) && r.status() >= 400)
+        errors.push(`${r.status()} ${scrub(r.url())}`);
     });
     const row = { pass: pass.name, flow: flow.name };
     try {

@@ -306,30 +306,76 @@ function textOf(content) {
   return "";
 }
 
+// An MCP tool name (mcp__claude_ai_Vercel__list_projects) is long but no secret, so it stays
+// readable: `mcp__`, then short parts joined by `_`, none of them a long stretch mixing digits
+// with upper- and lowercase letters as a token does. Nothing else is kept by its shape: a
+// 40-character hex string or a UUID can be a token as easily as a commit SHA or an id.
+const toolName = (m) =>
+  /^mcp__[A-Za-z0-9-]{1,40}(?:__?[A-Za-z0-9-]{1,40})*$/.test(m) &&
+  !m
+    .split("_")
+    .some(
+      (p) =>
+        p.length >= 16 && /\d/.test(p) && /[a-z]/.test(p) && /[A-Z]/.test(p),
+    );
+const mask = (m) => (toolName(m) ? m : "[redacted]");
+// Base64 with a `+`, `/`, or `=` is a secret when some stretch between slashes is long and mixes
+// digits with upper- and lowercase letters; a file path's segments are words and don't.
+const randomish = (m) =>
+  /[+/=]/.test(m) &&
+  m
+    .split("/")
+    .some(
+      (p) =>
+        p.length >= 16 && /\d/.test(p) && /[a-z]/.test(p) && /[A-Z]/.test(p),
+    );
+
 // Masks credential-shaped text, so a secret a tool call or error echoed never reaches a report.
+// The same rules mask the smoke runner's errors (skills/shipcheck/references/smoke-runner.mjs):
+// keep the two in step.
 function redact(s) {
-  return s
-    .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
-    .replace(
-      /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
-      "$1$2[redacted]",
-    )
-    .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
-    .replace(
-      /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
-      "[redacted]",
-    )
-    .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, "[redacted]");
+  return (
+    s
+      // A URL keeps its origin and path: its query and fragment go, and a long path segment (a
+      // webhook or reset token) is masked.
+      .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
+      .replace(/https?:\/\/[^\s"'<>]+/g, (u) =>
+        u.replace(/\/[A-Za-z0-9_-]{32,}(?=\/|$)/g, "/[redacted]"),
+      )
+      .replace(/(authorization:\s*(bearer|basic)\s+)\S+/gi, "$1[redacted]")
+      .replace(
+        /\b(password|passwd|secret|token|api[-_]?key|access[-_]?key)(\s*[=:]\s*)\S+/gi,
+        "$1$2[redacted]",
+      )
+      .replace(/\/\/[^/\s:@]+:[^/\s@]+@/g, "//[redacted]@")
+      .replace(
+        /\b(sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abprs]|AKIA|ASIA|npm)[-_A-Za-z0-9]{8,}/g,
+        "[redacted]",
+      )
+      .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
+      .replace(
+        /(?<![\w+/-])(?!\/)[A-Za-z0-9+/]{32,}={0,2}(?![\w+/=-])/g,
+        (m) => (randomish(m) ? "[redacted]" : m),
+      )
+      // A long token on its own. One next to `/` or `\` is part of a file path and stays.
+      .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, mask)
+  );
+}
+
+// One redacted line of transcript text, kept as written otherwise, for usage.json.
+function clean(s, n = 200) {
+  // Control characters become spaces. A character loop, not a regex, so ESLint's recommended
+  // no-control-regex passes in repos that lint the pack's scripts.
+  const text = Array.from(String(s ?? ""), (ch) => {
+    const code = ch.charCodeAt(0);
+    return code < 0x20 || code === 0x7f ? " " : ch;
+  }).join("");
+  return redact(text.replace(/\s+/g, " ").trim()).slice(0, n);
 }
 
 // One redacted line of transcript text, safe to place inside a Markdown table cell or list item.
 function oneLine(s, n = 120) {
-  return redact(
-    String(s ?? "")
-      .replace(/[\u0000-\u001f\u007f]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim(),
-  )
+  return clean(s, Infinity)
     .replace(/[`|]/g, "'")
     .replace(/^[#>\-*\s]+/, "")
     .slice(0, n);
@@ -340,7 +386,7 @@ function skillsInvoked(lines) {
   for (const o of lines) {
     for (const c of contentBlocks(o)) {
       if (c.type === "tool_use" && c.name === "Skill" && c.input?.skill) {
-        found.add(String(c.input.skill).replace(/^.*:/, ""));
+        found.add(oneLine(String(c.input.skill).replace(/^.*:/, ""), 60));
       }
     }
     if (o.type === "user") {
@@ -431,11 +477,12 @@ function summarizeSubagents(sessionDir) {
         if (c.type === "tool_result" && c.is_error) errors += 1;
       }
     }
+    // Transcript text, so it goes through oneLine before it reaches usage.json or a report line.
     const entry = {
       agentId: base,
-      agentType: meta.agentType ?? "unknown",
-      description: meta.description ?? "",
-      model,
+      agentType: oneLine(meta.agentType ?? "unknown", 60),
+      description: clean(meta.description),
+      model: model ? oneLine(model, 60) : null,
       usage,
       cost,
       weighted: weighted(usage),
@@ -497,7 +544,8 @@ function summarizeSession(file) {
     if (o.type === "system" && /compact/i.test(o.subtype ?? ""))
       boundaries += 1;
     if (o.isCompactSummary) summaries += 1;
-    if (o.type === "assistant" && o.message?.model) models.add(o.message.model);
+    if (o.type === "assistant" && o.message?.model)
+      models.add(oneLine(o.message.model, 60));
     for (const c of contentBlocks(o)) {
       if (c.type !== "tool_use") continue;
       const t = (o.timestamp ?? "").slice(11, 19);
@@ -505,14 +553,16 @@ function summarizeSession(file) {
       let what;
       if (c.name === "Agent" || c.name === "Task") {
         const sub = subagents.get(c.id);
-        const type =
-          c.input?.subagent_type ?? sub?.agentType ?? "general-purpose";
+        const type = oneLine(
+          c.input?.subagent_type ?? sub?.agentType ?? "general-purpose",
+          60,
+        );
         const d = {
           time: o.timestamp,
           agentType: type,
-          description: c.input?.description ?? sub?.description ?? "",
-          modelOverride: c.input?.model ?? null,
-          effortOverride: c.input?.effort ?? null,
+          description: clean(c.input?.description ?? sub?.description),
+          modelOverride: c.input?.model ? oneLine(c.input.model, 40) : null,
+          effortOverride: c.input?.effort ? oneLine(c.input.effort, 20) : null,
           ...(sub ?? {
             usage: emptyUsage(),
             cost: 0,
@@ -527,10 +577,10 @@ function summarizeSession(file) {
         dispatches.push(d);
         what = `Agent ${type}${d.modelOverride ? ` (${d.modelOverride})` : ""}: ${oneLine(d.description, 80)} [${d.weighted.toLocaleString()} wtok, ${d.seconds}s]`;
       } else if (c.name === "Skill") {
-        what = `Skill ${c.input?.skill} ${oneLine(c.input?.args, 60)}`;
+        what = `Skill ${oneLine(c.input?.skill, 60)} ${oneLine(c.input?.args, 60)}`;
       } else if (c.name === "ScheduleWakeup") {
         wakeups += 1;
-        what = `ScheduleWakeup ${c.input?.delaySeconds ?? ""}s ${oneLine(c.input?.reason, 60)}`;
+        what = `ScheduleWakeup ${oneLine(c.input?.delaySeconds, 10)}s ${oneLine(c.input?.reason, 60)}`;
       } else {
         what = `${c.name} ${oneLine(c.input?.description ?? c.input?.file_path ?? c.input?.pattern ?? "", 90)}`;
       }
@@ -600,7 +650,19 @@ const issuesDone = new Set(
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(
   path.join(outDir, "usage.json"),
-  JSON.stringify(sessions, null, 2),
+  // Every string is masked once more on the way out, so no transcript text skips redact(). Only
+  // each session record's own `id` and `file` stay as they are: they come from the transcript's
+  // file name, not its text, and the report names each session by them.
+  JSON.stringify(
+    sessions,
+    function (key, v) {
+      if (typeof v !== "string") return v;
+      const sessionField =
+        (key === "id" || key === "file") && sessions.includes(this);
+      return sessionField ? v : redact(v);
+    },
+    2,
+  ),
 );
 
 const fmt = (n) => n.toLocaleString("en-US");
@@ -728,7 +790,7 @@ for (const s of sessions) {
         ...new Set(s.repeatedDispatches),
       ]
         .slice(0, 10)
-        .map((k) => k.replace("|", ": "))
+        .map((k) => oneLine(k.replace("|", ": "), 160))
         .join("; ")}`,
     );
   if (s.toolErrorCount)

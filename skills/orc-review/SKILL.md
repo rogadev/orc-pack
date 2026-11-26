@@ -1,6 +1,6 @@
 ---
 name: orc-review
-pack: orc-pack@2.5.0
+pack: orc-pack@2.5.1
 description: Read-only deep review of a branch, range, pull request, or uncommitted work, sized to the change. Runs only the reviewer lanes whose surface the change touches, verifies the findings, and returns a plain-language report with a verdict. Reads the repo's project profile (risk map, architecture, known non-issues) from .claude/skills/deep-review/SKILL.md; `/orc-review init` drafts it and `/orc-review update` brings the project's pack and profile up to date. Use when the user says "/orc-review", "review my branch", "review dev before the PR", "is this ready to merge", "set up deep review for this project", or "update deep review".
 argument-hint: "init | update | dismiss | [ref | a..b | #PR | working] [quick | full] [auto]"
 ---

@@ -18,6 +18,36 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.5.1] - 2026-11-26
+
+**Summary.** A security patch for three helper scripts that copy text from outside the session into files an agent reads. `/triage`'s board snapshot now cleans every issue, pull request, label, milestone, login, branch, and commit string before it writes it, and puts each issue body and comment inside a fence that text in the body can't close. It also refuses a repo name that isn't `owner/name`. `/retro`'s usage script masks secrets in every string it writes, and `/shipcheck`'s smoke runner keeps tokens in URLs and console errors out of its results and records failures only from the app it's checking. This closes [#62](https://github.com/rogadev/orc-pack/issues/62). No skill or agent prompt changed. What 2.5.0 added (`/issues`, `/triage`, and `issue-auditor`) is in the [2.5.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.5.0).
+
+**Changed areas.**
+
+- **`/triage` snapshot (`skills/triage/references/snapshot.mjs`)** — Anyone who can open an issue, a pull request, or a comment on a repo could write text that changes the layout of the snapshot files `/triage`'s investigators read. A backtick or `|` in a title, label, or milestone could start code or forge a column, and a body or comment could add headings and notes that look like the snapshot's own. Now:
+  - Every title, label, milestone name, login, branch name, commit subject, and closed-issue or pull-request excerpt goes through one cleaner. The cleaner flattens line breaks, turns a backtick into `'`, and turns `|` into `/`.
+  - Each issue body and comment in `issues/<n>.md` sits in a ` ```text ` fence longer than any run of backticks inside it. Nothing in the body can end the fence early.
+  - A `--repo` value, or the repo `gh` reports, that isn't `owner/name` stops the script before any query.
+  - GraphQL variables go to `gh api` with `-f`, so a value starting with `@` is sent as text rather than read as a file path.
+- **`/retro` usage script (`skills/retro/references/usage.mjs`)**:
+  - Agent types, model names, skill names, and the wake-up delay are cleaned as they're read from transcripts, so none can break a table row or a timeline line.
+  - Every string in `usage.json` passes through `redact()` on the way out.
+  - `redact()` also drops a URL's query and fragment, masks a long segment in a URL's path (a webhook or reset token), and masks JWTs and base64 secrets that contain `+`, `/`, or `=`.
+  - It keeps file paths and MCP tool names readable, and leaves the session id, subagent id, and transcript path in `usage.json` as they are, because those come from file names. A 40-character hex string or a UUID anywhere else is masked: its shape can't tell a commit SHA or an id from a token.
+  - Descriptions in `usage.json` keep their text, issue numbers included. On real transcripts from three repos, `usage.md` and `usage.json` are unchanged.
+- **`/shipcheck` smoke runner (`skills/shipcheck/references/smoke-runner.mjs`)**:
+  - A failing response is recorded only when it comes from the base URL's origin, under its path when it has one. A plain string prefix also caught a lookalike host such as `app.example.com.cdn.net`, or a sibling path.
+  - A failing URL is recorded without its query string or fragment.
+  - URLs and console and page errors have credentials masked before they reach `results.json` or the log: a user and password in a URL, `Authorization` headers, `password=` and `token=` values, known key prefixes, JWTs, base64 secrets, and long token-like strings, including one that forms a URL path segment, as a reset or invite link's token does.
+  - The masking rules are the ones `/retro`'s `usage.mjs` uses, except that `usage.mjs` keeps file paths and MCP tool names readable.
+- **ESLint's recommended rules now pass on the pack's scripts.** `snapshot.mjs` failed `no-useless-escape`, and `usage.mjs` failed `no-control-regex`, which broke `eslint .` in a repo whose ESLint config reaches `.claude/`. Both are fixed in the code, with no change in output. An install that added an ESLint ignore for the pack's `references/` folders during the 2.5.0 update can keep it or drop it.
+
+**Update steps.** Copy the three files. Nothing else changes: no prompt, agent, or provenance format.
+
+**Breaking changes.** None. Snapshot `issues/<n>.md` files show the body and each comment inside a ` ```text ` fence, and the investigator brief already reads them as data.
+
+**Files to read.** `skills/triage/references/snapshot.mjs`, `skills/retro/references/usage.mjs`, `skills/shipcheck/references/smoke-runner.mjs`.
+
 ## [2.5.0] - 2026-11-26
 
 **Summary.** `/newissue` is now `/issues`, and it keeps the whole board true instead of only filing. Every run follows the same steps: read the whole board, investigate the code, then settle exactly one outcome for each piece of work in the request: nothing to file, already tracked, update the issue that covers it, settled before by a closed issue, or new work, shaped as one issue, several, an epic, or a decision first. A pivot check runs on every outcome. A request that makes other open issues wrong is carried through those issues, and a big pivot (three or more issues, an epic or milestone, a recorded decision, or a foundation) is discussed with the owner before anything is written. The skill now asks the owner about anything that would change what gets built, records the answers in the issue, and has a fresh agent, the new `issue-auditor`, read every draft cold before it files. Typing `/issues` runs it on Opus 5.5 at `xhigh` effort. `/orc` now holds each build to its issue: every `Done when` line gets a test and a stated proof, and an issue closes only when all of them hold.

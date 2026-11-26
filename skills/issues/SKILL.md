@@ -1,6 +1,6 @@
 ---
 name: issues
-pack: orc-pack@2.5.0
+pack: orc-pack@2.5.1
 description: Keeps a GitHub board true. Turns a rough idea, a bug, or a change of plan into sized issues (one, several, or an epic) that a fresh agent could build with zero prior context, or updates the issues that already cover it, after reading the whole board and the code and asking about anything that would change what gets built. Use whenever the user says "/issues", "/newissue", "file an issue", "make this an issue", "open a GitHub issue", "write this up as an issue", "track this", "update that issue", "rewrite that issue", "split this issue", or okays filing an issue you surfaced. Do NOT invoke for an issue the user has not asked for or approved; surface the idea and ask first.
 argument-hint: "<idea, bug, or change of plan> | #<n> <what to change> | (empty: what this conversation just covered)"
 model: claude-opus-5-5
