@@ -18,6 +18,26 @@ A released version's section is frozen. Once its tag exists, never edit it: late
 
 ---
 
+## [2.5.1] - 2026-11-26
+
+**Summary.** A security patch for three helper scripts that copy text from outside the session into files an agent reads. `/triage`'s board snapshot now cleans every issue, pull request, label, milestone, login, branch, and commit string before it writes it, and puts each issue body and comment inside a fence that text in the body can't close. It also refuses a repo name that isn't `owner/name`. `/retro`'s usage script cleans agent names, models, and skill names from transcripts, and `/shipcheck`'s smoke runner keeps tokens in URLs and console errors out of its results. No skill or agent prompt changed. What 2.5.0 added (`/issues`, `/triage`, and `issue-auditor`) is in the [2.5.0 release notes](https://github.com/rogadev/orc-pack/releases/tag/v2.5.0).
+
+**Changed areas.**
+
+- **`/triage` snapshot (`skills/triage/references/snapshot.mjs`)** — Anyone who can open an issue, a pull request, or a comment on a repo could write text that changes the layout of the snapshot files `/triage`'s investigators read. A backtick or `|` in a title, label, or milestone could start code or forge a column, and a body or comment could add headings and notes that look like the snapshot's own. Now:
+  - Every title, label, milestone name, login, branch name, commit subject, and closed-issue or pull-request excerpt goes through one cleaner. The cleaner flattens line breaks, turns a backtick into `'`, and turns `|` into `/`.
+  - Each issue body and comment in `issues/<n>.md` sits in a ` ```text ` fence longer than any run of backticks inside it. Nothing in the body can end the fence early.
+  - A `--repo` value, or the repo `gh` reports, that isn't `owner/name` stops the script before any query.
+  - GraphQL variables go to `gh api` with `-f`, so a value starting with `@` is sent as text rather than read as a file path.
+- **`/retro` usage script (`skills/retro/references/usage.mjs`)** — Agent types, model names, skill names, and dispatch descriptions from transcripts now get the same cleaning and secret masking as the rest of the report, both in `usage.md` and in `usage.json`. Descriptions in `usage.json` keep their text, issue numbers included, and are only flattened and redacted. On real transcripts the output is unchanged.
+- **`/shipcheck` smoke runner (`skills/shipcheck/references/smoke-runner.mjs`)** — A failing URL is recorded without its query string or fragment. Console errors and page errors have long token-like strings and JWTs masked before they reach `results.json` or the log.
+
+**Update steps.** Copy the three files. Nothing else changes: no prompt, agent, or provenance format.
+
+**Breaking changes.** None. Snapshot `issues/<n>.md` files show the body and each comment inside a ` ```text ` fence, and the investigator brief already reads them as data.
+
+**Files to read.** `skills/triage/references/snapshot.mjs`, `skills/retro/references/usage.mjs`, `skills/shipcheck/references/smoke-runner.mjs`.
+
 ## [2.5.0] - 2026-11-26
 
 **Summary.** `/newissue` is now `/issues`, and it keeps the whole board true instead of only filing. Every run follows the same steps: read the whole board, investigate the code, then settle exactly one outcome for each piece of work in the request: nothing to file, already tracked, update the issue that covers it, settled before by a closed issue, or new work, shaped as one issue, several, an epic, or a decision first. A pivot check runs on every outcome. A request that makes other open issues wrong is carried through those issues, and a big pivot (three or more issues, an epic or milestone, a recorded decision, or a foundation) is discussed with the owner before anything is written. The skill now asks the owner about anything that would change what gets built, records the answers in the issue, and has a fresh agent, the new `issue-auditor`, read every draft cold before it files. Typing `/issues` runs it on Opus 5.5 at `xhigh` effort. `/orc` now holds each build to its issue: every `Done when` line gets a test and a stated proof, and an issue closes only when all of them hold.

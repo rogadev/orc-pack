@@ -17,6 +17,17 @@ const phone = {
   viewport: { width: 390, height: 844 },
 };
 const desktop = { viewport: { width: 1440, height: 900 } };
+
+// Failing URLs and console errors can carry a token, in a query string or in the error text, and
+// results.json and the log keep them. Drop each URL's query and fragment, and mask long
+// token-like strings.
+const scrub = (s) =>
+  String(s)
+    .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
+    .replace(
+      /(?<![\w-])(?:eyJ[\w-]+\.[\w-]+\.[\w-]+|(?=[\w-]*\d)[\w-]{32,})(?![\w-])/g,
+      "[redacted]",
+    );
 const PASSES = [
   { name: "390-light", ctx: phone, theme: "light" },
   { name: "390-dark", ctx: phone, theme: "dark" },
@@ -53,11 +64,14 @@ for (const pass of PASSES) {
   for (const flow of FLOWS) {
     const page = await context.newPage();
     const errors = [];
-    page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on(
+      "console",
+      (m) => m.type() === "error" && errors.push(scrub(m.text())),
+    );
+    page.on("pageerror", (e) => errors.push(scrub(String(e))));
     page.on("response", (r) => {
       if (r.url().startsWith(baseUrl) && r.status() >= 400)
-        errors.push(`${r.status()} ${r.url()}`);
+        errors.push(`${r.status()} ${scrub(r.url())}`);
     });
     const row = { pass: pass.name, flow: flow.name };
     try {

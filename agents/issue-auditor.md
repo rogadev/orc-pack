@@ -1,6 +1,6 @@
 ---
 name: issue-auditor
-pack: orc-pack@2.5.0
+pack: orc-pack@2.5.1
 description: Cold read of drafted GitHub issues before /issues files or rewrites them. Sees only the drafts and the repo, never the conversation behind them, and reports what it would build from each, where it would have to guess, contradictions, acceptance lines no test can check, citations that don't match the code, and anything a draft uses that nothing creates. Read-only. Dispatched by the issues and triage skills; finding nothing is a valid result.
 model: claude-opus-5-5
 effort: high

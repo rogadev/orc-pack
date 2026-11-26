@@ -322,14 +322,19 @@ function redact(s) {
     .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, "[redacted]");
 }
 
-// One redacted line of transcript text, safe to place inside a Markdown table cell or list item.
-function oneLine(s, n = 120) {
+// One redacted line of transcript text, kept as written otherwise, for usage.json.
+function clean(s, n = 200) {
   return redact(
     String(s ?? "")
       .replace(/[\u0000-\u001f\u007f]+/g, " ")
       .replace(/\s+/g, " ")
       .trim(),
-  )
+  ).slice(0, n);
+}
+
+// One redacted line of transcript text, safe to place inside a Markdown table cell or list item.
+function oneLine(s, n = 120) {
+  return clean(s, Infinity)
     .replace(/[`|]/g, "'")
     .replace(/^[#>\-*\s]+/, "")
     .slice(0, n);
@@ -340,7 +345,7 @@ function skillsInvoked(lines) {
   for (const o of lines) {
     for (const c of contentBlocks(o)) {
       if (c.type === "tool_use" && c.name === "Skill" && c.input?.skill) {
-        found.add(String(c.input.skill).replace(/^.*:/, ""));
+        found.add(oneLine(String(c.input.skill).replace(/^.*:/, ""), 60));
       }
     }
     if (o.type === "user") {
@@ -431,11 +436,12 @@ function summarizeSubagents(sessionDir) {
         if (c.type === "tool_result" && c.is_error) errors += 1;
       }
     }
+    // Transcript text, so it goes through oneLine before it reaches usage.json or a report line.
     const entry = {
       agentId: base,
-      agentType: meta.agentType ?? "unknown",
-      description: meta.description ?? "",
-      model,
+      agentType: oneLine(meta.agentType ?? "unknown", 60),
+      description: clean(meta.description),
+      model: model ? oneLine(model, 60) : null,
       usage,
       cost,
       weighted: weighted(usage),
@@ -497,7 +503,8 @@ function summarizeSession(file) {
     if (o.type === "system" && /compact/i.test(o.subtype ?? ""))
       boundaries += 1;
     if (o.isCompactSummary) summaries += 1;
-    if (o.type === "assistant" && o.message?.model) models.add(o.message.model);
+    if (o.type === "assistant" && o.message?.model)
+      models.add(oneLine(o.message.model, 60));
     for (const c of contentBlocks(o)) {
       if (c.type !== "tool_use") continue;
       const t = (o.timestamp ?? "").slice(11, 19);
@@ -505,14 +512,16 @@ function summarizeSession(file) {
       let what;
       if (c.name === "Agent" || c.name === "Task") {
         const sub = subagents.get(c.id);
-        const type =
-          c.input?.subagent_type ?? sub?.agentType ?? "general-purpose";
+        const type = oneLine(
+          c.input?.subagent_type ?? sub?.agentType ?? "general-purpose",
+          60,
+        );
         const d = {
           time: o.timestamp,
           agentType: type,
-          description: c.input?.description ?? sub?.description ?? "",
-          modelOverride: c.input?.model ?? null,
-          effortOverride: c.input?.effort ?? null,
+          description: clean(c.input?.description ?? sub?.description),
+          modelOverride: c.input?.model ? oneLine(c.input.model, 40) : null,
+          effortOverride: c.input?.effort ? oneLine(c.input.effort, 20) : null,
           ...(sub ?? {
             usage: emptyUsage(),
             cost: 0,
@@ -527,7 +536,7 @@ function summarizeSession(file) {
         dispatches.push(d);
         what = `Agent ${type}${d.modelOverride ? ` (${d.modelOverride})` : ""}: ${oneLine(d.description, 80)} [${d.weighted.toLocaleString()} wtok, ${d.seconds}s]`;
       } else if (c.name === "Skill") {
-        what = `Skill ${c.input?.skill} ${oneLine(c.input?.args, 60)}`;
+        what = `Skill ${oneLine(c.input?.skill, 60)} ${oneLine(c.input?.args, 60)}`;
       } else if (c.name === "ScheduleWakeup") {
         wakeups += 1;
         what = `ScheduleWakeup ${c.input?.delaySeconds ?? ""}s ${oneLine(c.input?.reason, 60)}`;
@@ -728,7 +737,7 @@ for (const s of sessions) {
         ...new Set(s.repeatedDispatches),
       ]
         .slice(0, 10)
-        .map((k) => k.replace("|", ": "))
+        .map((k) => oneLine(k.replace("|", ": "), 160))
         .join("; ")}`,
     );
   if (s.toolErrorCount)

@@ -1,6 +1,6 @@
 ---
 name: triage
-pack: orc-pack@2.5.0
+pack: orc-pack@2.5.1
 description: Audits every open issue on a repo's GitHub board against today's code, history, and direction rather than its labels or milestones, finding what is already done, obsolete after a pivot, duplicated, covered by closed work, or in need of a rewrite or split, and each issue's real priority. Then proposes milestones, a build order that `/orc next N` follows, and a backlog track for catch-up days; asks the owner every call only they can make; and applies what they approve, running `/issues` for rewrites and new issues. Use whenever the user says "/triage", "triage the board", "audit our issues", "clean up the backlog", "groom the backlog", "what should we build next", "prioritize the issues", "which issues are already done", "set up milestones", or "give me a build order". For one issue or one idea, use `/issues` instead.
 argument-hint: "(empty: the whole board) | new | backlog | <area, label, or milestone> | report-only"
 model: claude-opus-5-5
