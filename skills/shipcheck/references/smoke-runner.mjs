@@ -20,7 +20,9 @@ const desktop = { viewport: { width: 1440, height: 900 } };
 
 // Failing URLs and console errors can carry a credential, in a URL or in the error text, and
 // results.json and the log keep them. Drop each URL's query and fragment, then mask what looks
-// like a credential, with the same rules as /retro's usage.mjs (keep the two in step).
+// like a credential, with the rules /retro's usage.mjs uses (keep the two in step). One rule
+// differs: a long string after a `/` is masked here too, because a reset or invite link can carry
+// its token in the path; usage.mjs keeps those so file paths stay readable.
 const scrub = (s) =>
   String(s)
     .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1")
@@ -35,7 +37,7 @@ const scrub = (s) =>
       "[redacted]",
     )
     .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
-    .replace(/(?<![\\/\w-])[A-Za-z0-9_-]{32,}(?![\\/\w-])/g, "[redacted]");
+    .replace(/(?<![\w-])[A-Za-z0-9_-]{32,}(?![\w-])/g, "[redacted]");
 const PASSES = [
   { name: "390-light", ctx: phone, theme: "light" },
   { name: "390-dark", ctx: phone, theme: "dark" },
