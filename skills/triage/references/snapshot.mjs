@@ -455,7 +455,7 @@ function similar(tok, pool, selfNumber) {
 // The extension must start with a letter, so version strings such as "5.5/5.6" don't match, and
 // has no length cap, so long ones such as ".webmanifest" aren't cut short.
 const PATH_RE =
-  /(?:^|[\s`'"(\[])((?:\.{0,2}\/)?(?:[\w@.-]+\/)+[\w@.-]+\.[A-Za-z][A-Za-z0-9]*)(?::\d+(?:[-:]\d+)?)?/g;
+  /(?:^|[\s`'"([])((?:\.{0,2}\/)?(?:[\w@.-]+\/)+[\w@.-]+\.[A-Za-z][A-Za-z0-9]*)(?::\d+(?:[-:]\d+)?)?/g;
 
 function pathsIn(text) {
   const found = new Set();

@@ -324,12 +324,13 @@ function redact(s) {
 
 // One redacted line of transcript text, kept as written otherwise, for usage.json.
 function clean(s, n = 200) {
-  return redact(
-    String(s ?? "")
-      .replace(/[\u0000-\u001f\u007f]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim(),
-  ).slice(0, n);
+  // Control characters become spaces. A character loop, not a regex, so ESLint's recommended
+  // no-control-regex passes in repos that lint the pack's scripts.
+  const text = Array.from(String(s ?? ""), (ch) => {
+    const code = ch.charCodeAt(0);
+    return code < 0x20 || code === 0x7f ? " " : ch;
+  }).join("");
+  return redact(text.replace(/\s+/g, " ").trim()).slice(0, n);
 }
 
 // One redacted line of transcript text, safe to place inside a Markdown table cell or list item.
